@@ -1,3 +1,4 @@
+import appConfig from "./apps/app/vitest.config";
 import { defineWorkspace } from "vitest/config";
 import { getTestDatabaseUrl } from "./scripts/test-database";
 
@@ -13,6 +14,22 @@ export default defineWorkspace([
       include: ["src/**/__tests__/**/*.integration.test.ts"],
       exclude: ["node_modules", "dist"],
       env: { DATABASE_URL: databaseUrl, DIRECT_DATABASE_URL: databaseUrl },
+    },
+  },
+  {
+    resolve: appConfig.resolve,
+    root: "./apps/app",
+    test: {
+      name: "owner-integration",
+      include: ["src/**/__tests__/**/*.integration.test.ts"],
+      exclude: ["node_modules", "dist"],
+      env: {
+        DATABASE_URL: databaseUrl,
+        DIRECT_DATABASE_URL: databaseUrl,
+        JWT_SECRET: "synthetic-unit-secret-at-least-32-characters",
+        OWNER_EMAIL: "owner@example.test",
+        APP_URL: "http://localhost:3000",
+      },
     },
   },
 ]);

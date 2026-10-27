@@ -1,119 +1,94 @@
 "use client";
-
-import React, { useEffect, useState, type ReactNode } from "react";
-import type {
-  AuthClient,
-  CurrentUserResponse,
-  SignUpData,
-  SignInData,
-  RequestEmailCodeData,
-  VerifyEmailCodeData,
-} from "@corely/auth-client";
+import { useEffect, useState, type ReactNode } from "react";
+import { OwnerSessionSchema, type OwnerSession } from "@corely/contracts";
 import { AuthContext } from "./auth-context";
 
-interface AuthProviderProps {
-  children: ReactNode;
-  authClient: AuthClient;
-  onLogout?: () => void;
+async function authRequest(path: string, body?: unknown): Promise<unknown> {
+  const response = await fetch(`/api/auth/${path}`, {
+    method: body === undefined ? "GET" : "POST",
+    credentials: "same-origin",
+    ...(body === undefined
+      ? {}
+      : {
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        }),
+  });
+  if (!response.ok) {
+    const problem = (await response
+      .json()
+      .catch(() => ({ title: "Sign in failed" }))) as { title?: string };
+    throw new Error(problem.title || "Sign in failed");
+  }
+  return response.status === 204 ? null : response.json();
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children, authClient, onLogout }) => {
-  const [user, setUser] = useState<CurrentUserResponse | null>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<OwnerSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
-    const initAuth = async () => {
+    let active = true;
+    void (async () => {
       try {
-        await authClient.loadStoredTokens();
-        if (authClient.getAccessToken()) {
-          const currentUser = await authClient.getCurrentUser();
-          setUser(currentUser);
+        let result: unknown;
+        try {
+          result = await authRequest("me");
+        } catch {
+          result = await authRequest("refresh", {});
         }
-      } catch (err) {
-        await authClient.clearTokens();
-        setError(err instanceof Error ? err.message : "Auth initialization failed");
+        if (active) setUser(OwnerSessionSchema.parse(result));
+      } catch {
+        if (active) setUser(null);
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
+    })();
+    return () => {
+      active = false;
     };
-    void initAuth();
-  }, [authClient]);
+  }, []);
 
-  const signup = async (data: SignUpData) => {
+  async function perform<T>(work: () => Promise<T>): Promise<T> {
     setError(null);
-    const result = await authClient.signup(data);
-    const currentUser = await authClient.getCurrentUser();
-    setUser(currentUser);
-    return result;
-  };
-
-  const signin = async (data: SignInData) => {
-    setError(null);
-    const result = await authClient.signin(data);
-    const currentUser = await authClient.getCurrentUser();
-    setUser(currentUser);
-    return result;
-  };
-
-  const requestEmailCode = async (data: RequestEmailCodeData) => {
-    setError(null);
-    return await authClient.requestEmailCode(data);
-  };
-
-  const verifyEmailCode = async (data: VerifyEmailCodeData) => {
-    setError(null);
-    const result = await authClient.verifyEmailCode(data);
-    const currentUser = await authClient.getCurrentUser();
-    setUser(currentUser);
-    return result;
-  };
-
-  const logout = async () => {
     try {
-      await authClient.signout();
-    } finally {
-      await authClient.clearTokens();
-      if (onLogout) {
-        onLogout();
-      }
-      setUser(null);
+      return await work();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Sign in failed");
+      throw cause;
     }
-  };
-
-  const switchTenant = async (tenantId: string | null) => {
-    setError(null);
-    const result = await authClient.switchTenant(tenantId);
-    const currentUser = await authClient.getCurrentUser();
-    setUser(currentUser);
-    return result;
-  };
-
-  const refresh = async () => {
-    await authClient.refreshAccessToken();
-    if (authClient.getAccessToken()) {
-      const currentUser = await authClient.getCurrentUser();
-      setUser(currentUser);
-    }
-  };
-
+  }
   return (
     <AuthContext.Provider
       value={{
         user,
         isLoading,
         isAuthenticated: !!user,
-        signup,
-        signin,
-        requestEmailCode,
-        verifyEmailCode,
-        logout,
-        switchTenant,
-        refresh,
         error,
+        requestEmailCode: (data) =>
+          perform(
+            async () =>
+              (await authRequest("request-code", data)) as {
+                message: string;
+                canProceed: boolean;
+                cooldownSeconds: number;
+              },
+          ),
+        verifyEmailCode: (data) =>
+          perform(async () => {
+            const result = OwnerSessionSchema.parse(
+              await authRequest("verify-code", data),
+            );
+            setUser(result);
+            return result;
+          }),
+        logout: async () => {
+          await perform(() => authRequest("logout", {}));
+          setUser(null);
+        },
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-};
+}

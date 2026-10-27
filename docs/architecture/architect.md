@@ -30,10 +30,11 @@ feeds bounded, tenant-scoped persistence; device acknowledgements determine comm
 
 ## Authority and current limits
 
-Tenant is the sole isolation term. The current todo context accepts a development header/fallback;
-OTP helpers do not make those routes protected. Issue #3 owns authenticated owner access and
-server-derived Tenant membership. Until then, bind development services to loopback and do not
-expose this scaffold publicly. See [security](../guides/SECURITY.md).
+Tenant is the sole isolation term. The identity feature verifies owner sessions and live active
+OWNER membership. Todo routes and the dashboard derive Tenant scope from that session; headers
+cannot establish authority. Bootstrap is an explicit operator CLI. Browser writes require the
+configured origin, and production validates secrets and email configuration on startup.
+Device authentication remains pending. See [security](../guides/SECURITY.md).
 
 The original scaffold includes unused domain/schema material. Its presence does not activate a
 feature or justify extending Platform, Workspace, or generic Automation domains. Keep changes scoped.

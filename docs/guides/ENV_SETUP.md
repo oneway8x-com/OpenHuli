@@ -1,24 +1,31 @@
 # Environment setup
 
-Follow [the README](../../README.md) for the tested local commands. Copy `.env.example` to `.env`
-and use the local Compose connection; inspect the database target before migrating or seeding.
+Follow [the README](../../README.md). Copy `.env.example` to `.env`, set `OWNER_EMAIL`, and inspect
+the local database target before migration or `pnpm owner:bootstrap` (`pnpm db:seed` is an alias).
+Bootstrap is an operator CLI; it creates or reuses the Home Tenant, user, and OWNER membership.
+Development bootstrap accepts only loopback `openhuli` or `openhuli_test` databases.
 
-| Setting                                             | Current consumer / meaning                                                                                            |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                                      | PostgreSQL connection used by app persistence and local seed; required for DB access.                                 |
-| `DIRECT_DATABASE_URL`                               | Optional Prisma migration connection; falls back to `DATABASE_URL`.                                                   |
-| `CORELY_DEV_TENANT_ID`                              | Development todo fallback and seed tenant, default `dev-tenant`; not authorization.                                   |
-| `NEXT_PUBLIC_API_BASE_URL`                          | Browser API prefix; empty uses same-origin Next `/api` routes.                                                        |
-| `JWT_SECRET`                                        | OTP auth helper signing key; current fallback is not suitable for public deployment.                                  |
-| `RESEND_API_KEY`, `EMAIL_FROM`                      | Optional production email delivery; local OTP delivery logs to the server.                                            |
-| `TEST_DATABASE_URL`                                 | Explicit test-only connection. Export before DB/E2E commands; local `openhuli_test` only.                             |
-| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Local Compose-only settings; each defaults to `openhuli`. Keep `.env` connection strings consistent if changing them. |
+| Setting                                             | Meaning                                                                                                                                       |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                      | PostgreSQL application connection.                                                                                                            |
+| `DIRECT_DATABASE_URL`                               | Optional migration connection; falls back to `DATABASE_URL`.                                                                                  |
+| `OWNER_EMAIL`                                       | Required single-owner email; normalized to lowercase. No signup endpoint.                                                                     |
+| `APP_URL`                                           | Exact browser origin without a path; development defaults to `http://localhost:3000`. Production requires HTTPS except loopback.              |
+| `JWT_SECRET`                                        | At least 32 characters; required outside explicit development. Production rejects known development secrets. Generate a private random value. |
+| `RESEND_API_KEY`, `EMAIL_FROM`                      | Required production OTP delivery configuration; sender must be a valid email address. Development logs OTP codes locally.                     |
+| `NEXT_PUBLIC_API_BASE_URL`                          | Keep empty for same-origin Next `/api` routes and cookies.                                                                                    |
+| `TEST_DATABASE_URL`                                 | Explicit loopback `openhuli_test` connection used by DB/E2E commands.                                                                         |
+| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Local Compose settings, default `openhuli`; match the connection strings.                                                                     |
 
-Root Next development loads `.env` through the documented setup; Prisma tooling loads root `.env`
-from its config and process environment takes precedence. Browser tests override both database
-connections for the test process and its Next server. Never point them at a shared or remote database.
+Next development and production start load root `.env`. Prisma tooling loads it through its config;
+process environment takes precedence. Browser tests override database and auth settings with synthetic
+values. Never point tests at a shared or remote database. Run `NODE_ENV=production pnpm owner:bootstrap`
+only after deliberately configuring the deployment database and all required production settings.
+Changing the configured owner requires explicit operator bootstrap and invalidates the former owner's
+access; it does not delete that user's records. Changing the signing secret invalidates access tokens
+and pending OTP codes. Existing refresh sessions can obtain new access tokens; revoke sessions in the
+database when rotating a compromised signing secret.
 
-Object storage adapters remain available but are not required for todo development. When enabling
-one, inspect `packages/storage` for its settings; do not provision cloud storage merely to run checks.
-Production owner authentication and validated runtime configuration are pending in issue #3. The
-persistent Node/MQTT/voice deployment is separate pending work, not a Vercel-only deployment.
+Builds can run without production credentials; runtime startup validates configuration. A green build
+is not a deployment check. Object storage is optional; inspect `packages/storage` when enabling it.
+The persistent Node/MQTT/voice deployment remains separate work.

@@ -10,20 +10,23 @@ export interface AuthCardProps {
   onSuccess?: () => void;
 }
 
-export const AuthCard: React.FC<AuthCardProps> = ({ 
-  title = "Sign in", 
-  subtitle = "Enter your email. We'll sign you in or create your account, then send a secure 6-digit code.",
-  onSuccess
+export const AuthCard: React.FC<AuthCardProps> = ({
+  title = "Sign in",
+  subtitle = "Use your owner email to request a secure 6-digit code.",
+  onSuccess,
 }) => {
-  const { requestEmailCode, verifyEmailCode, error } = useAuth();
+  const { requestEmailCode, verifyEmailCode, error, user } = useAuth();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-  const [verificationMode, setVerificationMode] = useState<"login" | "signup">("login");
   const [step, setStep] = useState<"email" | "code">("email");
   const [notice, setNotice] = useState("");
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const [isRequesting, setIsRequesting] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+
+  useEffect(() => {
+    if (user && step === "email") window.location.replace("/todos");
+  }, [user, step]);
 
   useEffect(() => {
     if (cooldownSeconds <= 0) {
@@ -41,19 +44,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     event?.preventDefault();
     setIsRequesting(true);
     try {
-      let resolvedMode: "login" | "signup" = "login";
-      let result = await requestEmailCode({ email, mode: resolvedMode });
-
-      if (result.status === "needs_signup") {
-        resolvedMode = "signup";
-        result = await requestEmailCode({ email, mode: resolvedMode });
-      }
-      if (result.status === "needs_login") {
-        resolvedMode = "login";
-        result = await requestEmailCode({ email, mode: resolvedMode });
-      }
-
-      setVerificationMode(resolvedMode);
+      const result = await requestEmailCode({ email });
       setNotice(result.message);
       setCooldownSeconds(result.cooldownSeconds ?? 0);
       setStep(result.canProceed ? "code" : "email");
@@ -67,7 +58,7 @@ export const AuthCard: React.FC<AuthCardProps> = ({
   const handleResendCode = async () => {
     setIsRequesting(true);
     try {
-      const result = await requestEmailCode({ email, mode: verificationMode });
+      const result = await requestEmailCode({ email });
       setNotice(result.message);
       setCooldownSeconds(result.cooldownSeconds ?? 0);
     } catch (err) {
@@ -81,11 +72,11 @@ export const AuthCard: React.FC<AuthCardProps> = ({
     event.preventDefault();
     setIsVerifying(true);
     try {
-      await verifyEmailCode({ email, code, mode: verificationMode });
+      await verifyEmailCode({ email, code });
       if (onSuccess) {
         onSuccess();
       } else {
-        window.location.href = "/dashboard";
+        window.location.href = "/todos";
       }
     } catch (err) {
       console.error(err);
@@ -103,7 +94,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
         </div>
         {step === "email" ? (
           <form onSubmit={handleRequestCode} className="space-y-4">
-            {notice ? <div className="rounded-md bg-muted p-3 text-sm">{notice}</div> : null}
+            {notice ? (
+              <div className="rounded-md bg-muted p-3 text-sm">{notice}</div>
+            ) : null}
             {error && <div className="text-sm text-destructive">{error}</div>}
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="email">
@@ -122,10 +115,12 @@ export const AuthCard: React.FC<AuthCardProps> = ({
               disabled={isRequesting || !email.trim()}
               className="w-full"
             >
-              {isRequesting ? "Checking your account..." : "Continue with email"}
+              {isRequesting
+                ? "Checking your account..."
+                : "Continue with email"}
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              No password needed. New accounts are created after email verification.
+              Only the configured owner can sign in.
             </p>
           </form>
         ) : (
@@ -150,7 +145,9 @@ export const AuthCard: React.FC<AuthCardProps> = ({
                 required
                 className="text-center tracking-[0.3em]"
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) =>
+                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
               />
             </div>
             <Button

@@ -1,22 +1,25 @@
 # Security and current limits
 
-This is a development scaffold, not a publicly deployable authenticated device service.
+Console access is restricted to the configured owner. Operator bootstrap creates the Home Tenant
+and OWNER membership; there is no public signup or bootstrap endpoint. Existing legacy browser
+sessions must sign in again.
 
-- Todo handlers currently accept `x-tenant-id` or a development fallback. A header is not
-  authentication and the current UI does not enforce owner access. Issue #3 replaces this with
-  server-verified sessions and membership, production secret validation, and isolation tests.
-- OTP/JWT helpers exist, but their presence does not protect every route or complete onboarding.
-  The development JWT fallback and production email behavior also need the #3 hardening work.
-- Bind the local app and database to loopback. Do not publish the scaffold, broker, or database
-  publicly based on a green build, a login screen, or the mocked auth-handler tests.
-- Keep secrets out of browser code, logs, committed fixtures, screenshots, and firmware. Do not
-  use real provider keys or paid/live services in routine tests.
-- Validate input with shared schemas and keep mutations behind explicit use cases. Test Tenant
-  isolation in persistence, but do not mistake repository scoping for authenticated route authority.
-- Database tests require the explicitly named local `openhuli_test` database. Their setup never
-  falls back to `DATABASE_URL`; cleanup is restricted to test-owned rows.
+- Todo routes, dashboard pages, and upload-token creation require a verified session and live
+  active owner membership. A caller-supplied Tenant header cannot grant access. Upload paths must
+  stay within the owner Tenant namespace; provider callbacks retain SDK signature verification.
+- Access and refresh tokens use HttpOnly, SameSite=Lax cookies, with Secure outside development.
+  Browser writes check the configured origin. Refresh tokens rotate, logout revokes the server
+  session, and every protected request checks session revocation and membership.
+- OTP codes expire after 15 minutes, allow five attempts, and have a 60-second resend cooldown.
+  Only explicit development mode logs codes and permits the development signing secret. Production
+  startup requires safe auth configuration and working email settings; delivery failures are errors.
+- Keep secrets out of browser code, committed fixtures, screenshots, and firmware. Do not use real
+  provider keys or paid/live services in routine tests. Development OTP logs are sensitive.
+- Database tests require the explicitly named local `openhuli_test` database. Setup never falls
+  back to `DATABASE_URL`; cleanup is restricted to test-owned rows.
 
-The [MVP specification](../mvp-spec.md) defines the pending device credential, MQTT ACL, TLS,
-AI tool approval/idempotency, and privacy requirements. These are release gates, not existing guarantees.
-Do not include secrets or personal data when reporting a vulnerability; share only the minimum
-reproduction and affected source locations with the maintainer.
+Email delivery requires operator setup and has not been verified against a live provider in routine
+checks. In-memory or edge-wide abuse protection is not implemented; production hosting should bound
+request volume. The [MVP specification](../mvp-spec.md) defines pending device credentials, MQTT ACL,
+TLS, AI tool approval/idempotency, and privacy requirements. These are not existing guarantees.
+Do not include secrets or personal data when reporting a vulnerability.
