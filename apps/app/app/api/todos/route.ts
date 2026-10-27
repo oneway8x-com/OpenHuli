@@ -9,8 +9,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    const { tenantId } = getTenantContext(request);
-    const searchParams = Object.fromEntries(request.nextUrl.searchParams.entries());
+    const { tenantId } = await getTenantContext(request);
+    const searchParams = Object.fromEntries(
+      request.nextUrl.searchParams.entries(),
+    );
     const query = TodoListQuerySchema.parse(searchParams);
     const runtime = createTodoRuntime();
     const response = await runtime.listTodos(query, { tenantId });
@@ -23,7 +25,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { tenantId } = getTenantContext(request);
+    const { tenantId } = await getTenantContext(request);
     const body = await request.json();
     const input = CreateTodoInputSchema.parse(body);
     const runtime = createTodoRuntime();

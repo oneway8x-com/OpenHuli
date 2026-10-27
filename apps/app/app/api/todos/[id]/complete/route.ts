@@ -8,10 +8,10 @@ export const dynamic = "force-dynamic";
 
 export async function POST(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { tenantId } = getTenantContext(request);
+    const { tenantId } = await getTenantContext(request);
     const { id } = await context.params;
     const runtime = createTodoRuntime();
     const response = await runtime.completeTodo(id, { tenantId });
