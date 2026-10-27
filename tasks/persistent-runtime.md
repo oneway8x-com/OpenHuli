@@ -60,3 +60,11 @@ for persistent sockets, MQTT connections, and future shared conversation use cas
   and diff checks passed. Lint passed with 98 existing warnings. Production build passed.
 - Verified auth/app/E2E/identity sources match the merged `origin/main`; conflict resolution changes
   only script composition and documentation. No database integration or browser E2E rerun.
+
+- `main` advanced again during validation to `152662c` (persistence PR #27). Merged it and retained
+  its all-feature-module typecheck and migration-check command alongside runtime scripts. Existing
+  migration/schema/feature files are preserved unchanged; no database migration is applied here.
+- Latest-base validation: frozen install and Prisma generation, typecheck across all feature modules
+  plus runtime, 188 Vitest tests plus 3 script tests, lint (98 existing warnings), Prisma validation,
+  architecture/prompt checks, diff checks, and production build passed. Runtime script entries now
+  sit alongside `dev:app` to avoid conflicts with unrelated commands appended to the scripts list.

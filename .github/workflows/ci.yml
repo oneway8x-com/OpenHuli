@@ -45,6 +45,7 @@ jobs:
       - run: pnpm prompt:check
       - run: pnpm test
       - run: pnpm test:db:setup
+      - run: pnpm test:migrations
       - run: pnpm test:int
       - run: pnpm build
       - run: pnpm --filter @corely/e2e exec playwright install --with-deps chromium
