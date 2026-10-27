@@ -5,6 +5,7 @@
 Implement [issue #2](https://github.com/oneway8x-com/OpenHuli/issues/2): accurate architecture/MVP
 scope, working development and test commands, app test discovery, and CI for the current Next.js app.
 Branch: `02-foundation`.
+PR: [#23](https://github.com/oneway8x-com/OpenHuli/pull/23), targeting `main`.
 
 ## Notes
 
@@ -53,8 +54,8 @@ Local environment: Node 24.2.0, pnpm 10.26.0, PostgreSQL 17 in a fresh task-owne
 
 ## Remaining work / risks
 
-- PR publication is in progress; GitHub CI results have not yet been observed. CI selects Node
-  22.19.0; the local checks used the compatible newer version above.
+- PR #23 is published; GitHub CI results have not yet been observed. CI selects Node 22.19.0;
+  the local checks used the compatible newer version above.
 - Do not expose the scaffold publicly before issue #3. Header-based development Tenant context and
   JWT/OTP hardening remain known follow-up work, not guarantees provided by these passing tests.
 - Temporary development servers, copied `.env`, and task-owned Docker database resources were cleaned up.
