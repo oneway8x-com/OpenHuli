@@ -9,10 +9,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { tenantId } = getTenantContext(request);
+    const { tenantId } = await getTenantContext(request);
     const { id } = await context.params;
     const runtime = createTodoRuntime();
     const response = await runtime.getTodo(id, { tenantId });
@@ -25,15 +25,18 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { tenantId } = getTenantContext(request);
+    const { tenantId } = await getTenantContext(request);
     const { id } = await context.params;
     const body = await request.json();
     const input = UpdateTodoInputSchema.parse(body);
     const runtime = createTodoRuntime();
-    const response = await runtime.updateTodo({ todoId: id, ...body }, { tenantId });
+    const response = await runtime.updateTodo(
+      { todoId: id, ...input },
+      { tenantId },
+    );
 
     return Response.json(response);
   } catch (error) {
@@ -43,10 +46,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { tenantId } = getTenantContext(request);
+    const { tenantId } = await getTenantContext(request);
     const { id } = await context.params;
     const runtime = createTodoRuntime();
     await runtime.deleteTodo(id, { tenantId });

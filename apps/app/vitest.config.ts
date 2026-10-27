@@ -5,6 +5,12 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@corely/modules-identity": fileURLToPath(
+        new URL(
+          "../../packages/modules/identity/src/index.ts",
+          import.meta.url,
+        ),
+      ),
       "@corely/modules-todos": fileURLToPath(
         new URL("../../packages/modules/todos/src/index.ts", import.meta.url),
       ),
@@ -18,5 +24,11 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/__tests__/**/*.{spec,test}.ts"],
     restoreMocks: true,
+    exclude: ["**/*.integration.test.ts"],
+    env: {
+      JWT_SECRET: "synthetic-unit-secret-at-least-32-characters",
+      OWNER_EMAIL: "owner@example.test",
+      APP_URL: "http://localhost:3000",
+    },
   },
 });

@@ -1,0 +1,25 @@
+{
+  "name": "@corely/modules-identity",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@corely/contracts": "workspace:*",
+    "@prisma/client": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@corely/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

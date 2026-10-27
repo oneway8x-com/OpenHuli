@@ -2,11 +2,7 @@
   "extends": "@corely/tsconfig/react.json",
   "compilerOptions": {
     "target": "ES2022",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "preserve",
@@ -31,16 +27,12 @@
       "@corely/auth-client/*": ["../../packages/auth-client/src/*"],
       "@corely/contracts": ["../../packages/contracts/src/index.ts"],
       "@corely/storage": ["../../packages/storage/src/index.ts"],
-      "@corely/storage/*": ["../../packages/storage/src/*"]
+      "@corely/storage/*": ["../../packages/storage/src/*"],
+      "@corely/modules-identity": [
+        "../../packages/modules/identity/src/index.ts"
+      ]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "next-env.d.ts",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "next-env.d.ts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

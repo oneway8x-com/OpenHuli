@@ -7,8 +7,9 @@ Next app on Vercel does not host persistent connections.
 
 This foundation implements process/socket lifecycle, MQTT connection management, typed configuration,
 and health/readiness. It does not implement device pairing, authenticated audio, telemetry ingestion,
-or provider execution. Those remain issues #7, #9, #13, and #10. Existing Next auth helpers are not
-imported: their current permissive Tenant/JWT behavior must not become runtime authority.
+or provider execution. Those remain issues #7, #9, #13, and #10. The shared identity feature now
+verifies owner sessions and active Tenant membership for the console. This host does not import
+Next-specific auth helpers or treat console cookies as device credentials.
 
 ## Run locally
 
@@ -110,10 +111,12 @@ Reuse the [v1 protocol parsers](../protocol/openhuli-v1.md). Do not put tool gra
 Prisma queries, or tenant selection into transport handlers. The service probe is not a shortcut for
 that gateway and must never be repurposed as device authorization.
 
-Next console sessions cannot be forwarded blindly between processes. Until the shared auth/session
-and device credential features land, the host has no trusted user/device endpoint. Later server-to-server calls must verify issuer/audience/expiry and resolve actual Tenant membership/device binding
-through the owning authentication feature. Do not trust `x-tenant-id`, device claims, cookie presence,
-shared probe tokens, or a model-supplied Tenant ID. No duplicated permissive JWT verifier is added here.
+Next console sessions cannot be forwarded blindly between processes. The shared identity feature
+provides `verifyAccessToken` and `resolveOwnerSession` for console issuer/audience/expiry, live-session,
+and active OWNER membership checks. A future console endpoint must compose those shared checks;
+there is no authenticated console endpoint in this host yet. Device credentials and binding remain
+separate work. Do not trust `x-tenant-id`, device claims, cookie presence, shared probe tokens, or a
+model-supplied Tenant ID. No duplicated JWT verifier is added here.
 
 ## Deployment and checks
 

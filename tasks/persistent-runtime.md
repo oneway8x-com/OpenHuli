@@ -9,7 +9,8 @@ for persistent sockets, MQTT connections, and future shared conversation use cas
 
 - Project 3 status set to In progress before editing. Branch `05-persistent-runtime` starts from
   `origin/main` (`ba04bf7`), including merged contracts PR #24; reuse the clean isolated worktree.
-- Current auth remains under issue #3; do not reuse its permissive JWT/tenant fallback for devices.
+- Initial base predated owner auth. Follow-up merge includes owner sessions from #3 while keeping
+  the runtime probe separate from owner/device authorization.
 - This foundation provides health/readiness, a service-token-protected ping/pong socket probe,
   broker lifecycle, abort/cleanup hooks, bounded shutdown, and configuration. Actual authenticated
   device audio (#9), conversation/provider execution (#10), and telemetry (#13) remain separate.
@@ -43,6 +44,19 @@ for persistent sockets, MQTT connections, and future shared conversation use cas
 - PR: [#26](https://github.com/oneway8x-com/OpenHuli/pull/26), targeting `main`; pushed for review.
 - Broker/provider adapter contracts require prompt abort and idempotent cleanup. Broken adapters
   fail shutdown and force a nonzero CLI exit rather than leaving the process alive.
-- Device identity, shared authenticated session verification, actual audio/conversation/telemetry
+- Device identity, runtime integration with shared owner sessions, actual audio/conversation/telemetry
   use cases, broker provisioning, and verified external TLS deployment remain in their tickets.
-- Issue remains In progress pending review. No merge, release, or deployment performed.
+- Issue remains In progress pending review. No PR merge, release, or deployment performed.
+
+## Conflict resolution follow-up
+
+- Merged `origin/main` (`8221a42`, owner-auth PR #25) into the existing PR branch.
+- Resolved README, environment guide, and root scripts by retaining both owner bootstrap/identity
+  checks and runtime build/start/typecheck integration. Preserved auto-merged auth and lockfile changes.
+- Updated runtime trust documentation to acknowledge the shared identity feature and keep device
+  credential handling in its existing follow-up scope. No runtime or auth behavior changed.
+- Post-merge checks: frozen-lockfile install, typecheck (including identity and runtime), all 188
+  Vitest tests plus 3 script tests, Prisma validation, architecture/prompt checks, formatting, links,
+  and diff checks passed. Lint passed with 98 existing warnings. Production build passed.
+- Verified auth/app/E2E/identity sources match the merged `origin/main`; conflict resolution changes
+  only script composition and documentation. No database integration or browser E2E rerun.

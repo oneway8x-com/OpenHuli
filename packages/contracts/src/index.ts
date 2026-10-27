@@ -302,3 +302,4 @@ export * from "./common/customization/custom-field";
 export * from "./common/customization/custom-attributes";
 
 export * from "./openhuli";
+export * from "./identity/owner-session.schema";

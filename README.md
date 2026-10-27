@@ -6,9 +6,8 @@ and [backlog](https://github.com/orgs/oneway8x-com/projects/3).
 
 **Current state:** a Next.js application with a reference todo feature and PostgreSQL persistence,
 plus a persistent Node host with health checks, optional MQTT connection management, and an internal
-socket probe. Device pairing, telemetry ingestion, streaming voice, and AI execution are planned. Todo routes
-still use development tenant context; keep this scaffold local until [owner authentication](https://github.com/oneway8x-com/OpenHuli/issues/3)
-is complete. Do not expose it as a public authenticated device service.
+socket probe. Owner access uses email OTP, server-verified sessions, and active Tenant membership.
+Device pairing, telemetry ingestion, streaming voice, and AI execution remain planned.
 
 ## Local setup
 
@@ -21,14 +20,17 @@ cp .env.example .env
 docker compose -f docker-compose.local.yml up -d --wait
 pnpm prisma:generate
 pnpm prisma:deploy
-pnpm db:seed
+pnpm owner:bootstrap
 pnpm build:packages
 pnpm dev
 ```
 
 Open [localhost:3000/todos](http://localhost:3000/todos). The database listens on loopback port 5434;
-Next development binds to loopback. The seed creates only the development tenant, not an owner
-account or an authorization policy. The Docker volume preserves local data.
+Next development binds to loopback. Set `OWNER_EMAIL` in `.env` before bootstrap. The operator-only
+command creates the owner, Home tenant, and OWNER membership; repeated runs are safe. Sign in
+with that email and the OTP printed in the development server terminal. The Docker volume preserves
+local data. Production requires an explicit signing secret, application origin, and email delivery
+configuration; see [environment setup](docs/guides/ENV_SETUP.md).
 
 The example connection is for the local Compose database. Check `.env` before running a migration
 or seed; never copy a remote connection into this setup. `pnpm prisma:deploy` applies committed
@@ -48,9 +50,8 @@ pnpm test
 pnpm build
 ```
 
-Typechecking builds the shared packages it consumes. Unit tests include the app's real auth
-handlers with mocked persistence; they do not claim the todo API has authenticated tenant isolation.
-Database-backed repository tests are separate:
+Typechecking builds the shared packages it consumes. Unit tests exercise auth handlers and identity
+use cases. Database-backed tests also verify two-tenant access, revocation, OTP races, and refresh replay:
 
 ```sh
 docker compose -f docker-compose.local.yml exec -T postgres createdb -U openhuli openhuli_test
@@ -62,7 +63,7 @@ pnpm test:e2e
 ```
 
 Create `openhuli_test` once. Tests reject remote hosts, development database names, and connection
-overrides. E2E starts its own Next.js process on loopback port 3100, creates a unique tenant per
+overrides. E2E starts its own Next.js process on loopback port 3100, creates synthetic owner sessions per
 case, and cleans only test-owned rows. See [the browser-test guide](apps/e2e/README.md).
 [CI](.github/workflows/ci.yml) runs these checks against a disposable PostgreSQL service.
 

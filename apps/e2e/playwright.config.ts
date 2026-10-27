@@ -5,6 +5,9 @@ const databaseUrl = getTestDatabaseUrl();
 const baseURL = "http://127.0.0.1:3100";
 process.env.DATABASE_URL = databaseUrl;
 process.env.DIRECT_DATABASE_URL = databaseUrl;
+process.env.JWT_SECRET = "synthetic-e2e-secret-at-least-32-characters";
+process.env.OWNER_EMAIL = "owner@example.test";
+process.env.APP_URL = baseURL;
 
 export default defineConfig({
   testDir: "./tests",
@@ -16,19 +19,26 @@ export default defineConfig({
   // The development server compiles a route on its first request.
   expect: { timeout: 15_000 },
   reporter: [["list"], ["html", { open: "never" }]],
-  use: { baseURL, trace: "retain-on-failure", screenshot: "only-on-failure" },
+  use: {
+    extraHTTPHeaders: { Origin: baseURL },
+    baseURL,
+    trace: "retain-on-failure",
+    screenshot: "only-on-failure",
+  },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     command:
       "pnpm --dir ../.. --filter @corely/app dev --hostname 127.0.0.1 --port 3100",
-    url: `${baseURL}/todos`,
+    url: `${baseURL}/login`,
     reuseExistingServer: false,
     timeout: 120_000,
     env: {
       DATABASE_URL: databaseUrl,
       DIRECT_DATABASE_URL: databaseUrl,
       NEXT_PUBLIC_API_BASE_URL: "",
-      CORELY_DEV_TENANT_ID: "e2e-fallback-unused",
+      JWT_SECRET: process.env.JWT_SECRET,
+      OWNER_EMAIL: process.env.OWNER_EMAIL,
+      APP_URL: baseURL,
       NEXT_TELEMETRY_DISABLED: "1",
     },
   },

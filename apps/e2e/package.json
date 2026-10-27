@@ -15,6 +15,7 @@
     "@types/node": "catalog:",
     "@corely/tsconfig": "workspace:*",
     "@corely/data": "workspace:*",
-    "@corely/contracts": "workspace:*"
+    "@corely/contracts": "workspace:*",
+    "@corely/modules-identity": "workspace:*"
   }
 }
