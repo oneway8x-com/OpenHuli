@@ -31,7 +31,7 @@ foundation PR #23. Issue #3 is In progress in Project 3.
 
 ## Remaining work / risks
 
-- All required local checks passed after rebasing; PR handoff below.
+- All required local checks passed after rebasing. PR: [#25](https://github.com/oneway8x-com/OpenHuli/pull/25), targeting `main` from `03-owner-auth`. Await review and CI; no merge or deployment.
 - Live email delivery and hosted deployment remain unverified; configure the owner, origin, signing
   secret, sender, and delivery key before production startup. Existing legacy sessions require login.
 - Device credentials, MQTT, and AI execution are separate tickets. Hosting-wide abuse controls remain
