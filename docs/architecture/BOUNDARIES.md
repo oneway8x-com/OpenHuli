@@ -10,7 +10,7 @@
 - Shared UI must not depend on app feature modules. Avoid deep imports between feature modules.
 - Use Tenant and preserve its scope through lookups, mutations, retries, and failures. Device/model
   input never establishes authority. No new Platform, Workspace, or generic Automation domains.
-- Persistent voice/MQTT transport belongs in the planned Node runtime; reusable execution policy
+- Persistent voice/MQTT transport belongs in `apps/runtime`; reusable execution policy
   stays in shared feature use cases, not duplicated between Next routes and device transports.
 
 `pnpm arch:check` checks selected import boundaries. It is not proof of authorization, complete

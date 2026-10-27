@@ -11,6 +11,7 @@
 - `apps/e2e`: Playwright configuration, isolated data fixtures, and browser journeys.
 - `scripts`: check/setup utilities; `.github/workflows`: CI; `tasks`: short implementation diaries.
 
-The persistent WSS/MQTT runtime and firmware are planned MVP work, not existing directories.
+`apps/runtime` contains the persistent Node host and MQTT lifecycle adapter. Device voice/telemetry
+use cases and firmware remain planned MVP work.
 The pnpm workspace and package scopes retain their scaffold names. See [architecture](architect.md)
 and [the MVP specification](../mvp-spec.md) for current versus intended runtime behavior.

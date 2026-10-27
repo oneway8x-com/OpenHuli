@@ -11,9 +11,9 @@
   "scripts": {
     "prepare": "husky",
     "dev": "pnpm dev:app",
-    "build": "pnpm build:packages && pnpm --filter @corely/app build",
+    "build": "pnpm build:packages && pnpm --filter @corely/runtime build && pnpm --filter @corely/app build",
     "build:packages": "pnpm --filter @corely/kernel --filter @corely/contracts --filter @corely/prompts --filter @corely/domain --filter @corely/data --filter @corely/storage --filter @corely/email-templates --filter \"@corely/modules-*\" build",
-    "typecheck": "pnpm --filter @corely/contracts typecheck && pnpm --filter @corely/data typecheck && pnpm --filter @corely/storage typecheck && pnpm --filter @corely/modules-todos typecheck && pnpm --filter @corely/app typecheck && pnpm --filter @corely/e2e exec tsc --noEmit",
+    "typecheck": "pnpm --filter @corely/contracts typecheck && pnpm --filter @corely/data typecheck && pnpm --filter @corely/storage typecheck && pnpm --filter @corely/modules-todos typecheck && pnpm --filter @corely/runtime typecheck && pnpm --filter @corely/app typecheck && pnpm --filter @corely/e2e exec tsc --noEmit",
     "dev:app": "pnpm --filter @corely/app dev --hostname 127.0.0.1",
     "build:app": "pnpm build:packages && pnpm --filter @corely/app build",
     "prisma:generate": "pnpm --filter @corely/data exec prisma generate",
@@ -39,7 +39,9 @@
     "db:seed": "pnpm --filter @corely/data exec tsx src/prisma/seed-local.ts",
     "test:scripts": "tsx --test scripts/*.test.ts",
     "test:db:setup": "tsx scripts/setup-test-database.ts",
-    "test:e2e": "pnpm --filter @corely/e2e e2e"
+    "test:e2e": "pnpm --filter @corely/e2e e2e",
+    "dev:runtime": "pnpm build:packages && pnpm --filter @corely/runtime dev",
+    "start:runtime": "pnpm --filter @corely/runtime start"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",

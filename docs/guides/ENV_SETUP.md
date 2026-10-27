@@ -20,5 +20,8 @@ connections for the test process and its Next server. Never point them at a shar
 
 Object storage adapters remain available but are not required for todo development. When enabling
 one, inspect `packages/storage` for its settings; do not provision cloud storage merely to run checks.
-Production owner authentication and validated runtime configuration are pending in issue #3. The
-persistent Node/MQTT/voice deployment is separate pending work, not a Vercel-only deployment.
+Production owner authentication remains in issue #3. The persistent host validates its `RUNTIME_*`
+settings independently and does not use the Next development Tenant/JWT fallback. See the
+[persistent runtime guide](PERSISTENT_RUNTIME.md) for settings, `.env` loading, MQTT TLS, lifecycle
+checks, and trust boundaries. Real device voice and deployment remain separate work; this is not
+a Vercel-only deployment.
