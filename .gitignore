@@ -143,3 +143,8 @@ apps/.DS_Store
 # Generated browser-test artifacts
 **/playwright-report/
 **/test-results/
+
+# Local sample API persistence
+.local/
+*.sqlite-wal
+*.sqlite-shm
