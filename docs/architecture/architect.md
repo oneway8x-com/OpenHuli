@@ -23,6 +23,8 @@ feeds bounded, tenant-scoped persistence; device acknowledgements determine comm
 - The persistent Node runtime owns WSS sessions, MQTT connections, provider sessions, cancellation,
   and graceful shutdown. It needs always-on hosting, not serverless request lifetimes.
 - PostgreSQL owns durable records; Prisma is restricted to repositories/persistence code.
+- The [v1 device and voice protocol](../protocol/openhuli-v1.md) defines shared bounded parsers,
+  binary audio framing, and connection-local wire validation for the planned runtime and simulator.
 - Shared contracts and feature use cases are reused across transports. Keep external/provider
   boundaries behind ports; do not add a service or abstraction for every feature.
 

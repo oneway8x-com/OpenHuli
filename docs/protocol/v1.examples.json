@@ -1,0 +1,289 @@
+{
+  "manifest": {
+    "version": 1,
+    "messageId": "manifest-1",
+    "type": "device.manifest",
+    "deviceId": "esp32-1",
+    "firmwareVersion": "0.1.0",
+    "capabilities": [
+      { "kind": "temperature" },
+      { "kind": "humidity" },
+      { "kind": "ping" },
+      { "kind": "display", "maxTextLength": 128 },
+      {
+        "kind": "microphone",
+        "format": {
+          "encoding": "pcm_s16le",
+          "sampleRateHz": 16000,
+          "channels": 1,
+          "chunkDurationMs": 20
+        }
+      },
+      {
+        "kind": "speaker",
+        "format": {
+          "encoding": "pcm_s16le",
+          "sampleRateHz": 16000,
+          "channels": 1,
+          "chunkDurationMs": 20
+        }
+      }
+    ]
+  },
+  "telemetry": {
+    "version": 1,
+    "messageId": "reading-1",
+    "type": "device.telemetry",
+    "deviceId": "esp32-1",
+    "bootId": "boot-1",
+    "sequence": 0,
+    "sampledAt": "2026-10-27T10:00:00Z",
+    "readings": [
+      { "metric": "temperature", "value": 22.5, "unit": "degC" },
+      { "metric": "humidity", "value": 48, "unit": "percent" }
+    ]
+  },
+  "command": {
+    "version": 1,
+    "messageId": "delivery-1",
+    "type": "device.command",
+    "deviceId": "esp32-1",
+    "commandId": "command-1",
+    "executionId": "execution-1",
+    "issuedAt": "2026-10-27T10:00:00Z",
+    "expiresAt": "2026-10-27T10:00:30Z",
+    "action": { "kind": "display.write", "text": "Temperature: 22.5 C" }
+  },
+  "commandResult": {
+    "version": 1,
+    "messageId": "result-1",
+    "type": "device.command.result",
+    "deviceId": "esp32-1",
+    "commandId": "command-1",
+    "executionId": "execution-1",
+    "completedAt": "2026-10-27T10:00:01Z",
+    "status": "succeeded"
+  },
+  "conversation": {
+    "version": 1,
+    "conversationId": "conversation-1",
+    "createdAt": "2026-10-27T10:00:00Z"
+  },
+  "textTurn": {
+    "version": 1,
+    "conversationId": "conversation-1",
+    "turnId": "text-turn-1",
+    "text": "Show the temperature"
+  },
+  "turn": {
+    "version": 1,
+    "conversationId": "conversation-1",
+    "turnId": "turn-1",
+    "turnSequence": 1,
+    "source": "voice",
+    "status": "committed"
+  },
+  "toolDefinition": {
+    "version": 1,
+    "toolId": "device-display",
+    "description": "Write text on a paired display",
+    "effect": "write",
+    "approval": "required",
+    "inputSchema": {
+      "type": "object",
+      "properties": { "text": { "type": "string", "maxLength": 128 } },
+      "required": ["text"],
+      "additionalProperties": false
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": { "commandId": { "type": "string" } },
+      "required": ["commandId"],
+      "additionalProperties": false
+    }
+  },
+  "toolCall": {
+    "version": 1,
+    "toolCallId": "call-1",
+    "conversationId": "conversation-1",
+    "turnId": "turn-1",
+    "toolId": "device-display",
+    "arguments": { "text": "Temperature: 22.5 C" }
+  },
+  "approvalRequest": {
+    "version": 1,
+    "approvalId": "approval-1",
+    "executionId": "execution-1",
+    "expiresAt": "2026-10-27T10:01:00Z",
+    "toolCall": {
+      "version": 1,
+      "toolCallId": "call-1",
+      "conversationId": "conversation-1",
+      "turnId": "turn-1",
+      "toolId": "device-display",
+      "arguments": { "text": "Temperature: 22.5 C" }
+    }
+  },
+  "approvalDecision": {
+    "version": 1,
+    "approvalId": "approval-1",
+    "executionId": "execution-1",
+    "decision": "approve"
+  },
+  "execution": {
+    "version": 1,
+    "executionId": "execution-1",
+    "toolCallId": "call-1",
+    "updatedAt": "2026-10-27T10:00:01Z",
+    "status": "succeeded",
+    "output": { "commandId": "command-1" }
+  },
+  "error": {
+    "code": "outcome_unknown",
+    "message": "Device acknowledgement timed out",
+    "correlationId": "execution-1",
+    "retryable": false
+  },
+  "voice": [
+    {
+      "sender": "device",
+      "message": {
+        "version": 1,
+        "messageId": "c1",
+        "type": "session.start",
+        "conversationId": "conversation-1",
+        "inputFormat": {
+          "encoding": "pcm_s16le",
+          "sampleRateHz": 16000,
+          "channels": 1,
+          "chunkDurationMs": 20
+        },
+        "outputFormat": {
+          "encoding": "pcm_s16le",
+          "sampleRateHz": 16000,
+          "channels": 1,
+          "chunkDurationMs": 20
+        }
+      }
+    },
+    {
+      "sender": "server",
+      "message": {
+        "version": 1,
+        "messageId": "s1",
+        "type": "session.ready",
+        "sessionId": "session-1",
+        "inputFormat": {
+          "encoding": "pcm_s16le",
+          "sampleRateHz": 16000,
+          "channels": 1,
+          "chunkDurationMs": 20
+        },
+        "outputFormat": {
+          "encoding": "pcm_s16le",
+          "sampleRateHz": 16000,
+          "channels": 1,
+          "chunkDurationMs": 20
+        }
+      }
+    },
+    {
+      "sender": "device",
+      "message": {
+        "version": 1,
+        "messageId": "c2",
+        "type": "turn.start",
+        "turnId": "turn-1",
+        "turnSequence": 1,
+        "streamId": 1
+      }
+    },
+    {
+      "sender": "device",
+      "audio": {
+        "kind": "input",
+        "streamId": 1,
+        "turnSequence": 1,
+        "sequence": 0,
+        "silenceBytes": 640
+      }
+    },
+    {
+      "sender": "device",
+      "message": {
+        "version": 1,
+        "messageId": "c3",
+        "type": "turn.commit",
+        "turnId": "turn-1",
+        "lastSequence": 0
+      }
+    },
+    {
+      "sender": "server",
+      "message": {
+        "version": 1,
+        "messageId": "s2",
+        "type": "response.text",
+        "turnId": "turn-1",
+        "text": "Temperature: 22.5 C"
+      }
+    },
+    {
+      "sender": "server",
+      "message": {
+        "version": 1,
+        "messageId": "s3",
+        "type": "audio.start",
+        "turnId": "turn-1",
+        "streamId": 2,
+        "format": {
+          "encoding": "pcm_s16le",
+          "sampleRateHz": 16000,
+          "channels": 1,
+          "chunkDurationMs": 20
+        }
+      }
+    },
+    {
+      "sender": "server",
+      "audio": {
+        "kind": "output",
+        "streamId": 2,
+        "turnSequence": 1,
+        "sequence": 0,
+        "silenceBytes": 640
+      }
+    },
+    {
+      "sender": "server",
+      "message": {
+        "version": 1,
+        "messageId": "s4",
+        "type": "audio.generation.completed",
+        "turnId": "turn-1",
+        "streamId": 2,
+        "lastSequence": 0
+      }
+    },
+    {
+      "sender": "device",
+      "message": {
+        "version": 1,
+        "messageId": "c4",
+        "type": "playback.completed",
+        "turnId": "turn-1",
+        "streamId": 2,
+        "lastSequence": 0
+      }
+    },
+    {
+      "sender": "server",
+      "message": {
+        "version": 1,
+        "messageId": "s5",
+        "type": "turn.completed",
+        "turnId": "turn-1"
+      }
+    }
+  ]
+}
