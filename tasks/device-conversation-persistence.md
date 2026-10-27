@@ -28,7 +28,7 @@ Implement [#6](https://github.com/oneway8x-com/OpenHuli/issues/6): tenant-safe d
 
 ## Remaining work / risks
 
-- No remaining implementation work for this issue. Implementation committed; PR preparation is in progress. No deployment requested.
+- No remaining implementation work for this issue. [PR #27](https://github.com/oneway8x-com/OpenHuli/pull/27) opened against `main`. Implementation committed and pushed; no deployment requested.
 - Pairing endpoints, registered-tool authorization, runtime dispatch, transport delivery, and cleanup scheduling remain separate MVP issues; these storage use cases require authenticated server context.
 - The migration intentionally rejects legacy rows whose tenant differs from their parent run; repair such inconsistencies explicitly before upgrading an existing installation.
 - Tool arguments/approval snapshots remain necessary operational data even when transcript retention is disabled; this policy is documented in the architecture note.
