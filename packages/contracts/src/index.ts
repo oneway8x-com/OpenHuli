@@ -303,3 +303,4 @@ export * from "./common/customization/custom-attributes";
 
 export * from "./openhuli";
 export * from "./identity/owner-session.schema";
+export * from "./openhuli/pairing";

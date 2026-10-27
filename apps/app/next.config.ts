@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
     "@corely/contracts",
     "@corely/modules-todos",
     "@corely/modules-identity",
+    "@corely/modules-devices",
     "@corely/ui",
   ],
   outputFileTracingRoot: path.join(process.cwd(), "../.."),

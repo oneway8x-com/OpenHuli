@@ -32,7 +32,14 @@ export class DeviceRepository {
   }
 
   addCredential(tenantId: string, input: DeviceCredentialInput) {
-    return this.db.deviceCredential.create({ data: { tenantId, ...input } });
+    return this.db.deviceCredential.create({
+      data: {
+        tenantId,
+        deviceId: input.deviceId,
+        secretHash: input.secretHash,
+        expiresAt: input.expiresAt,
+      },
+    });
   }
 
   findCredential(tenantId: string, id: string, now: Date) {
@@ -63,7 +70,12 @@ export class DeviceRepository {
           toolId: input.toolId,
         },
       },
-      create: { tenantId, ...input },
+      create: {
+        tenantId,
+        deviceId: input.deviceId,
+        toolId: input.toolId,
+        expiresAt: input.expiresAt,
+      },
       update: { expiresAt: input.expiresAt, revokedAt: null },
     });
   }

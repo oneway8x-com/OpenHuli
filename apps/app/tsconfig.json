@@ -30,7 +30,8 @@
       "@corely/storage/*": ["../../packages/storage/src/*"],
       "@corely/modules-identity": [
         "../../packages/modules/identity/src/index.ts"
-      ]
+      ],
+      "@corely/modules-devices": ["../../packages/modules/devices/src/index.ts"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "next-env.d.ts", ".next/types/**/*.ts"],
