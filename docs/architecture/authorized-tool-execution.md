@@ -4,7 +4,8 @@ Issue [#8](https://github.com/oneway8x-com/OpenHuli/issues/8) provides the share
 `packages/modules/tool-execution`. Transport adapters, future conversation orchestration, and
 console actions call these use cases rather than invoking tool callbacks or mutating execution rows.
 This module adds no transport endpoint, arbitrary HTTP destination, or live provider integration.
-Registered HTTP tools are tracked in #11; voice and console adapters are separate MVP tasks.
+Registered HTTP tools are provided by [the HTTP tools feature](../guides/HTTP_TOOLS.md) in #11;
+voice and console adapters are separate MVP tasks.
 
 ## Registration and authority
 

@@ -1,0 +1,30 @@
+{
+  "name": "@corely/notes-api",
+  "private": true,
+  "version": "0.0.0",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=../../.env --import tsx src/main.ts",
+    "build": "tsdown",
+    "start": "node --env-file-if-exists=../../.env dist/main.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@corely/modules-notes": "workspace:*",
+    "@corely/contracts": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@corely/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "tsx": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "@corely/data": "workspace:*",
+    "@corely/modules-http-tools": "workspace:*",
+    "@corely/modules-tool-execution": "workspace:*",
+    "@corely/modules-identity": "workspace:*",
+    "@corely/modules-devices": "workspace:*"
+  }
+}

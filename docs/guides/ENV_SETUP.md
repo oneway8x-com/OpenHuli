@@ -33,3 +33,7 @@ The persistent host validates its `RUNTIME_*` settings independently. Its intern
 is not an owner or device credential. See the [persistent runtime guide](PERSISTENT_RUNTIME.md) for
 settings, `.env` loading, MQTT TLS, lifecycle checks, and cross-process trust boundaries. Device voice
 and verified external deployment remain separate work; this is not a Vercel-only deployment.
+
+Registered HTTP tools validate `HTTP_WEATHER_*` and `HTTP_NOTES_*` separately. The notes demo validates
+`NOTES_API_*` and binds only to loopback. See [HTTP tools](HTTP_TOOLS.md) for the complete settings,
+server-only secret references, exact private-demo opt-in, SQLite file location and live smoke commands.
