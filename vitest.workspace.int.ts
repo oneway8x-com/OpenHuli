@@ -19,7 +19,7 @@ export default defineWorkspace([
       env: { DATABASE_URL: databaseUrl, DIRECT_DATABASE_URL: databaseUrl },
     },
   },
-  ...["devices", "conversations"].map((feature) => ({
+  ...["devices", "conversations", "tool-execution"].map((feature) => ({
     root: `./packages/modules/${feature}`,
     test: {
       name: `${feature}-integration`,

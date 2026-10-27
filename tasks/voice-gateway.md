@@ -44,3 +44,16 @@ Implement [#9](https://github.com/oneway8x-com/OpenHuli/issues/9) on `09-voice-g
   and executor use cases and preserve unknown outcomes after cancellation of committed writes.
 - No browser E2E rerun was needed for this transport-only feature; existing browser source types
   and the Next production build pass. No remote database changes or deployment.
+
+## Conflict resolution after tool execution merged
+
+- Merged current `main` (`5d13b73`) into `09-voice-gateway`, preserving both voice and
+  tool-execution workspace dependencies and integration projects. No application behavior changed.
+- Frozen offline installation, full typecheck and production build passed. Rerun after package
+  generation: 236 Vitest tests plus 3 script tests passed. The initial unit run overlapped a
+  package rebuild and could not resolve generated contracts; the subsequent full run passed.
+- Applied all migrations to a disposable local PostgreSQL database; all 55 integration tests
+  passed, including voice and tool execution. Removed the disposable database afterwards.
+- Prisma validation, architecture/prompt checks, and lint passed (0 errors, 98 existing warnings).
+  Integration configuration formatting and diff checks passed; lockfile keeps pnpm's format.
+- PR #31 remains open for review. No deployment or PR merge.

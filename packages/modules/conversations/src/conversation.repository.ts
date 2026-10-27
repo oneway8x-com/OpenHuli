@@ -209,6 +209,7 @@ export class ConversationRepository {
         tenantId,
         id,
         status: from,
+        requestHash: null,
         ...(status === "running"
           ? {
               expiresAt: { gt: now },
@@ -241,6 +242,7 @@ export class ConversationRepository {
           turnId: call.turnId,
           toolCallId: call.toolCallId,
           toolName: call.toolId,
+          requestHash: null,
           inputJson: JSON.stringify(call.arguments),
           expiresAt: { gte: new Date(input.expiresAt) },
         },
@@ -279,7 +281,7 @@ export class ConversationRepository {
   ) {
     return this.db.$transaction(async (tx) => {
       const approval = await tx.executionApproval.findFirst({
-        where: { tenantId, id, executionId },
+        where: { tenantId, id, executionId, requestHash: null },
       });
       if (!approval) throw new Error("Approval not found");
       const expired = approval.expiresAt <= now;
@@ -298,6 +300,7 @@ export class ConversationRepository {
           tenantId,
           id: executionId,
           status: "awaiting_approval",
+          requestHash: null,
           inputJson: approval.argumentsJson,
         },
         data: {
