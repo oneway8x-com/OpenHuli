@@ -2,7 +2,7 @@
   "name": "@corely/data",
   "private": true,
   "version": "0.0.0",
-  "license": "AGPL-3.0-only",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -39,7 +39,8 @@
   "devDependencies": {
     "@corely/tsconfig": "workspace:*",
     "@types/pg": "catalog:",
-    "prisma": "catalog:"
+    "prisma": "catalog:",
+    "dotenv": "catalog:"
   },
   "author": "Ha Doan <ha@oneway8x.com>"
 }

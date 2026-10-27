@@ -1,57 +1,24 @@
-# Environment Setup
+# Environment setup
 
-## Local development
+Follow [the README](../../README.md) for the tested local commands. Copy `.env.example` to `.env`
+and use the local Compose connection; inspect the database target before migrating or seeding.
 
-Install dependencies:
+| Setting                                             | Current consumer / meaning                                                                                            |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                      | PostgreSQL connection used by app persistence and local seed; required for DB access.                                 |
+| `DIRECT_DATABASE_URL`                               | Optional Prisma migration connection; falls back to `DATABASE_URL`.                                                   |
+| `CORELY_DEV_TENANT_ID`                              | Development todo fallback and seed tenant, default `dev-tenant`; not authorization.                                   |
+| `NEXT_PUBLIC_API_BASE_URL`                          | Browser API prefix; empty uses same-origin Next `/api` routes.                                                        |
+| `JWT_SECRET`                                        | OTP auth helper signing key; current fallback is not suitable for public deployment.                                  |
+| `RESEND_API_KEY`, `EMAIL_FROM`                      | Optional production email delivery; local OTP delivery logs to the server.                                            |
+| `TEST_DATABASE_URL`                                 | Explicit test-only connection. Export before DB/E2E commands; local `openhuli_test` only.                             |
+| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Local Compose-only settings; each defaults to `openhuli`. Keep `.env` connection strings consistent if changing them. |
 
-```bash
-pnpm install
-```
+Root Next development loads `.env` through the documented setup; Prisma tooling loads root `.env`
+from its config and process environment takes precedence. Browser tests override both database
+connections for the test process and its Next server. Never point them at a shared or remote database.
 
-Generate Prisma client:
-
-```bash
-pnpm prisma:generate
-```
-
-Start the app:
-
-```bash
-pnpm dev
-```
-
-## Required environment variables
-
-- `DATABASE_URL`
-- `NEXT_PUBLIC_API_BASE_URL` (optional; defaults to same-origin route handlers)
-- `CORELY_DEV_TENANT_ID` (optional local fallback)
-- `CORELY_DEV_WORKSPACE_ID` (optional local fallback)
-
-## Object storage
-
-Common settings:
-
-- `STORAGE_PROVIDER` (`gcs` or `vercel_blob`)
-- `STORAGE_BUCKET`
-- `STORAGE_KEY_PREFIX` (optional logical prefix)
-- `SIGNED_URL_UPLOAD_TTL_SECONDS` (optional; defaults to `600`)
-- `SIGNED_URL_DOWNLOAD_TTL_SECONDS` (optional; defaults to `600`)
-
-For GCS:
-
-- `GOOGLE_CLOUD_PROJECT` (optional if embedded in credentials)
-- `GOOGLE_APPLICATION_CREDENTIALS` (path or raw service account JSON)
-
-For Vercel Blob:
-
-- `BLOB_READ_WRITE_TOKEN`
-- `VERCEL_BLOB_ACCESS` (`private` by default, `public` optional)
-- `VERCEL_BLOB_HANDLE_UPLOAD_PATH` (optional; defaults to `/api/storage/blob/upload`)
-
-## Vercel deployment
-
-- Root Directory: `apps/app`
-- Framework Preset: `Next.js`
-- Ensure the project can read workspace packages outside `apps/app`
-- Run `pnpm prisma:generate` as part of the build environment when needed
-- If using Vercel Blob, provision a Blob store and expose `BLOB_READ_WRITE_TOKEN`
+Object storage adapters remain available but are not required for todo development. When enabling
+one, inspect `packages/storage` for its settings; do not provision cloud storage merely to run checks.
+Production owner authentication and validated runtime configuration are pending in issue #3. The
+persistent Node/MQTT/voice deployment is separate pending work, not a Vercel-only deployment.

@@ -1,57 +1,36 @@
 import { defineConfig, devices } from "@playwright/test";
+import { getTestDatabaseUrl } from "../../scripts/test-database";
 
-const isCI = Boolean(process.env.CI);
-const baseURL = process.env.BASE_URL || "http://127.0.0.1:8080";
-const apiURL = process.env.API_URL || "http://127.0.0.1:3000";
-const screenshotMode =
-  process.env.E2E_SCREENSHOT_MODE === "on"
-    ? "on"
-    : process.env.E2E_SCREENSHOT_MODE === "off"
-      ? "off"
-      : "only-on-failure";
+const databaseUrl = getTestDatabaseUrl();
+const baseURL = "http://127.0.0.1:3100";
+process.env.DATABASE_URL = databaseUrl;
+process.env.DIRECT_DATABASE_URL = databaseUrl;
 
 export default defineConfig({
   testDir: "./tests",
   testMatch: "**/*.spec.ts",
-  fullyParallel: true,
-  forbidOnly: isCI,
-  retries: isCI ? 2 : 0,
-  workers: isCI ? 1 : undefined,
-  reporter: [
-    ["html"],
-    ["json", { outputFile: "test-results/results.json" }],
-    ["junit", { outputFile: "test-results/junit.xml" }],
-  ],
-  use: {
-    baseURL,
-    trace: "on-first-retry",
-    screenshot: screenshotMode,
-    video: "retain-on-failure",
+  fullyParallel: false,
+  forbidOnly: Boolean(process.env.CI),
+  retries: 0,
+  workers: 1,
+  // The development server compiles a route on its first request.
+  expect: { timeout: 15_000 },
+  reporter: [["list"], ["html", { open: "never" }]],
+  use: { baseURL, trace: "retain-on-failure", screenshot: "only-on-failure" },
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  webServer: {
+    command:
+      "pnpm --dir ../.. --filter @corely/app dev --hostname 127.0.0.1 --port 3100",
+    url: `${baseURL}/todos`,
+    reuseExistingServer: false,
+    timeout: 120_000,
+    env: {
+      DATABASE_URL: databaseUrl,
+      DIRECT_DATABASE_URL: databaseUrl,
+      NEXT_PUBLIC_API_BASE_URL: "",
+      CORELY_DEV_TENANT_ID: "e2e-fallback-unused",
+      NEXT_TELEMETRY_DISABLED: "1",
+    },
   },
-  projects: [
-    {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
-    },
-  ],
-  webServer: [
-    {
-      command: "pnpm --dir ../.. dev:api",
-      url: `${apiURL}/health`,
-      reuseExistingServer: !isCI,
-      timeout: 120_000,
-    },
-    {
-      command: "pnpm --dir ../.. dev:web",
-      url: baseURL,
-      reuseExistingServer: !isCI,
-      timeout: 120_000,
-      env: {
-        ...process.env,
-        VITE_API_BASE_URL: apiURL,
-      },
-    },
-  ],
-  globalSetup: "./utils/globalSetup.ts",
   timeout: 60_000,
 });

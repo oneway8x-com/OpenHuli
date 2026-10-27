@@ -3,8 +3,8 @@ import { Providers } from "@/app/providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Corely App",
-  description: "Next.js migration shell for Corely",
+  title: "OpenHuli",
+  description: "An open-source control center for connected maker devices.",
 };
 
 export default function RootLayout({

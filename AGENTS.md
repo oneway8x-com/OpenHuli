@@ -6,7 +6,8 @@ understand, test, and maintain. Keep process proportional to the work.
 ## Working agreement
 
 - A clear user request is enough to start. Use an existing issue when supplied; do not require
-  a new issue, assignee, project status, or separate reviewer for every change.
+  a new issue, assignee, or separate reviewer for every change. When implementing a ticket,
+  move it to the project's existing **In progress** status before editing.
 - Keep one short task diary for implementation work at `tasks/<short-description>.md`, using
   [the template](tasks/TEMPLATE.md). Record the goal, useful decisions, actual check results, and
   remaining work. Reuse it across follow-ups; no diary is needed for read-only questions or reviews.
@@ -15,9 +16,13 @@ understand, test, and maintain. Keep process proportional to the work.
   stale scaffold guidance. Planned MVP capabilities are not proof of implemented behavior.
 - Keep changes scoped and preserve unrelated local work. Prefer existing dependencies and
   patterns; justify additions by the problem they solve.
-- For a new implementation branch, use `codex/<short-description>` unless directed otherwise.
-  Verify the intended base and dependency changes; reviews and small documentation edits do not
-  require a new branch. Do not commit, push, merge, publish, or deploy unless requested.
+- Name ticket implementation branches `<issue-number>-<short-description>`, padding the real
+  GitHub issue number to at least two digits: issue #2 becomes `02-foundation`. Do not use planning
+  IDs or invent numbers. Verify the intended base and preserve unrelated work; reviews and small
+  documentation edits do not require a new branch.
+- Ticket implementation includes committing and pushing its scoped changes and creating a PR
+  when implementation, checks, and self-review are complete. Reuse an existing PR rather than
+  duplicating it. Merging, releases, deployments, and unrelated publication require a separate request.
 - Use English for repository content and GitHub contributions. Keep secrets, credentials,
   personal data, and machine-specific paths out of committed files and shared evidence.
 - Prefer an available CLI or API for external services. Use existing authorization without

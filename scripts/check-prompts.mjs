@@ -31,9 +31,13 @@ const patterns = [
 ];
 
 const isAllowed = (filePath) =>
-  allowlistPrefixes.some((prefix) => filePath.replace(/\\/g, "/").startsWith(prefix));
+  allowlistPrefixes.some((prefix) =>
+    filePath.replace(/\\/g, "/").startsWith(prefix),
+  );
 
-const files = execSync("git ls-files", { cwd: repoRoot })
+const files = execSync("git ls-files --cached --others --exclude-standard", {
+  cwd: repoRoot,
+})
   .toString()
   .trim()
   .split("\n")
@@ -50,6 +54,9 @@ for (const relPath of files) {
     continue;
   }
   const absPath = path.join(repoRoot, relPath);
+  if (!fs.existsSync(absPath)) {
+    continue; // An unstaged deletion is still listed in Git's index.
+  }
   const content = fs.readFileSync(absPath, "utf8");
   for (const pattern of patterns) {
     if (pattern.regex.test(content)) {
@@ -59,7 +66,9 @@ for (const relPath of files) {
 }
 
 if (violations.length) {
-  console.error("Prompt guard failed. Inline prompts detected outside packages/prompts:");
+  console.error(
+    "Prompt guard failed. Inline prompts detected outside packages/prompts:",
+  );
   for (const violation of violations) {
     console.error(`- ${violation.file} (${violation.pattern})`);
   }

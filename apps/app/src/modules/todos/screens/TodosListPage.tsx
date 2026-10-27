@@ -102,13 +102,12 @@ export function TodosListPage() {
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
             <Badge variant="secondary" className="rounded-full px-3 py-1">
-              First shared module slice
+              Reference feature
             </Badge>
             <div>
-              <h2 className="text-3xl font-semibold tracking-tight">Todos on the Next runtime</h2>
+              <h2 className="text-3xl font-semibold tracking-tight">Tasks</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                This page runs inside the new App Router app and talks to `app/api/todos`, backed
-                by the extracted `@corely/modules-todos` package.
+                A simple task list for trying the OpenHuli development setup.
               </p>
             </div>
           </div>
@@ -123,7 +122,9 @@ export function TodosListPage() {
       <section className="grid gap-4 md:grid-cols-2">
         <Card className="rounded-[1.75rem] border-border/70 bg-background/80">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Open</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Open
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold">{openCount}</p>
@@ -131,7 +132,9 @@ export function TodosListPage() {
         </Card>
         <Card className="rounded-[1.75rem] border-border/70 bg-background/80">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Done</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Done
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold">{doneCount}</p>
@@ -187,7 +190,9 @@ export function TodosListPage() {
                       variant="ghost"
                       size="icon"
                       onClick={() => toggleTodo(todo)}
-                      disabled={completeMutation.isPending || reopenMutation.isPending}
+                      disabled={
+                        completeMutation.isPending || reopenMutation.isPending
+                      }
                       aria-label={
                         todo.status === "done"
                           ? `Reopen ${todo.title}`
@@ -203,7 +208,10 @@ export function TodosListPage() {
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      <Link href={`/todos/${todo.id}`} className="font-medium hover:underline">
+                      <Link
+                        href={`/todos/${todo.id}`}
+                        className="font-medium hover:underline"
+                      >
                         {todo.title}
                       </Link>
                       {todo.description ? (
@@ -214,12 +222,17 @@ export function TodosListPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={priorityStyles[todo.priority]}>
+                    <Badge
+                      variant="outline"
+                      className={priorityStyles[todo.priority]}
+                    >
                       {todo.priority}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : "No deadline"}
+                    {todo.dueDate
+                      ? new Date(todo.dueDate).toLocaleDateString()
+                      : "No deadline"}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -241,8 +254,11 @@ export function TodosListPage() {
 
               {!items.length && !isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
-                    No tasks found. Create the first task in the new app.
+                  <TableCell
+                    colSpan={5}
+                    className="py-12 text-center text-muted-foreground"
+                  >
+                    No tasks found. Create your first task.
                   </TableCell>
                 </TableRow>
               ) : null}

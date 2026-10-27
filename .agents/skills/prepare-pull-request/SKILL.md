@@ -15,8 +15,10 @@ check results. Inspect any existing PR template and reuse it when present.
 3. Write a short description covering the problem and resulting behavior, how it was tested,
    and material risks or limitations. Link the issue when one exists; use `Closes` only when
    the PR completes its scope. Add UI evidence when it helps verify the change.
-4. Create or update the PR only when requested. Prefer the GitHub CLI; pass multiline text via
-   a body file. Check for an existing PR before creating another and verify the returned state.
+4. Create or update the PR when requested or when completing the
+   [implementation workflow](../implement-ticket/SKILL.md). Commit and push only the task's
+   changes as needed. Prefer the GitHub CLI; pass multiline text via a body file. Check for an
+   existing PR before creating another and verify the returned state.
 5. Use Draft for incomplete work or material unverified behavior. A complete PR needs no invented
    reviewer assignment; the sole maintainer can self-review subject to repository protections.
 
