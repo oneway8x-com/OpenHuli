@@ -4,10 +4,11 @@ An open-source control center for maker devices. The first release targets ESP32
 voice, AI-assisted API actions, and a weather station. See the [MVP scope](docs/mvp-spec.md)
 and [backlog](https://github.com/orgs/oneway8x-com/projects/3).
 
-**Current state:** a Next.js application with a reference todo feature and PostgreSQL persistence.
-Owner access uses email OTP, server-verified sessions, and active Tenant membership.
+**Current state:** a Next.js application with a reference todo feature and PostgreSQL persistence,
+plus a persistent Node host with health checks, optional MQTT connection management, and an internal
+socket probe. Owner access uses email OTP, server-verified sessions, and active Tenant membership.
 Owner-only [device provisioning APIs](docs/guides/DEVICE_PAIRING.md) issue scoped credentials.
-Device WSS/MQTT transport, streaming voice, and AI execution remain planned.
+Device WSS/MQTT transport, telemetry ingestion, streaming voice, and AI execution remain planned.
 
 ## Local setup
 
@@ -76,8 +77,9 @@ unless you deliberately want to delete local data.
 - `packages/modules/*`: feature use cases and repositories; `todos` is the reference.
 - `packages/contracts`: shared schemas; `packages/data/prisma`: schema and migrations.
 - `apps/e2e`: real browser → Next routes → local PostgreSQL tests.
-- A separate persistent Node runtime for WSS/MQTT is planned in [#5](https://github.com/oneway8x-com/OpenHuli/issues/5).
-  Vercel can host the console/HTTP surface, not that persistent runtime.
+- `apps/runtime`: persistent Node host for sockets and optional MQTT connections. Start it with
+  `pnpm dev:runtime`; see the [runtime setup and trust boundaries](docs/guides/PERSISTENT_RUNTIME.md).
+  Vercel can host the console/HTTP surface, not this persistent process.
 
 Read [AGENTS.md](AGENTS.md), [architecture](docs/architecture/architect.md), and
 [security limits](docs/guides/SECURITY.md). Keep changes small and record useful decisions and checks

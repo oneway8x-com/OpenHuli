@@ -1,0 +1,27 @@
+{
+  "name": "@corely/runtime",
+  "private": true,
+  "version": "0.0.0",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=../../.env --import tsx --watch src/main.ts",
+    "build": "tsdown",
+    "start": "node --env-file-if-exists=../../.env dist/main.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@corely/contracts": "workspace:*",
+    "mqtt": "^5.14.1",
+    "ws": "8.19.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@corely/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/ws": "^8.18.1",
+    "tsx": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:"
+  }
+}

@@ -2,7 +2,10 @@
 
 The current application is a Next.js modular monolith backed by PostgreSQL/Prisma. The
 [MVP specification](../mvp-spec.md) adds one persistent Node process for device voice, MQTT, and
-AI orchestration. That process is planned in issue #5, not present in the foundation ticket.
+AI orchestration. The host foundation is implemented in `apps/runtime`: health/readiness, a protected lifecycle probe,
+optional MQTT connection management, and cancellation/cleanup ports. Device audio, conversation
+execution, and telemetry processing remain in their feature tickets. See the
+[runtime guide](../guides/PERSISTENT_RUNTIME.md).
 
 ## Request flow
 

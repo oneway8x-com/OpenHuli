@@ -28,4 +28,8 @@ database when rotating a compromised signing secret.
 
 Builds can run without production credentials; runtime startup validates configuration. A green build
 is not a deployment check. Object storage is optional; inspect `packages/storage` when enabling it.
-The persistent Node/MQTT/voice deployment remains separate work.
+
+The persistent host validates its `RUNTIME_*` settings independently. Its internal diagnostic token
+is not an owner or device credential. See the [persistent runtime guide](PERSISTENT_RUNTIME.md) for
+settings, `.env` loading, MQTT TLS, lifecycle checks, and cross-process trust boundaries. Device voice
+and verified external deployment remain separate work; this is not a Vercel-only deployment.

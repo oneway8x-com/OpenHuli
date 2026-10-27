@@ -4,4 +4,5 @@ export default defineWorkspace([
   "packages/*/vitest.config.ts",
   "packages/modules/*/vitest.config.ts",
   "apps/app/vitest.config.ts",
+  "apps/runtime/vitest.config.ts",
 ]);

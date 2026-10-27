@@ -1,6 +1,8 @@
 # Streaming
 
-Streaming endpoints should be implemented as Next.js route handlers under `apps/app/app/api/*`.
+Bounded HTTP/SSE responses may use Next.js route handlers under `apps/app/app/api/*`. Persistent
+WebSocket voice sessions, broker connections, and provider lifecycles belong in `apps/runtime`, not
+serverless handlers. See the [runtime guide](../guides/PERSISTENT_RUNTIME.md).
 
 ## Rules
 
