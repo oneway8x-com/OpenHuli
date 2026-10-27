@@ -23,6 +23,6 @@ Implement [#8](https://github.com/oneway8x-com/OpenHuli/issues/8): registry-back
 
 ## Remaining work / risks
 
-- Combined checks with the merged runtime foundation passed; final PR handoff in progress.
+- [PR #29](https://github.com/oneway8x-com/OpenHuli/pull/29) opened against main after rebasing and passing combined checks with the merged runtime foundation. No merge or deployment performed.
 - Real provider/tool registrations and transport/console integration remain their separate MVP tickets. An unknown write without query-only provider reconciliation requires explicit operator investigation.
 - Registered callbacks must truthfully declare effect, honor AbortSignal, use the stable provider key, and bump revision for schema/executor/destination changes. No universal exactly-once guarantee is claimed.
