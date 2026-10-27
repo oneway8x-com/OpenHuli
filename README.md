@@ -7,7 +7,8 @@ and [backlog](https://github.com/orgs/oneway8x-com/projects/3).
 **Current state:** a Next.js application with a reference todo feature and PostgreSQL persistence,
 plus a persistent Node host with health checks, optional MQTT connection management, and an internal
 socket probe. Owner access uses email OTP, server-verified sessions, and active Tenant membership.
-Device pairing, telemetry ingestion, streaming voice, and AI execution remain planned.
+Owner-only [device provisioning APIs](docs/guides/DEVICE_PAIRING.md) issue scoped credentials.
+Device WSS/MQTT transport, telemetry ingestion, streaming voice, and AI execution remain planned.
 
 ## Local setup
 

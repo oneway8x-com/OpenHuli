@@ -68,3 +68,17 @@ for persistent sockets, MQTT connections, and future shared conversation use cas
   plus runtime, 188 Vitest tests plus 3 script tests, lint (98 existing warnings), Prisma validation,
   architecture/prompt checks, diff checks, and production build passed. Runtime script entries now
   sit alongside `dev:app` to avoid conflicts with unrelated commands appended to the scripts list.
+
+## Pairing merge conflict follow-up
+
+- Merge `main` at `ed6d846` (device pairing PR #28) into PR #26 without rewriting its history.
+- README conflict resolved by retaining the runtime host and owner-only device provisioning APIs;
+  actual device WSS/MQTT transport, telemetry ingestion, voice, and AI execution remain future work.
+- Auto-merged device feature, schema/migration, contracts, app dependency, and lockfile changes are
+  preserved from `main`. No runtime implementation or authorization behavior changed.
+- Frozen offline installation, Prisma generation/validation, all-feature/runtime/app typechecks,
+  206 Vitest tests plus 3 script tests, lint (98 existing warnings, zero errors), architecture/prompt
+  checks, formatting, and whitespace checks passed. Production build passed for shared packages, runtime, and Next.
+- Verified app, feature, contracts, data, and migration-check sources match merged `main` exactly;
+  runtime implementation matches the pre-merge PR branch. No DB/E2E rerun or deployment for this
+  documentation-only conflict resolution.

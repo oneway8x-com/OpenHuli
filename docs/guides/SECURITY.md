@@ -20,6 +20,9 @@ sessions must sign in again.
 
 Email delivery requires operator setup and has not been verified against a live provider in routine
 checks. In-memory or edge-wide abuse protection is not implemented; production hosting should bound
-request volume. The [MVP specification](../mvp-spec.md) defines pending device credentials, MQTT ACL,
+request volume. The [MVP specification](../mvp-spec.md) defines pending device transport wiring, broker ACL,
 TLS, AI tool approval/idempotency, and privacy requirements. These are not existing guarantees.
+[Device pairing](DEVICE_PAIRING.md) adds hashed, purpose-scoped credentials, constrained manifests,
+exact topic/target authorization, and a revocation watchdog. Device WSS and broker adapters must
+wire those shared guards before enabling device connections; they are separate tickets.
 Do not include secrets or personal data when reporting a vulnerability.

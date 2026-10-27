@@ -20,6 +20,13 @@ const upgrade = await readFile(
   ),
   "utf8",
 );
+const deviceAccess = await readFile(
+  new URL(
+    "../packages/data/prisma/migrations/20261027220000_device_access/migration.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 await db.connect();
 try {
   for (const seeded of [false, true]) {
@@ -41,6 +48,24 @@ try {
       }
       await db.query(upgrade);
       if (seeded) {
+        await db.query(`INSERT INTO "Device" (id,"tenantId",name,"manifestJson") VALUES ('legacy-device','tenant','Legacy','{}');
+          INSERT INTO "DeviceCredential" (id,"tenantId","deviceId","secretHash","expiresAt") VALUES ('legacy-credential','tenant','legacy-device',repeat('a',64),now()+interval '1 day');
+          INSERT INTO "DeviceToolGrant" (id,"tenantId","deviceId","toolId","expiresAt") VALUES ('legacy-grant','tenant','legacy-device','device.ping',now()+interval '1 day');`);
+      }
+      await db.query(deviceAccess);
+      if (seeded) {
+        const legacy = await db.query(
+          'SELECT "configurationJson",purpose,"secretHash","targetDeviceIdsJson" FROM "Device" d JOIN "DeviceCredential" c ON c."deviceId"=d.id JOIN "DeviceToolGrant" g ON g."deviceId"=d.id WHERE d.id=$1',
+          ["legacy-device"],
+        );
+        assert.deepEqual(legacy.rows, [
+          {
+            configurationJson: null,
+            purpose: "legacy",
+            secretHash: "a".repeat(64),
+            targetDeviceIdsJson: "[]",
+          },
+        ]);
         const run = await db.query(
           'SELECT "metadataJson", "retainTranscripts", "deviceId" FROM "AgentRun" WHERE id = $1',
           ["run"],

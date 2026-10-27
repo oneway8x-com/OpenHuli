@@ -790,18 +790,19 @@ model SeededRecordMeta {
 
 // Device records are owned by the devices feature. Credentials store digests only.
 model Device {
-  id           String             @id @default(cuid())
-  tenantId     String
-  name         String
-  manifestJson String
-  status       String             @default("active")
-  createdAt    DateTime           @default(now()) @db.Timestamptz(6)
-  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  credentials  DeviceCredential[]
-  grants       DeviceToolGrant[]
-  telemetry    DeviceTelemetry[]
-  commands     DeviceCommand[]
-  runs         AgentRun[]
+  id                String             @id @default(cuid())
+  tenantId          String
+  name              String
+  configurationJson String?
+  manifestJson      String
+  status            String             @default("active")
+  createdAt         DateTime           @default(now()) @db.Timestamptz(6)
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  credentials       DeviceCredential[]
+  grants            DeviceToolGrant[]
+  telemetry         DeviceTelemetry[]
+  commands          DeviceCommand[]
+  runs              AgentRun[]
 
   @@unique([tenantId, id])
   @@index([tenantId, status])
@@ -812,6 +813,7 @@ model DeviceCredential {
   tenantId   String
   deviceId   String
   secretHash String
+  purpose    String    @default("legacy")
   expiresAt  DateTime  @db.Timestamptz(6)
   revokedAt  DateTime? @db.Timestamptz(6)
   createdAt  DateTime  @default(now()) @db.Timestamptz(6)
@@ -822,13 +824,14 @@ model DeviceCredential {
 }
 
 model DeviceToolGrant {
-  id        String    @id @default(cuid())
-  tenantId  String
-  deviceId  String
-  toolId    String
-  expiresAt DateTime  @db.Timestamptz(6)
-  revokedAt DateTime? @db.Timestamptz(6)
-  device    Device    @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Cascade)
+  id                  String    @id @default(cuid())
+  tenantId            String
+  deviceId            String
+  toolId              String
+  targetDeviceIdsJson String    @default("[]")
+  expiresAt           DateTime  @db.Timestamptz(6)
+  revokedAt           DateTime? @db.Timestamptz(6)
+  device              Device    @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Cascade)
 
   @@unique([tenantId, deviceId, toolId])
 }

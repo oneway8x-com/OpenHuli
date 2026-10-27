@@ -6,10 +6,11 @@ long-lived Node/container host, alongside PostgreSQL and a broker when configure
 Next app on Vercel does not host persistent connections.
 
 This foundation implements process/socket lifecycle, MQTT connection management, typed configuration,
-and health/readiness. It does not implement device pairing, authenticated audio, telemetry ingestion,
-or provider execution. Those remain issues #7, #9, #13, and #10. The shared identity feature now
-verifies owner sessions and active Tenant membership for the console. This host does not import
-Next-specific auth helpers or treat console cookies as device credentials.
+and health/readiness. The devices feature now provides owner-only [pairing and scoped credential
+policy](DEVICE_PAIRING.md). Authenticated audio, broker device access/telemetry ingestion, and provider
+execution remain issues #9, #13, and #10. The shared identity feature verifies owner sessions and
+active Tenant membership for the console. This host does not import Next-specific auth helpers or
+treat console cookies as device credentials.
 
 ## Run locally
 
@@ -114,9 +115,11 @@ that gateway and must never be repurposed as device authorization.
 Next console sessions cannot be forwarded blindly between processes. The shared identity feature
 provides `verifyAccessToken` and `resolveOwnerSession` for console issuer/audience/expiry, live-session,
 and active OWNER membership checks. A future console endpoint must compose those shared checks;
-there is no authenticated console endpoint in this host yet. Device credentials and binding remain
-separate work. Do not trust `x-tenant-id`, device claims, cookie presence, shared probe tokens, or a
-model-supplied Tenant ID. No duplicated JWT verifier is added here.
+there is no authenticated console endpoint in this host yet. Device transports must compose the
+devices feature's scoped authentication, exact topic/target checks, live revalidation, and revocation
+watchdog before enabling access. Those guards are not wired into this host foundation. Do not trust
+`x-tenant-id`, device claims, cookie presence, shared probe tokens, or a model-supplied Tenant ID.
+No duplicated JWT verifier is added here.
 
 ## Deployment and checks
 

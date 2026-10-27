@@ -37,7 +37,9 @@ Tenant is the sole isolation term. The identity feature verifies owner sessions 
 OWNER membership. Todo routes and the dashboard derive Tenant scope from that session; headers
 cannot establish authority. Bootstrap is an explicit operator CLI. Browser writes require the
 configured origin, and production validates secrets and email configuration on startup.
-Device authentication remains pending. See [security](../guides/SECURITY.md).
+Device provisioning and shared authentication policy live in the devices feature; see
+[device pairing](../guides/DEVICE_PAIRING.md). WSS/broker transports must wire these guards in
+their respective tickets before device access is enabled. See [security](../guides/SECURITY.md).
 
 The original scaffold includes unused domain/schema material. Its presence does not activate a
 feature or justify extending Platform, Workspace, or generic Automation domains. Keep changes scoped.

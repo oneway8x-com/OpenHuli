@@ -1,9 +1,10 @@
+import { DeviceAccessError } from "@corely/modules-devices";
 import { ZodError } from "zod";
 import { TodoNotFoundError } from "@corely/modules-todos";
 import { IdentityError } from "@corely/modules-identity";
 
 export function problemFromError(error: unknown): Response {
-  if (error instanceof IdentityError)
+  if (error instanceof IdentityError || error instanceof DeviceAccessError)
     return Response.json(
       { type: "about:blank", title: error.message, status: error.status },
       { status: error.status },
