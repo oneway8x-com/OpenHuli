@@ -33,6 +33,13 @@ describe("runtime configuration", () => {
     ).toBeDefined();
   });
   it.each([
+    { RUNTIME_VOICE_ENABLED: "yes" },
+    { RUNTIME_VOICE_QUEUE_BYTES: "663" },
+    { RUNTIME_VOICE_QUEUE_MESSAGES: "0" },
+    { RUNTIME_VOICE_BUFFERED_BYTES: "0" },
+    { RUNTIME_VOICE_TURN_TIMEOUT_MS: "30001" },
+    { RUNTIME_VOICE_SESSION_TIMEOUT_MS: "0" },
+    { RUNTIME_VOICE_ENABLED: "true", DATABASE_URL: "not-a-database" },
     { RUNTIME_PORT: "NaN" },
     { RUNTIME_PORT: "65536" },
     { RUNTIME_PORT: "-1" },

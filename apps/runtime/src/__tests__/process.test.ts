@@ -16,6 +16,7 @@ function launch(env: NodeJS.ProcessEnv = {}) {
       env: {
         ...process.env,
         NODE_ENV: "test",
+        RUNTIME_VOICE_ENABLED: "false",
         TSX_TSCONFIG_PATH: fileURLToPath(
           new URL("../../tsconfig.test.json", import.meta.url),
         ),

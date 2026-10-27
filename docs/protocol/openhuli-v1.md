@@ -132,6 +132,9 @@ Validate both sends and receives with `sendControl`/`receiveControl` and
 The peer validates direction, negotiation, IDs, sequence, capabilities, and turn order; it does
 not open a socket, buffer audio for AI, or dispatch a use case. Feed only accepted committed turns
 to the authenticated conversation use case. Reconnect uses a fresh peer; no audio resume in v1.
+The gateway treats the offered `conversationId` as a correlation hint and creates a fresh
+server-owned conversation key equal to `session.ready.sessionId`; it never reopens a record from
+a device-supplied ID. See [gateway lifecycle and limits](../guides/VOICE_GATEWAY.md).
 
 | Sender | Type                         | Additional fields / rule                                                                                              |
 | ------ | ---------------------------- | --------------------------------------------------------------------------------------------------------------------- |

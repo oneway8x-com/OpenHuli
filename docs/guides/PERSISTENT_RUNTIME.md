@@ -7,8 +7,8 @@ Next app on Vercel does not host persistent connections.
 
 This foundation implements process/socket lifecycle, MQTT connection management, typed configuration,
 and health/readiness. The devices feature now provides owner-only [pairing and scoped credential
-policy](DEVICE_PAIRING.md). Authenticated audio, broker device access/telemetry ingestion, and provider
-execution remain issues #9, #13, and #10. The shared identity feature verifies owner sessions and
+policy](DEVICE_PAIRING.md). The [voice gateway](VOICE_GATEWAY.md) now adds authenticated, bounded device audio transport.
+Broker device access/telemetry ingestion and live provider execution remain #13 and #10. The shared identity feature verifies owner sessions and
 active Tenant membership for the console. This host does not import Next-specific auth helpers or
 treat console cookies as device credentials.
 
@@ -106,8 +106,8 @@ rejects new upgrades, sends close code 1001, force-terminates unresponsive peers
 (or half the shutdown timeout), and waits for cleanup within the configured deadline. Failure exits
 the CLI nonzero; an adapter that ignores cancellation cannot keep a failed CLI process alive forever.
 
-The authenticated device gateway in #9 must validate a scoped credential, resolve a server-owned
-Tenant/device/conversation context, then call shared feature use cases through explicit ports.
+The authenticated `/voice` gateway validates a scoped credential, resolves a server-owned
+Tenant/device/conversation context, and calls shared voice session use cases through explicit ports.
 Reuse the [v1 protocol parsers](../protocol/openhuli-v1.md). Do not put tool grants, approval decisions,
 Prisma queries, or tenant selection into transport handlers. The service probe is not a shortcut for
 that gateway and must never be repurposed as device authorization.
@@ -117,7 +117,7 @@ provides `verifyAccessToken` and `resolveOwnerSession` for console issuer/audien
 and active OWNER membership checks. A future console endpoint must compose those shared checks;
 there is no authenticated console endpoint in this host yet. Device transports must compose the
 devices feature's scoped authentication, exact topic/target checks, live revalidation, and revocation
-watchdog before enabling access. Those guards are not wired into this host foundation. Do not trust
+watchdog before enabling access. The voice gateway wires them; broker device access remains #13. Do not trust
 `x-tenant-id`, device claims, cookie presence, shared probe tokens, or a model-supplied Tenant ID.
 No duplicated JWT verifier is added here.
 

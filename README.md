@@ -8,7 +8,9 @@ and [backlog](https://github.com/orgs/oneway8x-com/projects/3).
 plus a persistent Node host with health checks, optional MQTT connection management, and an internal
 socket probe. Owner access uses email OTP, server-verified sessions, and active Tenant membership.
 Owner-only [device provisioning APIs](docs/guides/DEVICE_PAIRING.md) issue scoped credentials.
-Device WSS/MQTT transport, telemetry ingestion, streaming voice, and AI execution remain planned.
+The [authenticated voice gateway](docs/guides/VOICE_GATEWAY.md) is ready for a composed streaming
+provider; the live AI adapter remains #10. MQTT device transport, telemetry ingestion, and AI
+execution remain planned.
 
 ## Local setup
 

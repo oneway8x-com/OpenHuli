@@ -24,5 +24,6 @@ request volume. The [MVP specification](../mvp-spec.md) defines pending device t
 TLS, AI tool approval/idempotency, and privacy requirements. These are not existing guarantees.
 [Device pairing](DEVICE_PAIRING.md) adds hashed, purpose-scoped credentials, constrained manifests,
 exact topic/target authorization, and a revocation watchdog. Device WSS and broker adapters must
-wire those shared guards before enabling device connections; they are separate tickets.
+wire those shared guards before enabling device connections. The [voice gateway](VOICE_GATEWAY.md)
+now composes them for scoped audio sessions; broker device access remains separate.
 Do not include secrets or personal data when reporting a vulnerability.

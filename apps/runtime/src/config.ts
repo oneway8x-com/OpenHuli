@@ -16,6 +16,41 @@ const ConfigSchema = z
       .enum(["127.0.0.1", "::1", "0.0.0.0", "::"])
       .default("127.0.0.1"),
     RUNTIME_PORT: z.coerce.number().int().min(0).max(65535).default(3200),
+    RUNTIME_VOICE_ENABLED: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((value) => value === "true"),
+    RUNTIME_VOICE_QUEUE_BYTES: z.coerce
+      .number()
+      .int()
+      .min(664)
+      .max(1048576)
+      .default(21248),
+    RUNTIME_VOICE_QUEUE_MESSAGES: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(1024)
+      .default(64),
+    RUNTIME_VOICE_BUFFERED_BYTES: z.coerce
+      .number()
+      .int()
+      .min(1024)
+      .max(1048576)
+      .default(65536),
+    RUNTIME_VOICE_OPERATION_TIMEOUT_MS: timeout(5000),
+    RUNTIME_VOICE_TURN_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(100)
+      .max(30000)
+      .default(30000),
+    RUNTIME_VOICE_SESSION_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(100)
+      .max(3600000)
+      .default(600000),
     RUNTIME_PROBE_TOKEN: optionalString(
       z
         .string()
@@ -86,6 +121,22 @@ export type RuntimeConfig = z.infer<typeof ConfigSchema>;
 
 export function readRuntimeConfig(env: NodeJS.ProcessEnv): RuntimeConfig {
   const result = ConfigSchema.safeParse(env);
+  if (env.RUNTIME_VOICE_ENABLED === "true") {
+    try {
+      const url = new URL(env.DATABASE_URL || "");
+      if (
+        !["postgres:", "postgresql:"].includes(url.protocol) ||
+        !url.hostname ||
+        url.pathname.length < 2 ||
+        url.hash
+      )
+        throw new Error();
+    } catch {
+      throw new RuntimeConfigurationError(
+        "Invalid runtime configuration: DATABASE_URL",
+      );
+    }
+  }
   if (!result.success) {
     const keys = [
       ...new Set(result.error.issues.map((issue) => issue.path.join("."))),

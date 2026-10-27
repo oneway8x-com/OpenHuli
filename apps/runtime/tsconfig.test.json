@@ -3,7 +3,9 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@corely/contracts": ["../../packages/contracts/src/index.ts"]
+      "@corely/contracts": ["../../packages/contracts/src/index.ts"],
+      "@corely/modules-voice": ["../../packages/modules/voice/src/index.ts"],
+      "@corely/modules-devices": ["../../packages/modules/devices/src/index.ts"]
     }
   }
 }
