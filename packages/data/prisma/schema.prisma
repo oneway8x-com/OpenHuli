@@ -34,6 +34,7 @@ model Tenant {
   integrationConnections IntegrationConnection[]
   todos                  Todo[]
   devices                Device[]
+  toolPreauthorizations  ToolPreauthorization[]
 
   @@index([createdAt])
 }
@@ -685,9 +686,20 @@ model ToolExecution {
   run           AgentRun          @relation(fields: [tenantId, runId], references: [tenantId, id], onDelete: Cascade)
   turn          ConversationTurn? @relation(fields: [tenantId, runId, turnId], references: [tenantId, runId, id], onDelete: Restrict)
 
-  expiresAt DateTime?          @db.Timestamptz(6)
-  approval  ExecutionApproval?
-  commands  DeviceCommand[]
+  effect           String?
+  requestHash      String?
+  policyHash       String?
+  actorJson        String?
+  targetDeviceId   String?
+  dispatchDeadline DateTime?          @db.Timestamptz(6)
+  outcomeKind      String?
+  attempts         Int                @default(0)
+  reconcileToken   String?
+  reconcileUntil   DateTime?          @db.Timestamptz(6)
+  targetDevice     Device?            @relation("ToolExecutionTarget", fields: [tenantId, targetDeviceId], references: [tenantId, id], onDelete: Restrict)
+  expiresAt        DateTime?          @db.Timestamptz(6)
+  approval         ExecutionApproval?
+  commands         DeviceCommand[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, runId, toolCallId])
@@ -804,6 +816,10 @@ model Device {
   commands          DeviceCommand[]
   runs              AgentRun[]
 
+  targetedExecutions      ToolExecution[]        @relation("ToolExecutionTarget")
+  sourcePreauthorizations ToolPreauthorization[] @relation("PreauthorizationSource")
+  targetPreauthorizations ToolPreauthorization[] @relation("PreauthorizationTarget")
+
   @@unique([tenantId, id])
   @@index([tenantId, status])
 }
@@ -895,6 +911,7 @@ model ConversationTurn {
 }
 
 model ExecutionApproval {
+  requestHash     String?
   id              String        @id
   tenantId        String
   executionId     String
@@ -924,4 +941,25 @@ model ConversationUsage {
 
   @@unique([tenantId, runId, eventId])
   @@index([tenantId, metric, createdAt])
+}
+
+// Explicit owner consent for a registered low-risk action and exact resource scope.
+model ToolPreauthorization {
+  id             String    @id @default(cuid())
+  tenantId       String
+  ownerUserId    String
+  toolId         String
+  policyHash     String
+  scopeKey       String
+  sourceDeviceId String?
+  targetDeviceId String?
+  expiresAt      DateTime  @db.Timestamptz(6)
+  revokedAt      DateTime? @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(6)
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  sourceDevice   Device?   @relation("PreauthorizationSource", fields: [tenantId, sourceDeviceId], references: [tenantId, id], onDelete: Restrict)
+  targetDevice   Device?   @relation("PreauthorizationTarget", fields: [tenantId, targetDeviceId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, ownerUserId, toolId, policyHash, scopeKey])
+  @@index([tenantId, expiresAt])
 }

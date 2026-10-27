@@ -7,7 +7,7 @@ process.env.DATABASE_URL = databaseUrl;
 process.env.DIRECT_DATABASE_URL = databaseUrl;
 
 export default defineWorkspace([
-  ...["devices", "conversations"].map((feature) => ({
+  ...["devices", "conversations", "tool-execution"].map((feature) => ({
     root: `./packages/modules/${feature}`,
     test: {
       name: `${feature}-integration`,
