@@ -1,0 +1,24 @@
+{
+  "name": "@corely/modules-http-tools",
+  "private": true,
+  "version": "0.0.0",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@corely/contracts": "workspace:*",
+    "zod": "catalog:",
+    "@corely/modules-tool-execution": "workspace:*"
+  },
+  "devDependencies": {
+    "@corely/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

@@ -7,6 +7,15 @@ process.env.DATABASE_URL = databaseUrl;
 process.env.DIRECT_DATABASE_URL = databaseUrl;
 
 export default defineWorkspace([
+  {
+    root: "./apps/notes-api",
+    test: {
+      name: "http-tools-integration",
+      include: ["src/**/__tests__/**/*.integration.test.ts"],
+      env: { DATABASE_URL: databaseUrl, DIRECT_DATABASE_URL: databaseUrl },
+      testTimeout: 10000,
+    },
+  },
   ...["devices", "conversations", "tool-execution"].map((feature) => ({
     root: `./packages/modules/${feature}`,
     test: {
