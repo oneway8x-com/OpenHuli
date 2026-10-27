@@ -2,7 +2,7 @@
   "name": "@corely/e2e",
   "private": true,
   "version": "0.0.0",
-  "license": "AGPL-3.0-only",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "e2e": "playwright test",
@@ -13,6 +13,8 @@
   "devDependencies": {
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",
-    "@corely/tsconfig": "workspace:*"
+    "@corely/tsconfig": "workspace:*",
+    "@corely/data": "workspace:*",
+    "@corely/contracts": "workspace:*"
   }
 }

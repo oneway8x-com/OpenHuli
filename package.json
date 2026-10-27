@@ -2,7 +2,7 @@
   "name": "corely",
   "private": true,
   "version": "0.0.0",
-  "license": "AGPL-3.0-only",
+  "license": "MIT",
   "type": "module",
   "packageManager": "pnpm@10.26.0",
   "engines": {
@@ -10,16 +10,16 @@
   },
   "scripts": {
     "prepare": "husky",
-    "dev": "pnpm --filter @corely/app dev",
+    "dev": "pnpm dev:app",
     "build": "pnpm build:packages && pnpm --filter @corely/app build",
     "build:packages": "pnpm --filter @corely/kernel --filter @corely/contracts --filter @corely/prompts --filter @corely/domain --filter @corely/data --filter @corely/storage --filter @corely/email-templates --filter \"@corely/modules-*\" build",
-    "typecheck": "pnpm --filter @corely/data typecheck && pnpm --filter @corely/storage typecheck && pnpm --filter @corely/modules-todos typecheck && pnpm --filter @corely/app typecheck",
-    "dev:app": "pnpm --filter @corely/app dev",
+    "typecheck": "pnpm --filter @corely/data typecheck && pnpm --filter @corely/storage typecheck && pnpm --filter @corely/modules-todos typecheck && pnpm --filter @corely/app typecheck && pnpm --filter @corely/e2e exec tsc --noEmit",
+    "dev:app": "pnpm --filter @corely/app dev --hostname 127.0.0.1",
     "build:app": "pnpm build:packages && pnpm --filter @corely/app build",
     "prisma:generate": "pnpm --filter @corely/data exec prisma generate",
     "prisma:migrate": "pnpm --filter @corely/data exec prisma migrate dev",
     "prisma:studio": "pnpm --filter @corely/data exec prisma studio",
-    "migrate": "pnpm --filter @corely/data exec tsx --env-file=../../.env ../../../node_modules/.bin/prisma migrate dev",
+    "migrate": "pnpm prisma:migrate",
     "format": "prettier -w .",
     "format:check": "prettier --check .",
     "lint": "eslint . --cache",
@@ -28,11 +28,18 @@
     "arch:check": "node scripts/architecture-check.mjs",
     "check": "pnpm lint && pnpm typecheck && pnpm prompt:check",
     "prompt:check": "node scripts/check-prompts.mjs",
-    "test": "vitest run --workspace ./vitest.workspace.ts",
-    "test:unit": "vitest run --workspace ./vitest.workspace.ts",
-    "test:int": "pnpm prisma:generate && vitest run --workspace ./vitest.workspace.int.ts",
+    "test": "pnpm test:scripts && vitest run --workspace ./vitest.workspace.ts",
+    "test:unit": "pnpm test:scripts && vitest run --workspace ./vitest.workspace.ts",
+    "test:int": "vitest run --workspace ./vitest.workspace.int.ts",
     "test:watch": "vitest --workspace ./vitest.workspace.ts --watch",
-    "coverage": "vitest run --workspace ./vitest.workspace.ts --coverage"
+    "coverage": "vitest run --workspace ./vitest.workspace.ts --coverage",
+    "pretypecheck": "pnpm build:packages",
+    "prisma:validate": "pnpm --filter @corely/data exec prisma validate",
+    "prisma:deploy": "pnpm --filter @corely/data exec prisma migrate deploy",
+    "db:seed": "pnpm --filter @corely/data exec tsx src/prisma/seed-local.ts",
+    "test:scripts": "tsx --test scripts/*.test.ts",
+    "test:db:setup": "tsx scripts/setup-test-database.ts",
+    "test:e2e": "pnpm --filter @corely/e2e e2e"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
@@ -49,7 +56,8 @@
     "tsx": "catalog:",
     "typescript": "catalog:",
     "typescript-eslint": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "@corely/tsconfig": "workspace:*"
   },
   "author": "Ha Doan <ha@oneway8x.com>",
   "dependencies": {

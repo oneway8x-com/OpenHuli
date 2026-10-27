@@ -2,7 +2,7 @@
   "name": "@corely/tsconfig",
   "private": true,
   "version": "0.0.0",
-  "license": "AGPL-3.0-only",
+  "license": "MIT",
   "description": "Shared TypeScript configurations for Corely monorepo",
   "files": [
     "*.json",

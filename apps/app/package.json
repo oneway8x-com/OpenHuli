@@ -2,7 +2,7 @@
   "name": "@corely/app",
   "private": true,
   "version": "0.0.0",
-  "license": "AGPL-3.0-only",
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "@corely/api-client": "workspace:*",
@@ -37,7 +37,7 @@
     "typescript": "catalog:"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "node --env-file-if-exists=../../.env node_modules/next/dist/bin/next dev",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc -p tsconfig.typecheck.json --noEmit"

@@ -13,11 +13,14 @@ export default function DashboardLayout({
       <header className="sticky top-0 z-10 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="container flex items-center justify-between py-4">
           <div className="flex items-center gap-3">
-            <Link href="/todos" className="text-lg font-semibold tracking-tight">
-              Corely App
+            <Link
+              href="/todos"
+              className="text-lg font-semibold tracking-tight"
+            >
+              OpenHuli
             </Link>
             <Badge variant="secondary" className="rounded-full px-3 py-1">
-              Next.js migration
+              Development preview
             </Badge>
           </div>
           <nav className="flex items-center gap-4 text-sm text-muted-foreground">

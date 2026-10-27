@@ -2,77 +2,99 @@ import { createTodo } from "./helpers/todo-fixtures";
 import { gotoTodos } from "./helpers/auth";
 import { expect, test } from "./fixtures";
 
-test.describe("Todo module", () => {
-  test("creates a new todo from the UI", async ({ page, session }) => {
-    await gotoTodos(page, session);
-
-    await expect(page.getByTestId("todos-empty-state")).toBeVisible();
-
-    await page.getByRole("button", { name: "New Task" }).click();
-    await expect(page.getByRole("heading", { name: "New Task" })).toBeVisible();
-
-    await page.getByLabel("Title").fill("Ship March roadmap");
-    await page.getByLabel("Description").fill("Align product, engineering, and rollout milestones.");
+test.describe("development todo request flow", () => {
+  test("creates a task through the UI and persists it through the API", async ({
+    page,
+    request,
+  }, testInfo) => {
+    await gotoTodos(page);
+    await expect(
+      page.getByText("No tasks found.", { exact: false }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: "Create task", exact: true })
+      .click();
+    await page
+      .getByLabel("Title", { exact: true })
+      .fill("Connect the weather station");
+    await page
+      .getByLabel("Description", { exact: true })
+      .fill("Verify the local setup");
     await page.getByRole("combobox", { name: "Priority" }).click();
-    await page.getByRole("option", { name: "High" }).click();
-    await page.getByLabel("Due Date").fill("2026-03-31");
-    await page.getByRole("button", { name: "Create Task" }).click();
-
-    await expect(page.getByRole("heading", { name: "Tasks" })).toBeVisible();
-    await expect(page.getByText("Ship March roadmap")).toBeVisible();
-    await expect(page.getByText("Align product, engineering, and rollout milestones.")).toBeVisible();
-    await expect(page.getByText("High")).toBeVisible();
-    await expect(page.getByText("2026-03-31")).toBeVisible();
+    await page.getByRole("option", { name: "High", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Create task", exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/todos\/[0-9a-f-]{36}$/);
+    await expect(
+      page.getByText("Connect the weather station", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("Verify the local setup", { exact: true }),
+    ).toBeVisible();
+    const response = await request.get("/api/todos");
+    expect(response.ok()).toBe(true);
+    expect(await response.json()).toMatchObject({
+      items: [{ title: "Connect the weather station", priority: "high" }],
+    });
+    await page.reload();
+    await expect(
+      page.getByText("Connect the weather station", { exact: true }),
+    ).toBeVisible();
+    await page.screenshot({
+      path: testInfo.outputPath("openhuli-desktop.png"),
+      fullPage: true,
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({
+      path: testInfo.outputPath("openhuli-mobile.png"),
+      fullPage: true,
+    });
   });
 
-  test("completes and reopens a todo from the list", async ({ page, request, session }) => {
-    const todo = await createTodo(request, session, {
-      title: "Review payroll exports",
-      priority: "medium",
-    });
-
-    await gotoTodos(page, session);
-
-    const row = page.getByTestId(`todo-row-${todo.id}`);
-    await expect(row).toContainText("Review payroll exports");
-
-    await page.getByLabel(`Mark Review payroll exports as complete`).click();
-    await expect(page.getByText("Todo completed", { exact: true })).toBeVisible();
-    await expect(row.getByText("Review payroll exports")).toHaveClass(/line-through/);
-
-    await page.getByLabel(`Reopen Review payroll exports`).click();
-    await expect(page.getByText("Todo reopened", { exact: true })).toBeVisible();
-    await expect(row.getByText("Review payroll exports")).not.toHaveClass(/line-through/);
+  test("completes and reopens a task", async ({ page, request }) => {
+    const todo = await createTodo(request, "Verify the microphone");
+    await gotoTodos(page);
+    await page
+      .getByLabel("Mark Verify the microphone as complete", { exact: true })
+      .click();
+    await expect(
+      page.getByLabel("Reopen Verify the microphone", { exact: true }),
+    ).toBeVisible();
+    expect(
+      await (await request.get(`/api/todos/${todo.id}`)).json(),
+    ).toMatchObject({ status: "done" });
+    await page
+      .getByLabel("Reopen Verify the microphone", { exact: true })
+      .click();
+    await expect(
+      page.getByLabel("Mark Verify the microphone as complete", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    expect(
+      await (await request.get(`/api/todos/${todo.id}`)).json(),
+    ).toMatchObject({ status: "open" });
   });
 
-  test("edits and deletes a todo from the list", async ({ page, request, session }) => {
-    const todo = await createTodo(request, session, {
-      title: "Draft investor update",
-      description: "Initial draft",
-      priority: "low",
-    });
-
-    await gotoTodos(page, session);
-
-    await page.getByLabel(`Edit Draft investor update`).click();
-    await expect(page.getByRole("heading", { name: "Edit Task" })).toBeVisible();
-
-    await page.getByLabel("Title").fill("Draft investor update v2");
-    await page.getByLabel("Description").fill("Updated with revenue and runway metrics.");
-    await page.getByRole("combobox", { name: "Priority" }).click();
-    await page.getByRole("option", { name: "High" }).click();
-    await page.getByRole("combobox", { name: "Status" }).click();
-    await page.getByRole("option", { name: "Done" }).click();
-    await page.getByRole("button", { name: "Save Changes" }).click();
-
-    const updatedRow = page.getByTestId(`todo-row-${todo.id}`);
-    await expect(updatedRow).toContainText("Draft investor update v2");
-    await expect(updatedRow).toContainText("Updated with revenue and runway metrics.");
-    await expect(updatedRow).toContainText("High");
-    await expect(updatedRow.getByText("Draft investor update v2")).toHaveClass(/line-through/);
-
-    await page.getByLabel(`Delete Draft investor update v2`).click();
-    await expect(page.getByText("Todo deleted", { exact: true })).toBeVisible();
-    await expect(page.getByText("Draft investor update v2")).toHaveCount(0);
+  test("edits and deletes a task", async ({ page, request }) => {
+    const todo = await createTodo(request, "Check the sensor");
+    await gotoTodos(page);
+    const row = page.getByRole("row").filter({ hasText: "Check the sensor" });
+    await row.getByRole("link", { name: "Edit", exact: true }).click();
+    await page.getByLabel("Title", { exact: true }).fill("Sensor verified");
+    await page
+      .getByRole("button", { name: "Save changes", exact: true })
+      .click();
+    await expect(
+      page.getByText("Sensor verified", { exact: true }),
+    ).toBeVisible();
+    await gotoTodos(page);
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByLabel("Delete Sensor verified", { exact: true }).click();
+    await expect(
+      page.getByRole("link", { name: "Sensor verified", exact: true }),
+    ).toHaveCount(0);
+    expect((await request.get(`/api/todos/${todo.id}`)).status()).toBe(404);
   });
 });

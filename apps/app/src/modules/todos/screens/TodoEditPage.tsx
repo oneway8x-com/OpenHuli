@@ -19,7 +19,12 @@ import {
   Textarea,
   useToast,
 } from "@corely/ui";
-import type { CreateTodoInput, TodoPriority, TodoStatus, UpdateTodoInput } from "@corely/contracts";
+import type {
+  CreateTodoInput,
+  TodoPriority,
+  TodoStatus,
+  UpdateTodoInput,
+} from "@corely/contracts";
 import { ChevronLeft, Loader2 } from "lucide-react";
 import { createTodo, fetchTodo, updateTodo } from "../todos-api";
 
@@ -65,17 +70,16 @@ export function TodoEditPage({ id }: { id?: string }) {
         return createTodo(basePayload satisfies CreateTodoInput);
       }
 
-      return updateTodo(
-        id!,
-        {
-          ...basePayload,
-          status,
-        } satisfies UpdateTodoInput
-      );
+      return updateTodo(id!, {
+        ...basePayload,
+        status,
+      } satisfies UpdateTodoInput);
     },
     onSuccess: async (savedTodo) => {
       await queryClient.invalidateQueries({ queryKey: ["todos"] });
-      await queryClient.invalidateQueries({ queryKey: ["todos", savedTodo.id] });
+      await queryClient.invalidateQueries({
+        queryKey: ["todos", savedTodo.id],
+      });
       toast({ title: isNew ? "Task created" : "Task updated" });
       router.push(isNew ? `/todos/${savedTodo.id}` : `/todos/${id}`);
     },
@@ -98,16 +102,22 @@ export function TodoEditPage({ id }: { id?: string }) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <Button variant="ghost" onClick={() => router.push("/todos")} className="-ml-4">
+      <Button
+        variant="ghost"
+        onClick={() => router.push("/todos")}
+        className="-ml-4"
+      >
         <ChevronLeft className="mr-1 h-4 w-4" />
         Back to tasks
       </Button>
 
       <Card className="rounded-[2rem] border-border/70 bg-background/85 shadow-sm">
         <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl">{isNew ? "Create a new task" : "Edit task"}</CardTitle>
+          <CardTitle className="text-2xl">
+            {isNew ? "Create a new task" : "Edit task"}
+          </CardTitle>
           <p className="text-sm text-muted-foreground">
-            This form already saves through the new in-app route handlers.
+            Add a title and any details you want to keep.
           </p>
         </CardHeader>
 
@@ -144,7 +154,10 @@ export function TodoEditPage({ id }: { id?: string }) {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="priority">Priority</Label>
-                <Select value={priority} onValueChange={(value) => setPriority(value as TodoPriority)}>
+                <Select
+                  value={priority}
+                  onValueChange={(value) => setPriority(value as TodoPriority)}
+                >
                   <SelectTrigger id="priority" aria-label="Priority">
                     <SelectValue placeholder="Select priority" />
                   </SelectTrigger>
@@ -170,7 +183,10 @@ export function TodoEditPage({ id }: { id?: string }) {
             {!isNew ? (
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Select value={status} onValueChange={(value) => setStatus(value as TodoStatus)}>
+                <Select
+                  value={status}
+                  onValueChange={(value) => setStatus(value as TodoStatus)}
+                >
                   <SelectTrigger id="status" aria-label="Status">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -183,11 +199,20 @@ export function TodoEditPage({ id }: { id?: string }) {
             ) : null}
 
             <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="ghost" onClick={() => router.push("/todos")}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => router.push("/todos")}
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={mutation.isPending || !title.trim()}>
-                {mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              <Button
+                type="submit"
+                disabled={mutation.isPending || !title.trim()}
+              >
+                {mutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
                 {isNew ? "Create task" : "Save changes"}
               </Button>
             </div>
