@@ -33,6 +33,7 @@ model Tenant {
   billingProviderEvents  BillingProviderEvent[]
   integrationConnections IntegrationConnection[]
   todos                  Todo[]
+  devices                Device[]
 
   @@index([createdAt])
 }
@@ -627,10 +628,21 @@ model AgentRun {
   updatedAt       DateTime  @updatedAt
   traceId         String?
 
+  deviceId          String?
+  correlationId     String?
+  retainTranscripts Boolean             @default(false)
+  expiresAt         DateTime?           @db.Timestamptz(6)
+  device            Device?             @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Restrict)
+  turns             ConversationTurn[]
+  usage             ConversationUsage[]
+
   messages       Message[]
   toolExecutions ToolExecution[]
 
+  @@unique([tenantId, id])
   @@index([tenantId, createdAt])
+  @@index([tenantId, deviceId, createdAt])
+  @@index([tenantId, expiresAt])
   @@index([tenantId, createdByUserId, lastMessageAt(sort: Desc)])
   @@index([tenantId, createdByUserId, createdAt(sort: Desc)])
 }
@@ -640,12 +652,15 @@ model Message {
   tenantId    String
   runId       String
   role        String
-  partsJson   String
+  partsJson   String   @default("[]")
   contentText String?
   createdAt   DateTime @default(now())
   traceId     String?
 
-  run AgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  turnId        String?
+  correlationId String?
+  run           AgentRun          @relation(fields: [tenantId, runId], references: [tenantId, id], onDelete: Cascade)
+  turn          ConversationTurn? @relation(fields: [tenantId, runId, turnId], references: [tenantId, runId, id], onDelete: Restrict)
 
   @@index([tenantId, runId, createdAt])
   @@index([tenantId, createdAt(sort: Desc)])
@@ -665,9 +680,18 @@ model ToolExecution {
   errorJson  String?
   traceId    String?
 
-  run AgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  turnId        String?
+  correlationId String?
+  run           AgentRun          @relation(fields: [tenantId, runId], references: [tenantId, id], onDelete: Cascade)
+  turn          ConversationTurn? @relation(fields: [tenantId, runId, turnId], references: [tenantId, runId, id], onDelete: Restrict)
 
+  expiresAt DateTime?          @db.Timestamptz(6)
+  approval  ExecutionApproval?
+  commands  DeviceCommand[]
+
+  @@unique([tenantId, id])
   @@unique([tenantId, runId, toolCallId])
+  @@index([tenantId, status, expiresAt])
 }
 
 // -----------------------------------------------------------------------------
@@ -762,4 +786,139 @@ model SeededRecordMeta {
   @@unique([tenantId, targetTable, targetId])
   @@index([tenantId, sourceTemplateId])
   @@index([tenantId, targetTable, isCustomized])
+}
+
+// Device records are owned by the devices feature. Credentials store digests only.
+model Device {
+  id           String             @id @default(cuid())
+  tenantId     String
+  name         String
+  manifestJson String
+  status       String             @default("active")
+  createdAt    DateTime           @default(now()) @db.Timestamptz(6)
+  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  credentials  DeviceCredential[]
+  grants       DeviceToolGrant[]
+  telemetry    DeviceTelemetry[]
+  commands     DeviceCommand[]
+  runs         AgentRun[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, status])
+}
+
+model DeviceCredential {
+  id         String    @id @default(cuid())
+  tenantId   String
+  deviceId   String
+  secretHash String
+  expiresAt  DateTime  @db.Timestamptz(6)
+  revokedAt  DateTime? @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  device     Device    @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, id])
+  @@index([tenantId, deviceId, expiresAt])
+}
+
+model DeviceToolGrant {
+  id        String    @id @default(cuid())
+  tenantId  String
+  deviceId  String
+  toolId    String
+  expiresAt DateTime  @db.Timestamptz(6)
+  revokedAt DateTime? @db.Timestamptz(6)
+  device    Device    @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, deviceId, toolId])
+}
+
+model DeviceTelemetry {
+  id           String   @id @default(cuid())
+  tenantId     String
+  deviceId     String
+  messageId    String
+  bootId       String
+  sequence     BigInt
+  sampledAt    DateTime @db.Timestamptz(6)
+  receivedAt   DateTime @default(now()) @db.Timestamptz(6)
+  readingsJson String
+  device       Device   @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, deviceId, bootId, sequence])
+  @@unique([tenantId, deviceId, messageId])
+  @@index([tenantId, deviceId, sampledAt])
+}
+
+model DeviceCommand {
+  id          String        @id
+  tenantId    String
+  deviceId    String
+  executionId String
+  payloadJson String
+  status      String        @default("queued")
+  issuedAt    DateTime      @db.Timestamptz(6)
+  expiresAt   DateTime      @db.Timestamptz(6)
+  resultJson  String?
+  completedAt DateTime?     @db.Timestamptz(6)
+  device      Device        @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Restrict)
+  execution   ToolExecution @relation(fields: [tenantId, executionId], references: [tenantId, id], onDelete: Restrict)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, executionId])
+  @@index([tenantId, deviceId, status, expiresAt])
+}
+
+// AgentRun remains the conversation, and ToolExecution remains the execution ledger.
+model ConversationTurn {
+  id                    String              @id
+  tenantId              String
+  runId                 String
+  sequence              BigInt
+  source                String
+  status                String
+  correlationId         String
+  createdAt             DateTime            @default(now()) @db.Timestamptz(6)
+  completedAt           DateTime?           @db.Timestamptz(6)
+  generationCompletedAt DateTime?           @db.Timestamptz(6)
+  playbackCompletedAt   DateTime?           @db.Timestamptz(6)
+  run                   AgentRun            @relation(fields: [tenantId, runId], references: [tenantId, id], onDelete: Cascade)
+  messages              Message[]
+  executions            ToolExecution[]
+  usage                 ConversationUsage[]
+
+  @@unique([tenantId, runId, id])
+  @@unique([tenantId, runId, sequence])
+}
+
+model ExecutionApproval {
+  id              String        @id
+  tenantId        String
+  executionId     String
+  argumentsJson   String
+  status          String        @default("pending")
+  expiresAt       DateTime      @db.Timestamptz(6)
+  decidedAt       DateTime?     @db.Timestamptz(6)
+  decidedByUserId String?
+  execution       ToolExecution @relation(fields: [tenantId, executionId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, executionId])
+  @@index([tenantId, status, expiresAt])
+}
+
+model ConversationUsage {
+  id        String            @id @default(cuid())
+  tenantId  String
+  runId     String
+  turnId    String?
+  eventId   String
+  metric    String
+  quantity  Int
+  createdAt DateTime          @default(now()) @db.Timestamptz(6)
+  run       AgentRun          @relation(fields: [tenantId, runId], references: [tenantId, id], onDelete: Cascade)
+  turn      ConversationTurn? @relation(fields: [tenantId, runId, turnId], references: [tenantId, runId, id], onDelete: Restrict)
+
+  @@unique([tenantId, runId, eventId])
+  @@index([tenantId, metric, createdAt])
 }

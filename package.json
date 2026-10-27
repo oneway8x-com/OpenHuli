@@ -13,7 +13,7 @@
     "dev": "pnpm dev:app",
     "build": "pnpm build:packages && pnpm --filter @corely/app build",
     "build:packages": "pnpm --filter @corely/kernel --filter @corely/contracts --filter @corely/prompts --filter @corely/domain --filter @corely/data --filter @corely/storage --filter @corely/email-templates --filter \"@corely/modules-*\" build",
-    "typecheck": "pnpm --filter @corely/contracts typecheck && pnpm --filter @corely/data typecheck && pnpm --filter @corely/storage typecheck && pnpm --filter @corely/modules-todos typecheck && pnpm --filter @corely/modules-identity typecheck && pnpm --filter @corely/app typecheck && pnpm --filter @corely/e2e exec tsc --noEmit",
+    "typecheck": "pnpm --filter @corely/contracts typecheck && pnpm --filter @corely/data typecheck && pnpm --filter @corely/storage typecheck && pnpm --filter \"@corely/modules-*\" typecheck && pnpm --filter @corely/app typecheck && pnpm --filter @corely/e2e exec tsc --noEmit",
     "dev:app": "pnpm --filter @corely/app dev --hostname 127.0.0.1",
     "build:app": "pnpm build:packages && pnpm --filter @corely/app build",
     "prisma:generate": "pnpm --filter @corely/data exec prisma generate",
@@ -40,7 +40,8 @@
     "test:scripts": "tsx --test scripts/*.test.ts",
     "test:db:setup": "tsx scripts/setup-test-database.ts",
     "test:e2e": "pnpm --filter @corely/e2e e2e",
-    "owner:bootstrap": "node --env-file-if-exists=.env --import tsx scripts/bootstrap-owner.ts"
+    "owner:bootstrap": "node --env-file-if-exists=.env --import tsx scripts/bootstrap-owner.ts",
+    "test:migrations": "tsx scripts/check-persistence-migrations.ts"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
