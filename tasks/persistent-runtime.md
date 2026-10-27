@@ -40,7 +40,7 @@ for persistent sockets, MQTT connections, and future shared conversation use cas
 
 ## Remaining work / risks
 
-- PR creation pending.
+- PR: [#26](https://github.com/oneway8x-com/OpenHuli/pull/26), targeting `main`; pushed for review.
 - Broker/provider adapter contracts require prompt abort and idempotent cleanup. Broken adapters
   fail shutdown and force a nonzero CLI exit rather than leaving the process alive.
 - Device identity, shared authenticated session verification, actual audio/conversation/telemetry
