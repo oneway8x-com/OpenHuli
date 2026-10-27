@@ -38,7 +38,7 @@ OpenHuli device, telemetry, command, conversation, tool, approval, error, and bi
 
 ## Remaining work / risks
 
-- PR creation pending.
+- PR: [#24](https://github.com/oneway8x-com/OpenHuli/pull/24), targeting `main`; pushed for review.
 - Runtime consumers must enforce authentication, Tenant ownership, expiry, durable idempotency,
   cancellation reconciliation, and provider pacing/resampling. The peer only validates wire order;
   its simulated exchange is not a live WSS/MQTT or hardware acceptance claim.
