@@ -27,6 +27,13 @@ const deviceAccess = await readFile(
   ),
   "utf8",
 );
+const executor = await readFile(
+  new URL(
+    "../packages/data/prisma/migrations/20261027223000_authorized_tool_execution/migration.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 await db.connect();
 try {
   for (const seeded of [false, true]) {
@@ -53,6 +60,7 @@ try {
           INSERT INTO "DeviceToolGrant" (id,"tenantId","deviceId","toolId","expiresAt") VALUES ('legacy-grant','tenant','legacy-device','device.ping',now()+interval '1 day');`);
       }
       await db.query(deviceAccess);
+      await db.query(executor);
       if (seeded) {
         const legacy = await db.query(
           'SELECT "configurationJson",purpose,"secretHash","targetDeviceIdsJson" FROM "Device" d JOIN "DeviceCredential" c ON c."deviceId"=d.id JOIN "DeviceToolGrant" g ON g."deviceId"=d.id WHERE d.id=$1',

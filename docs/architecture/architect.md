@@ -50,3 +50,9 @@ OpenHuli uses MIT, selected by the maintainer. `LICENSE` preserves the Corely AI
 package metadata is aligned. Dependency licenses remain independent.
 
 See [structure](overall-structure.md), [boundaries](BOUNDARIES.md), and [AGENTS.md](../../AGENTS.md).
+
+## Authorized tool execution
+
+The [shared tool executor](authorized-tool-execution.md) owns registered policy, live authorization,
+exact approvals, durable dispatch identity, cancellation, and query-only outcome reconciliation.
+Transport and console adapters must call those use cases rather than dispatch callbacks directly.
