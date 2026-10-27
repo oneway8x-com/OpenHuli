@@ -32,7 +32,7 @@ Implement [#7](https://github.com/oneway8x-com/OpenHuli/issues/7) on `07-device-
 
 ## Remaining work / risks
 
-- Implementation, self-review, and required local checks complete. PR handoff below.
+- Implementation, self-review, and required local checks complete. PR [#28](https://github.com/oneway8x-com/OpenHuli/pull/28) targets `main` from `07-device-pairing`. Await CI and review; no merge or deployment.
 - WSS/broker transports must wire the exported authentication, topic authorization, per-operation
   revalidation, and idle watchdog before enabling device connections (#9/#13). No live broker,
   hardware firmware provisioning, or hosted TLS was exercised; full onboarding UI remains #19.
