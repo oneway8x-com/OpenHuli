@@ -35,7 +35,7 @@ Implement [#9](https://github.com/oneway8x-com/OpenHuli/issues/9) on `09-voice-g
 
 ## Remaining work / risks
 
-- Implementation and required checks complete; PR handoff below.
+- Implementation and required checks complete. PR [#31](https://github.com/oneway8x-com/OpenHuli/pull/31) targets `main` from `09-voice-gateway`. Await CI and review; no merge or deployment.
 - The CLI has no live streaming provider until #10. Voice is disabled by default and explicitly
   unready when enabled without a provider; no fake successful speech/action path is shipped.
 - Gateway queues are per single runtime host. #20/#21 own distributed/spend limits and verified
