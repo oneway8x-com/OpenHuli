@@ -5,6 +5,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@corely/modules-devices": fileURLToPath(
+        new URL("../../packages/modules/devices/src/index.ts", import.meta.url),
+      ),
       "@corely/modules-identity": fileURLToPath(
         new URL(
           "../../packages/modules/identity/src/index.ts",

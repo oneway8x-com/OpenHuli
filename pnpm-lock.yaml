@@ -201,6 +201,9 @@ importers:
       '@corely/kernel':
         specifier: workspace:*
         version: link:../../packages/kernel
+      '@corely/modules-devices':
+        specifier: workspace:*
+        version: link:../../packages/modules/devices
       '@corely/modules-identity':
         specifier: workspace:*
         version: link:../../packages/modules/identity

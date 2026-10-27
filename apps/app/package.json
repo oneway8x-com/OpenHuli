@@ -23,7 +23,8 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "zod": "catalog:",
-    "@corely/modules-identity": "workspace:*"
+    "@corely/modules-identity": "workspace:*",
+    "@corely/modules-devices": "workspace:*"
   },
   "devDependencies": {
     "@corely/tailwind-preset": "workspace:*",
