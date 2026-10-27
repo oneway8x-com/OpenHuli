@@ -35,6 +35,7 @@ live forecast mapping and a separate persisted notes API with durable idempotenc
 
 ## Remaining work / risks
 
-PR publication pending. Stack depends on PR #29 and must land after it. Notes is a loopback demo API,
+Published [PR #30](https://github.com/oneway8x-com/OpenHuli/pull/30), based on PR #29.
+The stack must land after #29. CI is running; all local checks passed. Notes is a loopback demo API,
 not a publicly hardened hosted service. Voice/provider wiring remains #10; no hardware/deployment
 verification or remote migration was performed.
