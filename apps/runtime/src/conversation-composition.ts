@@ -1,3 +1,10 @@
+import {
+  createHttpTools,
+  readHttpToolsConfig,
+  type HttpToolsConfig,
+  type SecretStore,
+  type JsonHttpClient,
+} from "@corely/modules-http-tools";
 import { setTimeout as pause } from "node:timers/promises";
 import { z } from "zod";
 import {
@@ -35,11 +42,32 @@ export function createLiveConversationRuntime(
   config: RuntimeConfig,
   provider?: ConversationProviderFactory,
   commands?: DeviceCommandDependencies,
+  http?: {
+    config: HttpToolsConfig;
+    secrets: SecretStore;
+    client?: JsonHttpClient;
+  },
 ) {
   const auth = readAuthConfig();
   const persistence = new PrismaService();
   const devices = new DeviceAccessRepository(persistence);
+  const httpConfig = http?.config ?? readHttpToolsConfig(process.env);
+  const httpTools = createHttpTools(
+    httpConfig,
+    http?.secrets ?? {
+      async get(reference) {
+        if (
+          reference !== httpConfig.notes?.secretReference ||
+          !process.env.NOTES_API_TOKEN
+        )
+          throw new Error("Notes credential unavailable");
+        return process.env.NOTES_API_TOKEN;
+      },
+    },
+    http?.client,
+  );
   const registry = new ToolRegistry([
+    ...httpTools,
     ...(commands ? createDeviceCommandTools(commands) : []),
     defineTool({
       id: "device_context",
@@ -79,6 +107,35 @@ export function createLiveConversationRuntime(
         new ConversationRepository(persistence),
       ),
       tools: [
+        ...(httpTools.some((tool) => tool.id === "weather.forecast")
+          ? [
+              {
+                id: "weather.forecast",
+                description:
+                  "Read an attributed Open-Meteo forecast for the owner-configured location. This is a forecast, not a device sensor measurement. Include source and fetch time.",
+                parameters: {
+                  type: "OBJECT",
+                  properties: {
+                    days: { type: "INTEGER", minimum: 1, maximum: 3 },
+                  },
+                },
+              },
+            ]
+          : []),
+        ...(httpTools.some((tool) => tool.id === "notes.create")
+          ? [
+              {
+                id: "notes.create",
+                description:
+                  "Create one exact note through the owner-configured notes service. Requires owner consent. Report success only after a confirmed receipt.",
+                parameters: {
+                  type: "OBJECT",
+                  properties: { text: { type: "STRING" } },
+                  required: ["text"],
+                },
+              },
+            ]
+          : []),
         ...(commands
           ? [
               {

@@ -2,8 +2,8 @@
 
 Open `/conversations` after signing in as the configured owner. Choose a provisioned active device
 and start a conversation. Typed turns enter the same conversation runtime, provider adapter and
-registered executor as device voice. Device context works with the current registry. Forecast and
-notes scenarios require #11's registered tools to be installed; the console does not invent them.
+registered executor as device voice. Device context is always registered. Configure the [HTTP tools](HTTP_TOOLS.md) to enable attributed
+`weather.forecast` reads and consent-controlled `notes.create` writes in both voice and console.
 The console is text-only; device/simulator audio playback remains on the authenticated voice path.
 
 ## Setup and trust boundaries
@@ -75,5 +75,5 @@ Automated tests use real owner authentication, routes, PostgreSQL, runtime and e
 synthetic provider and effect port. They cover exact approval binding, denial/cancel, partial and
 unknown outcomes, safe text rendering, source timestamps, reload without replay, narrow screens,
 and authentication/CSRF/Tenant boundaries. The browser host lives only under `apps/e2e/support`;
-production startup never loads its synthetic adapter. No live Gemini/forecast/note call or physical
-hardware result is implied by these tests.
+production startup never loads its synthetic adapter. The notes journey performs a real local HTTP POST into a separate SQLite store; forecast payloads
+and AI are deterministic fixtures. No live Gemini/Open-Meteo or physical hardware result is implied.

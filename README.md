@@ -15,7 +15,7 @@ opt-in. [MQTT telemetry](docs/guides/MQTT_TELEMETRY.md) adds authenticated inges
 [Acknowledged device commands](docs/guides/DEVICE_COMMANDS.md) support ping and optional display through
 the authorized executor. [Streaming responses and playback](docs/guides/RESPONSE_PLAYBACK.md) include
 audio conversion, cancellation and a reference simulator. The [conversation console](docs/guides/CONVERSATION_CONSOLE.md) provides typed turns, activity and
-exact approvals. Forecasts/notes tools remain #11.
+exact approvals. [Forecast and notes tools](docs/guides/HTTP_TOOLS.md) can be enabled through server configuration.
 
 ## Local setup
 

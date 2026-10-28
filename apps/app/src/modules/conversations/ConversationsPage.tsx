@@ -27,6 +27,8 @@ const toolNames: Record<string, string> = {
   device_context: "Read device context",
   "device.ping": "Ping device",
   "display.message": "Display message",
+  "weather.forecast": "Get forecast",
+  "notes.create": "Create note",
 };
 type Entry = { id: string; user?: string; answer?: string; final?: boolean };
 const label = (status: string, outcome: string | null) =>
@@ -593,6 +595,33 @@ function ToolCards({
                     {JSON.stringify(execution.arguments, null, 2)}
                   </pre>
                 </details>
+                {execution.output?.kind === "forecast" &&
+                execution.output.source === "Open-Meteo" ? (
+                  <p className="text-sm text-muted-foreground">
+                    Forecast data by{" "}
+                    <a
+                      className="underline"
+                      href="https://open-meteo.com/"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open-Meteo.com
+                    </a>{" "}
+                    ·{" "}
+                    <a
+                      className="underline"
+                      href="https://creativecommons.org/licenses/by/4.0/"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      CC BY 4.0
+                    </a>{" "}
+                    · Fetched{" "}
+                    {typeof execution.output.fetchedAt === "string"
+                      ? timestamp(execution.output.fetchedAt)
+                      : "time unavailable"}
+                  </p>
+                ) : null}
                 {execution.output ? (
                   <details>
                     <summary className="cursor-pointer text-sm font-medium">

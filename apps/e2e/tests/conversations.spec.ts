@@ -188,3 +188,86 @@ test("console routes require an owner and reject forged origins or tenant select
     ).status(),
   ).toBe(403);
 });
+test("forecast and note turns use the registered HTTP tools with attribution and one confirmed POST", async ({
+  page,
+}) => {
+  expect(
+    (
+      await page.request.post("/api/devices", {
+        data: {
+          name: "HTTP console device",
+          profileId: "weather-station",
+          profileVersion: 1,
+          capabilities: [
+            { kind: "temperature" },
+            { kind: "humidity" },
+            { kind: "ping" },
+          ],
+        },
+      })
+    ).status(),
+  ).toBe(201);
+  await page.goto("/conversations");
+  await page
+    .getByLabel("Active device")
+    .selectOption({ label: "HTTP console device" });
+  await page
+    .getByRole("button", { name: "New conversation", exact: true })
+    .click();
+  await expect(page.getByLabel("Message", { exact: true })).toBeEnabled();
+  await page.getByLabel("Message", { exact: true }).fill("forecast");
+  await page.getByRole("button", { name: "Send message", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Get forecast", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Open-Meteo.com", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "CC BY 4.0", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("Confirmed", { exact: true })).toBeVisible();
+  await page
+    .getByText("Result, sources and timestamps", { exact: true })
+    .click();
+  await expect(
+    page.getByText('"attribution": "Weather data by Open-Meteo.com"'),
+  ).toBeVisible();
+  await expect(page.getByText('"fetchedAt":', { exact: false })).toBeVisible();
+  await expect(page.getByLabel("Message", { exact: true })).toBeEnabled();
+  await send(page, "A synthetic console note");
+  await expect(
+    page.getByText('"text": "A synthetic console note"'),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Approve action", exact: true })
+    .click();
+  await expect(page.getByText("Confirmed", { exact: true })).toHaveCount(2);
+  const response = await page.request.get(
+    `/api/conversations?id=${new URL(page.url()).searchParams.get("id")}`,
+  );
+  const snapshot = await response.json();
+  const note = snapshot.executions.find(
+    (execution: { toolId: string }) => execution.toolId === "notes.create",
+  );
+  expect(note.output.text).toBe("A synthetic console note");
+  expect(note.output.id).toBeTruthy();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({
+    path: "/tmp/openhuli18-console-http.png",
+    fullPage: true,
+  });
+  await page.reload();
+  await expect(page.getByText("Confirmed", { exact: true })).toHaveCount(2);
+  const restored = await (
+    await page.request.get(`/api/conversations?id=${snapshot.id}`)
+  ).json();
+  expect(
+    restored.executions.filter(
+      (execution: { toolId: string }) => execution.toolId === "notes.create",
+    ),
+  ).toHaveLength(1);
+  expect(JSON.stringify(restored)).not.toContain(
+    "synthetic-console-notes-token",
+  );
+});
