@@ -48,6 +48,8 @@ library, an installable Arduino/PlatformIO package, a minimal example and refere
 
 ## Remaining work / risks
 
-Push the scoped changes and open the PR. Physical TLS/network/heap/stack/sensor/display acceptance
+Implementation committed and pushed; [PR #49](https://github.com/oneway8x-com/OpenHuli/pull/49)
+targets `main` and closes #48 on merge. Hosted CI is pending; the issue remains open.
+Physical TLS/network/heap/stack/sensor/display acceptance
 remains under [#22](https://github.com/oneway8x-com/OpenHuli/issues/22); core 3.x and other boards
 are unsupported. No registry publication, deployment, release or remote database change was made.
