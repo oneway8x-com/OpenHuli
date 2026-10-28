@@ -23,7 +23,8 @@ Implement [#18](https://github.com/oneway8x-com/OpenHuli/issues/18) on `18-conve
 
 ## Remaining work / risks
 
+- The native disposable PostgreSQL instance was stopped and its data removed. Docker remained unresponsive, so cleanup of the earlier `openhuli-console-test` container could not be confirmed.
 - No paid Gemini, live Open-Meteo, deployment or hardware test was run. No key was requested; the user previously chose documented live smoke instructions.
 - Console output is text-only. Default transcript retention remains off; refresh restores operational metadata, not previous text.
 - Approvals must finish within the originating turn's existing time budget (25 seconds by default). Sessions expire after at most five minutes; process restart makes prior activity read only. These bounds and safe reconnect behavior are documented in `docs/guides/CONVERSATION_CONSOLE.md`.
-- PR: pending creation.
+- PR: [#37](https://github.com/oneway8x-com/OpenHuli/pull/37), `18-conversation-console` → `main`.
