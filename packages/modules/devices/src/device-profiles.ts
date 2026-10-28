@@ -23,6 +23,10 @@ const profiles = {
     required: ["microphone"],
     allowed: ["microphone"],
   },
+  "sensor-node": {
+    required: ["ping"],
+    allowed: ["temperature", "humidity", "display", "ping"],
+  },
   "weather-station": {
     required: ["temperature", "humidity", "ping"],
     allowed: ["temperature", "humidity", "display", "ping"],
@@ -33,6 +37,16 @@ export function validateDeviceProfile(value: unknown): PairDeviceInput {
   const config = PairDeviceSchema.parse(value);
   const profile = profiles[config.profileId];
   const kinds = config.capabilities.map((cap) => cap.kind);
+  if (
+    config.profileId === "sensor-node" &&
+    config.capabilities.some(
+      (cap) => cap.kind === "display" && cap.maxTextLength > 32,
+    )
+  )
+    throw new DeviceAccessError(
+      400,
+      "Sensor node displays support at most 32 characters",
+    );
   if (
     profile.required.some((kind) => !kinds.includes(kind)) ||
     kinds.some((kind) => !new Set<string>(profile.allowed).has(kind))

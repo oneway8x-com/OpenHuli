@@ -384,3 +384,47 @@ test("owner pairs a microphone-only firmware endpoint without unsupported capabi
   ).toEqual(["microphone"]);
   expect(JSON.stringify(data)).not.toContain('"token"');
 });
+
+test("owner pairs a sensorless Uno/Nano and opts into real sensor capabilities", async ({
+  page,
+}) => {
+  await page.goto("/devices");
+  await page
+    .getByRole("combobox", { name: "Profile", exact: true })
+    .selectOption("sensor-node");
+  await page.getByLabel("Device name").fill("Synthetic Nano USB");
+  await expect(
+    page.getByLabel("Temperature sensor", { exact: true }),
+  ).not.toBeChecked();
+  const response = page.waitForResponse(
+    (r) => r.url().endsWith("/api/devices") && r.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: "Pair device", exact: true }).click();
+  const paired = await (await response).json();
+  expect(paired.device.capabilities).toEqual([{ kind: "ping" }]);
+  expect(paired.credentials.map((c: { purpose: string }) => c.purpose)).toEqual(
+    ["mqtt"],
+  );
+  await expect(
+    page.getByText("Synthetic Nano USB", { exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await page
+    .getByRole("combobox", { name: "Profile", exact: true })
+    .selectOption("sensor-node");
+  await page.getByLabel("Temperature sensor", { exact: true }).check();
+  await page.getByLabel("Has a display", { exact: true }).check();
+  await expect(
+    page.getByLabel("Display character limit", { exact: true }),
+  ).toHaveAttribute("max", "32");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({
+    path: "/tmp/openhuli50-pairing-mobile.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({
+    path: "/tmp/openhuli50-pairing-desktop.png",
+    fullPage: true,
+  });
+});

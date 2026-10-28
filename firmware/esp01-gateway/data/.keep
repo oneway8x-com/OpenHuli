@@ -1,0 +1,1 @@
+Provision this empty LittleFS image only during first setup; do not erase an existing dispatch fence.

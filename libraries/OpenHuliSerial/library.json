@@ -1,0 +1,22 @@
+{
+  "name": "OpenHuliSerial",
+  "version": "0.1.0",
+  "description": "Bounded Uno/Nano serial companion and gateway wire codec for OpenHuli",
+  "license": "MIT",
+  "frameworks": ["arduino"],
+  "platforms": ["atmelavr", "espressif8266"],
+  "export": {
+    "include": [
+      "src/*.h",
+      "src/*.cpp",
+      "examples/Node/Node.ino",
+      "examples/Node/platformio.ini",
+      "examples/Sensors/Sensors.ino",
+      "examples/Sensors/platformio.ini",
+      "library.json",
+      "library.properties",
+      "README.md",
+      "LICENSE"
+    ]
+  }
+}
