@@ -5,5 +5,11 @@ export default defineConfig({
   format: ["esm"],
   outDir: "dist",
   clean: true,
-  noExternal: ["@corely/modules-voice", "@corely/modules-devices"],
+  noExternal: [
+    "@corely/modules-voice",
+    "@corely/modules-devices",
+    "@corely/modules-conversations",
+    "@corely/modules-tool-execution",
+    "@corely/modules-identity",
+  ],
 });

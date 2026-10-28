@@ -15,11 +15,25 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     return;
   }
-  const voice = config.RUNTIME_VOICE_ENABLED
+  const conversation =
+    config.RUNTIME_VOICE_ENABLED && config.GEMINI_API_KEY
+      ? (
+          await import("./conversation-composition")
+        ).createLiveConversationRuntime(config)
+      : undefined;
+  const authorization = config.RUNTIME_VOICE_ENABLED
+    ? (await import("./device-authorization")).createVoiceAuthorization()
+    : undefined;
+  const voice = authorization
     ? {
-        authorization: (
-          await import("./device-authorization")
-        ).createVoiceAuthorization(),
+        authorization: {
+          ...authorization,
+          async close() {
+            await authorization.close();
+            await conversation?.close();
+          },
+        },
+        ...(conversation ? { provider: conversation } : {}),
       }
     : undefined;
   const runtime = createRuntime(config, {

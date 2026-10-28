@@ -8,7 +8,8 @@
     "dev": "node --env-file-if-exists=../../.env --import tsx --watch src/main.ts",
     "build": "tsdown",
     "start": "node --env-file-if-exists=../../.env dist/main.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "smoke:live": "node --env-file-if-exists=../../.env --import tsx src/live-smoke.ts"
   },
   "dependencies": {
     "@corely/contracts": "workspace:*",
@@ -17,7 +18,10 @@
     "zod": "catalog:",
     "@corely/modules-voice": "workspace:*",
     "@corely/modules-devices": "workspace:*",
-    "@corely/data": "workspace:*"
+    "@corely/data": "workspace:*",
+    "@corely/modules-conversations": "workspace:*",
+    "@corely/modules-tool-execution": "workspace:*",
+    "@corely/modules-identity": "workspace:*"
   },
   "devDependencies": {
     "@corely/tsconfig": "workspace:*",

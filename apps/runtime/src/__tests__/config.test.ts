@@ -33,6 +33,11 @@ describe("runtime configuration", () => {
     ).toBeDefined();
   });
   it.each([
+    { GEMINI_API_KEY: "too-short" },
+    { GEMINI_API_KEY: "synthetic-secret-with-invalid-value?" },
+    { AI_MAX_TOOL_CALLS: "0" },
+    { AI_MAX_TOOL_CALLS: "17" },
+    { AI_TURN_TIMEOUT_MS: "99" },
     { RUNTIME_VOICE_ENABLED: "yes" },
     { RUNTIME_VOICE_QUEUE_BYTES: "663" },
     { RUNTIME_VOICE_QUEUE_MESSAGES: "0" },

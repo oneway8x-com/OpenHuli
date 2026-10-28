@@ -2,23 +2,22 @@
 
 Issue #9 adds `/voice` to the persistent Node runtime and the shared `modules/voice` session use
 cases. It streams bounded PCM to a provider port while the user records; it never collects a whole
-audio file or treats an incomplete turn as an action request. The live streaming AI adapter and its
-conversation/execution persistence are #10. No live provider, model credentials, hardware support,
-or production TLS deployment is claimed by this ticket.
+audio file or treats an incomplete turn as an action request. The [live conversation adapter](LIVE_CONVERSATIONS.md)
+adds Gemini, typed turns, persistence and authorized execution. Hardware and hosted TLS validation remain separate.
 
 ## Enablement and readiness
 
 `RUNTIME_VOICE_ENABLED=false` keeps the endpoint closed. Enabling it requires `DATABASE_URL` and a
 streaming provider composed into `createRuntime` alongside `createVoiceAuthorization`. The current
-CLI intentionally has no fake/echo/discard provider: until #10 supplies the live adapter, enabling
-voice reports `voice: unconfigured`, readiness returns 503, and upgrade returns 503. Liveness remains
-available. A successful host/probe check does not prove an available voice service.
+CLI selects the Gemini adapter only with `GEMINI_API_KEY`. Without it, enabled voice reports
+`voice: unconfigured`, readiness and upgrade return 503. Production never selects a fake provider.
+Liveness remains available. A successful host/probe check does not prove an available voice service.
 
 The provider boundary is `VoiceProviderFactory` in `packages/modules/voice`. `open` receives only
 server-owned Tenant/device/session/conversation context and an abort signal. `startTurn` receives a
 turn-bound output channel. `appendAudio` forwards individual 20ms PCM frames during collection and
 MUST NOT dispatch tools or start side effects. Only `commit` receives a validated committed context,
-after every queued chunk is accepted and the device credential is revalidated. The #10 adapter must
+after every queued chunk is accepted and the device credential is revalidated. The conversation adapter must
 call the shared conversation/execution use cases and retain their approval/idempotency guarantees.
 It must never treat upstream model/tool events during collection as permission to execute.
 
@@ -76,7 +75,7 @@ channels return false after cancellation/completion and cannot inject text/audio
 `turn.cancel` immediately aborts the turn even when its provider is slow or a commit is queued behind
 unaccepted audio. It closes that turn's provider resources. Disconnect, credential expiry/revocation,
 idle expiry, shutdown, and session expiry abort the entire provider session. Cancellation of an
-already committed external write does not prove it was undone; #8/#10 must retain unknown outcomes
+already committed external write does not prove it was undone; #8/#10 retain unknown outcomes
 and reconcile rather than retry them. No call is automatically retried by this gateway.
 
 ## Limits and cleanup

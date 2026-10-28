@@ -106,7 +106,7 @@ export class OpenHuliVoicePeer {
       this.phase = "ready";
     } else {
       this.require(this.phase === "ready", "Session is not ready");
-      if (message.type === "turn.start") {
+      if (message.type === "turn.start" || message.type === "turn.text") {
         this.require(!this.active, "Another turn is active");
         this.require(this.turns.size < 256, "Session turn limit reached");
         this.require(!this.turns.has(message.turnId), "Duplicate turnId");
@@ -114,20 +114,24 @@ export class OpenHuliVoicePeer {
           message.turnSequence === this.turnSequence + 1,
           "Unexpected turn sequence",
         );
-        this.require(!this.streams.has(message.streamId), "Duplicate streamId");
+        if (message.type === "turn.start")
+          this.require(
+            !this.streams.has(message.streamId),
+            "Duplicate streamId",
+          );
         this.active = {
           id: message.turnId,
           sequence: message.turnSequence,
-          inputStream: message.streamId,
+          inputStream: message.type === "turn.start" ? message.streamId : 0,
           inputNext: 0,
-          committed: false,
+          committed: message.type === "turn.text",
           text: false,
           outputNext: 0,
           generated: false,
           played: false,
         };
         this.turns.add(message.turnId);
-        this.streams.add(message.streamId);
+        if (message.type === "turn.start") this.streams.add(message.streamId);
         this.turnSequence = message.turnSequence;
       } else {
         const active = this.active;

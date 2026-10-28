@@ -219,3 +219,11 @@ FIN boundary. It buffers at most 664 bytes and emits only on FIN. It rejects sho
 concatenated frames, payload/header length mismatches, unknown version/kind/reserved fields, and
 zero IDs. Call `finish()` on disconnect to detect incomplete fragmentation. This decoder is not a
 raw RFC 6455 parser: the transport owns masking, control frames, UTF-8 validation, TLS, and framing.
+
+## Additive typed turns
+
+`turn.text` supplies a complete 1–4096 nonblank-character typed turn on the authenticated device
+socket, with fresh `messageId`, `turnId` and next `turnSequence`. It starts and commits atomically;
+no input stream ID, audio frame or subsequent `turn.commit` is allowed for that turn. Session format
+negotiation and existing device credential/capability requirements still apply. See
+[live conversations](../guides/LIVE_CONVERSATIONS.md) for an example and server behavior.

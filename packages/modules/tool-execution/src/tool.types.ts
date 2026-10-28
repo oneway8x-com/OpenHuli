@@ -18,7 +18,13 @@ export type Actor =
       accessExpiresAt: number;
     }
   | ({ kind: "device" } & DeviceSession);
-export type ToolAuthentication = { kind: "owner" | "device"; token: string };
+/** verified-device is an internal server composition input, never a wire authentication payload. */
+export type ToolAuthentication =
+  | { kind: "owner" | "device"; token: string }
+  | {
+      kind: "verified-device";
+      session: DeviceSession;
+    };
 export interface ToolContext {
   tenantId: string;
   executionId: string;

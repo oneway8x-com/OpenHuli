@@ -20,6 +20,7 @@ export interface VoiceAuthorization {
   close(): Promise<void>;
 }
 export interface VoiceSessionContext {
+  credentialId: string;
   sessionId: string;
   conversationId: string;
   tenantId: string;
@@ -27,6 +28,7 @@ export interface VoiceSessionContext {
   signal: AbortSignal;
 }
 export interface VoiceTurnContext extends VoiceSessionContext {
+  source?: "text" | "voice";
   turnId: string;
   turnSequence: number;
 }
@@ -41,6 +43,7 @@ export interface VoiceOutput {
 /** Append must never dispatch actions; only commit may start the authenticated conversation use case. */
 export interface VoiceProviderTurn {
   appendAudio(frame: OpenHuliAudioFrame): Promise<void>;
+  appendText?(text: string): Promise<void>;
   commit(context: CommittedVoiceTurn): Promise<void>;
   stop(): Promise<void>;
 }
