@@ -92,4 +92,15 @@ jobs:
         with:
           path: ~/.platformio
           key: firmware-${{ runner.os }}-${{ hashFiles('firmware/esp32-voice/platformio.ini') }}
-      - run: pio run --project-dir firmware/esp32-voice
+      - run: pio run --project-dir firmware/esp32-voice --environment s2_mini --environment s2_mini_check
+      - name: Test firmware command JSON boundary
+        run: |
+          binary="$(mktemp)"
+          trap 'rm -f "$binary"' EXIT
+          c++ -std=c++17 -Wall -Wextra -Werror -pedantic \
+            -Ifirmware/esp32-voice/include \
+            -Ifirmware/esp32-voice/.pio/libdeps/s2_mini/ArduinoJson/src \
+            firmware/esp32-voice/src/voice_core.cpp firmware/esp32-voice/src/weather_core.cpp \
+            firmware/esp32-voice/src/command_json.cpp firmware/esp32-voice/test/command_json.cpp \
+            -o "$binary"
+          "$binary"

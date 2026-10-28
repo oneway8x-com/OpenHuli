@@ -19,7 +19,9 @@ manual commands, grants and Tenant integration settings. The [conversation conso
 exact approvals. [Forecast and notes tools](docs/guides/HTTP_TOOLS.md) can be enabled through server configuration.
 
 The [ESP32 microphone reference](docs/guides/ESP32_VOICE.md) is configurable and cross-buildable;
-its exact wiring, real audio and physical acceptance remain unverified.
+its exact wiring, real audio and physical acceptance remain unverified. The optional
+[DHT11/LCD1602 extension](docs/guides/ESP32_WEATHER.md) adds sensor-only or combined operation,
+with its physical acceptance also pending.
 The [release evaluation guide](docs/guides/RELEASE_EVALUATION.md) defines 32 scenarios and a
 report template for live and physical acceptance. Hardware wiring, endurance and provider latency
 require recorded evidence before the MVP release gate can pass.

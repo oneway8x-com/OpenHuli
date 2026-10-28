@@ -3,8 +3,8 @@
 Issue [#15](https://github.com/oneway8x-com/OpenHuli/issues/15) adds a configurable, microphone-only
 ESP32-S2 reference. **Hardware acceptance is pending.** The `lolin_s2_mini` build selects a candidate
 LOLIN S2 Mini target; it does not establish the actual board revision, microphone model, wiring or
-working audio. No GPIO map is published until those details are confirmed. DHT11, MQTT ping/display
-and physical speaker support belong to their separate firmware/device tickets.
+working audio. No GPIO map is published until those details are confirmed. The optional [DHT11/LCD1602 extension](ESP32_WEATHER.md) adds MQTT telemetry and commands;
+physical speaker support belongs to its separate validated profile.
 
 ## Hardware and configuration
 

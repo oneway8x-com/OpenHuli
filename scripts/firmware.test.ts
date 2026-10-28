@@ -11,6 +11,10 @@ import {
   OpenHuliVoicePeer,
   parseOpenHuliVoiceClientMessage,
   OPENHULI_PCM_FORMAT,
+  parseDeviceManifest,
+  parseDeviceTelemetry,
+  DevicePresenceSchema,
+  DeviceCommandResultSchema,
 } from "../packages/contracts/src/index.ts";
 
 test("compiled firmware core conforms to the shared v1 peer and preserves bounded turn state", () => {
@@ -87,6 +91,91 @@ test("compiled firmware core conforms to the shared v1 peer and preserves bounde
     assert.equal(parseOpenHuliAudio(bytes).payload.byteLength, 640);
     peer.receiveControl(controls[2]!);
     peer.receiveControl(controls[3]!);
+  } finally {
+    rmSync(temporary, { recursive: true, force: true });
+  }
+});
+
+test("compiled weather firmware reports real samples/errors and conforms to MQTT wire contracts", () => {
+  const root = fileURLToPath(
+    new URL("../firmware/esp32-voice/", import.meta.url),
+  );
+  const temporary = mkdtempSync(join(tmpdir(), "openhuli-weather-"));
+  try {
+    const binary = join(temporary, "weather-tests");
+    execFileSync(
+      process.env.CXX || "c++",
+      [
+        "-std=c++17",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-pedantic",
+        "-I",
+        join(root, "include"),
+        join(root, "src/voice_core.cpp"),
+        join(root, "src/weather_core.cpp"),
+        join(root, "test/weather.cpp"),
+        "-o",
+        binary,
+      ],
+      { timeout: 60000 },
+    );
+    const lines = execFileSync(binary, { encoding: "utf8", timeout: 10000 })
+      .trim()
+      .split("\n");
+    assert.match(lines.at(-1) ?? "", /^PASS /);
+    const line = (prefix: string) =>
+      lines
+        .find((text) => text.startsWith(prefix + " "))!
+        .slice(prefix.length + 1);
+    const manifest = parseDeviceManifest(line("MANIFEST"));
+    assert.deepEqual(
+      manifest.capabilities.map((c) => c.kind),
+      ["temperature", "humidity", "ping", "microphone", "display"],
+    );
+    assert.deepEqual(
+      parseDeviceManifest(line("SENSOR_MANIFEST")).capabilities.map(
+        (c) => c.kind,
+      ),
+      ["temperature", "humidity", "ping"],
+    );
+    assert.equal(
+      parseDeviceManifest(line("NO_DISPLAY_MANIFEST")).capabilities.some(
+        (c) => c.kind === "display",
+      ),
+      false,
+    );
+    const sample = parseDeviceTelemetry(line("TELEMETRY"), manifest);
+    assert.equal(sample.readings[0]!.value, 23.4);
+    assert.equal(sample.readings[1]!.value, 55.2);
+    const failed = parseDeviceTelemetry(line("SENSOR_ERROR"), manifest);
+    assert.deepEqual(failed.readings, []);
+    assert.equal(failed.sensorErrors!.length, 2);
+    const presence = ["ONLINE", "WILL", "RECONNECTED"].map((key) =>
+      DevicePresenceSchema.parse(JSON.parse(line(key))),
+    );
+    assert.deepEqual(
+      presence.map((p) => p.sequence),
+      [2, 3, 4],
+    );
+    assert.deepEqual(
+      presence.map((p) => p.status),
+      ["online", "offline", "online"],
+    );
+    const results = lines
+      .filter((text) => text.startsWith("RESULT "))
+      .map((text) =>
+        DeviceCommandResultSchema.parse(JSON.parse(text.slice(7))),
+      );
+    assert.deepEqual(
+      results.map((r) => r.status),
+      ["succeeded", "failed", "expired", "unknown", "failed", "failed"],
+    );
+    assert.equal(
+      results[1]!.status === "failed" && results[1]!.error.code,
+      "unsupported_capability",
+    );
   } finally {
     rmSync(temporary, { recursive: true, force: true });
   }

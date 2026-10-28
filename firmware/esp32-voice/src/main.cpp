@@ -1,4 +1,7 @@
+#include "hardware_config.h"
+#include "local_config.h"
 #include "voice_core.h"
+#include "weather_runtime.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <WebSocketsClient.h>
@@ -11,11 +14,6 @@
 #include <driver/gpio.h>
 #include <driver/i2s.h>
 #include <esp_heap_caps.h>
-#if __has_include("config.local.h")
-#include "config.local.h"
-#else
-#include "config.example.h"
-#endif
 #if !defined(CONFIG_IDF_TARGET_ESP32S2)
 #error This unvalidated reference target is ESP32-S2 only.
 #endif
@@ -285,16 +283,20 @@ bool start_microphone() {
   i2s_driver_uninstall(I2S_NUM_0);
   return false;
 }
-bool safe_pin(int pin, bool output) {
-  // Exclude USB, flash/PSRAM, BOOT and strapping pins; this is validation, not a proposed pin map.
-  return ((pin >= 1 && pin <= 18) || pin == 21 || (pin >= 33 && pin <= 44)) &&
-         (output ? GPIO_IS_VALID_OUTPUT_GPIO(pin) : GPIO_IS_VALID_GPIO(pin));
-}
 bool validate_config() {
-  if (!config::hardware_confirmed || !safe_pin(config::mic_bclk, true) ||
-      !safe_pin(config::mic_ws, true) || !safe_pin(config::mic_data, false) ||
-      !safe_pin(config::button, false) || (config::led != -1 && !safe_pin(config::led, true)) ||
-      config::sample_shift > 24 || config::sample_shift < 8)
+  if (!config::hardware_confirmed || (!config::voice_enabled && !config::weather_enabled) ||
+      !*config::wifi_ssid || std::strlen(config::wifi_ssid) > 32 ||
+      !openhuli::weather::validate_config())
+    return false;
+  if (!config::voice_enabled)
+    return true;
+  if (!openhuli::safe_pin(config::mic_bclk, true) || !openhuli::safe_pin(config::mic_ws, true) ||
+      !openhuli::safe_pin(config::mic_data, false) || !openhuli::safe_pin(config::button, false) ||
+      (config::led != -1 && !openhuli::safe_pin(config::led, true)) || config::sample_shift < 8 ||
+      config::sample_shift > 24 || !config::voice_port || config::voice_port > 65535 ||
+      !openhuli::safe_host(config::voice_host) ||
+      !openhuli::safe_token(config::device_voice_token) ||
+      !std::strstr(config::root_ca, "-----BEGIN CERTIFICATE-----"))
     return false;
   const int pins[] = {config::mic_bclk, config::mic_ws, config::mic_data, config::button,
                       config::led};
@@ -302,20 +304,6 @@ bool validate_config() {
     for (size_t j = i + 1; j < 5; ++j)
       if (pins[i] >= 0 && pins[i] == pins[j])
         return false;
-  if (!*config::wifi_ssid || std::strlen(config::wifi_ssid) > 32 || config::voice_port == 0 ||
-      config::voice_port > 65535 || std::strncmp(config::device_voice_token, "ohd1.", 5) ||
-      std::strlen(config::device_voice_token) > 2048 ||
-      !std::strstr(config::root_ca, "-----BEGIN CERTIFICATE-----"))
-    return false;
-  for (const char* c = config::device_voice_token; *c; ++c)
-    if (!(std::isalnum(static_cast<unsigned char>(*c)) || *c == '.' || *c == '_' || *c == '-'))
-      return false;
-  const size_t host_length = std::strlen(config::voice_host);
-  if (!host_length || host_length > 253)
-    return false;
-  for (const char* c = config::voice_host; *c; ++c)
-    if (!(std::isalnum(static_cast<unsigned char>(*c)) || *c == '.' || *c == '-'))
-      return false;
   return true;
 }
 void begin_turn() {
@@ -427,16 +415,18 @@ void setup() {
         "Unconfigured reference: confirm hardware and private config.local.h before use");
     return;
   }
-  queue = xQueueCreateStatic(queue_capacity, sizeof(Chunk), queue_bytes, &queue_storage);
-  pinMode(config::button, INPUT_PULLUP);
-  button.initialize(digitalRead(config::button) == LOW, millis());
-  if (config::led >= 0)
-    pinMode(config::led, OUTPUT);
-  if (!queue || !start_microphone()) {
-    configured = false;
-    voice.fail();
-    Serial.println("Microphone setup failed");
-    return;
+  if (config::voice_enabled) {
+    queue = xQueueCreateStatic(queue_capacity, sizeof(Chunk), queue_bytes, &queue_storage);
+    pinMode(config::button, INPUT_PULLUP);
+    button.initialize(digitalRead(config::button) == LOW, millis());
+    if (config::led >= 0)
+      pinMode(config::led, OUTPUT);
+    if (!queue || !start_microphone()) {
+      configured = false;
+      voice.fail();
+      Serial.println("Microphone setup failed");
+      return;
+    }
   }
   WiFi.persistent(false);
   WiFi.mode(WIFI_STA);
@@ -444,6 +434,12 @@ void setup() {
   WiFi.begin(config::wifi_ssid, config::wifi_password);
   std::snprintf(authorization, sizeof(authorization), "Bearer %s", config::device_voice_token);
   socket.onEvent(websocket_event);
+  if (!openhuli::weather::begin()) {
+    configured = false;
+    clear_capture();
+    WiFi.disconnect();
+    Serial.println("Weather service setup failed");
+  }
 }
 void loop() {
   if (!configured) {
@@ -465,7 +461,7 @@ void loop() {
       configTime(0, 0, "pool.ntp.org", "time.cloudflare.com");
       clock_started = true;
     }
-    if (std::time(nullptr) >= 1704067200) {
+    if (config::voice_enabled && std::time(nullptr) >= 1704067200) {
       if (!socket_started) {
         // CA chain and DNS hostname verification remain enabled. No plaintext/insecure mode exists.
         socket.beginSslWithCA(config::voice_host, config::voice_port, "/voice", config::root_ca,
@@ -480,19 +476,22 @@ void loop() {
       socket.loop();
     }
   }
-  input_and_send(now);
+  if (config::voice_enabled)
+    input_and_send(now);
   if ((voice.state == State::negotiating && uint32_t(now - phase_started) > 5000) ||
       (voice.state == State::draining && uint32_t(now - phase_started) > 2000) ||
       (voice.state == State::waiting && uint32_t(now - phase_started) > 60000))
     fault("session phase deadline");
-  indicator(now);
+  if (config::voice_enabled)
+    indicator(now);
   if (uint32_t(now - diagnostic_at) >= 10000) {
     diagnostic_at = now;
     Serial.printf(
         "voice state=%s heap=%u minimum_heap=%u psram=%u capture_stack=%u queue_peak=%lu "
         "chunks=%lu\n",
         state_name(), ESP.getFreeHeap(), heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL),
-        ESP.getPsramSize(), static_cast<unsigned>(uxTaskGetStackHighWaterMark(capture_handle)),
+        ESP.getPsramSize(),
+        capture_handle ? static_cast<unsigned>(uxTaskGetStackHighWaterMark(capture_handle)) : 0u,
         static_cast<unsigned long>(max_queue_used), static_cast<unsigned long>(voice.sent));
   }
   delay(1);
