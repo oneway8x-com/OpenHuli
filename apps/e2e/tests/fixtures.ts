@@ -64,6 +64,9 @@ export const test = base.extend<{ session: TestTenant }>({
       await prisma.portalOtpCode.deleteMany({
         where: { tenantId: owner.tenantId, emailNormalized: owner.email },
       });
+      await prisma.deviceCommand.deleteMany({
+        where: { tenantId: owner.tenantId },
+      });
       await prisma.agentRun.deleteMany({ where: { tenantId: owner.tenantId } });
       await prisma.device.deleteMany({ where: { tenantId: owner.tenantId } });
       await prisma.user.deleteMany({ where: { id: owner.userId } });

@@ -544,3 +544,20 @@ export async function reconcileToolExecution(
   }
   return current(record, deps);
 }
+
+/** Read a previously submitted call without reserving or dispatching it (e.g. lost HTTP receipt). */
+export async function findToolCall(
+  input: { conversationId: string; toolCallId: string },
+  auth: ToolAuthentication,
+  deps: ToolDependencies,
+) {
+  const actor = await authenticate(auth, deps);
+  const record = await deps.store.findByCall(
+    actor.tenantId,
+    OpenHuliIdSchema.parse(input.conversationId),
+    OpenHuliIdSchema.parse(input.toolCallId),
+  );
+  if (!record) throw new Error("Execution not found");
+  requireVisibility(actor, record);
+  return view(record);
+}

@@ -35,8 +35,9 @@ async function fixture() {
     method: string,
     body?: unknown,
     headers: Record<string, string> = {},
+    path = "/notes",
   ) =>
-    fetch(`http://127.0.0.1:${address.port}/notes`, {
+    fetch(`http://127.0.0.1:${address.port}${path}`, {
       method,
       headers: {
         authorization: `Bearer ${token}`,
@@ -56,6 +57,16 @@ async function fixture() {
   };
 }
 describe("separate notes HTTP API", () => {
+  it("requires authentication for the read-only health probe and creates no note", async () => {
+    const f = await fixture();
+    expect(
+      (await f.req("GET", undefined, { authorization: "" }, "/health")).status,
+    ).toBe(401);
+    expect(await (await f.req("GET", undefined, {}, "/health")).json()).toEqual(
+      { ready: true },
+    );
+    expect((await f.req("GET")).status).toBe(404);
+  });
   it("persists an actual POST, returns exact idempotent receipts across restart and isolates tenants", async () => {
     const f = await fixture();
     const response = await f.req("POST", { text: "Real persisted note" });

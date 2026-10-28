@@ -53,7 +53,14 @@ async function main(): Promise<void> {
         Boolean(config.GEMINI_API_KEY),
       )
     : undefined;
+  const management = conversation
+    ? (await import("./management")).createDeviceManagement(
+        conversation,
+        services?.telemetry,
+      )
+    : undefined;
   const runtime = createRuntime(config, {
+    ...(management ? { management } : {}),
     ...(consoleRuntime ? { console: consoleRuntime } : {}),
     ...(voice ? { voice } : {}),
     dependencies: mqtt ? [mqtt] : [],

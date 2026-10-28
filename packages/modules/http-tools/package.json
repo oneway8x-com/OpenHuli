@@ -14,7 +14,8 @@
   "dependencies": {
     "@corely/contracts": "workspace:*",
     "zod": "catalog:",
-    "@corely/modules-tool-execution": "workspace:*"
+    "@corely/modules-tool-execution": "workspace:*",
+    "@prisma/client": "catalog:"
   },
   "devDependencies": {
     "@corely/tsconfig": "workspace:*",

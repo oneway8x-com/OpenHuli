@@ -112,3 +112,8 @@ pnpm smoke:http notes
 ```
 
 Do not substitute deterministic tests for the live forecast smoke or claim hardware/voice coverage.
+
+Owners can save Tenant-specific forecast settings and enabled flags in the
+[device console](DEVICE_CONSOLE.md). Saved settings override environment defaults for that Tenant.
+Notes destinations and credentials remain server-managed. The notes API also supplies an authenticated,
+read-only `GET /health` endpoint for connection checks; the console never creates a note as a probe.

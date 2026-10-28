@@ -41,6 +41,10 @@ export function createNotesServer(config: NotesApiConfig, store: NotesStore) {
       send(401, { error: "Unauthorized" });
       return;
     }
+    if (request.method === "GET" && request.url === "/health") {
+      send(200, { ready: true });
+      return;
+    }
     if (
       request.url !== "/notes" ||
       !["GET", "POST"].includes(request.method ?? "")
