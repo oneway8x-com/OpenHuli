@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { ConversationJournal } from "./conversation-runtime.types";
 import type { ConversationRepository } from "./conversation.repository";
 import {
+  recordTurnAudioCompletion,
   startConversation,
   startConversationTurn,
   transitionConversationTurn,
@@ -61,6 +62,17 @@ export function createConversationJournal(
           turnId: context.turnId,
           role,
           ...(text ? { text } : {}),
+        },
+        context,
+        repository,
+      );
+    },
+    async audioCompletion(context, kind) {
+      await recordTurnAudioCompletion(
+        {
+          conversationId: context.conversationId,
+          turnId: context.turnId,
+          kind,
         },
         context,
         repository,

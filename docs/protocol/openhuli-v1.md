@@ -263,3 +263,14 @@ and no offline/reconnect replay. A receipt must come from the exact authenticate
 execution, with matching command/execution IDs. First timely terminal result wins; late receipts cannot
 revive uncertain outcomes. Devices must check synchronized time and reserve IDs before acting.
 See [command lifecycle and firmware deduplication](../guides/DEVICE_COMMANDS.md).
+
+### Additive streaming response negotiation (#17)
+
+`session.start` may offer `streamingResponses: true`; ready echoes it only when accepted. With this
+opt-in, `response.delta` carries transient public text (at most 4,096 total characters/turn), and
+`tool.result` carries `executionId` plus an authoritative execution status (at most 16/turn).
+They occur after commit and before the one final `response.text`; clients replace preview text
+with that final text. Final-only sessions do not receive these additional message types.
+Audio output keeps the existing format and generation/playback receipt rules. See
+[response playback](../guides/RESPONSE_PLAYBACK.md) for buffering, bounded conversion, simulator
+and physical validation limits. Owner console authentication/rendering remains #18.

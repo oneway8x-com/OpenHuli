@@ -116,3 +116,9 @@ commit/cancel ordering, fragmentation, partial disconnects, reconnect, stream/se
 slow queues/deadlines, stale output, authorization capacity, expiry, secret redaction, and shutdown.
 PostgreSQL socket tests use real paired credentials to reject MQTT/tampered/revoked/expired secrets.
 No paid provider or live device is needed. Follow the root test database guard and never use a remote DB.
+
+## Response playback
+
+See [streaming responses and playback](RESPONSE_PLAYBACK.md) for optional incremental public text,
+execution status events, converted audio, client sink receipts and cancellation. Existing sessions
+remain final-text-only unless streaming is offered; output audio is negotiated separately.

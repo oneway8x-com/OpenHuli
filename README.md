@@ -13,7 +13,8 @@ The [authenticated voice gateway](docs/guides/VOICE_GATEWAY.md) composes a
 authorized tool executor. Device context is the first registered read. Live-provider validation is
 opt-in. [MQTT telemetry](docs/guides/MQTT_TELEMETRY.md) adds authenticated ingestion and grounded read tools;
 [Acknowledged device commands](docs/guides/DEVICE_COMMANDS.md) support ping and optional display through
-the authorized executor. Forecasts/notes tools, speaker playback, and the conversation console remain later tickets.
+the authorized executor. [Streaming responses and playback](docs/guides/RESPONSE_PLAYBACK.md) include
+audio conversion, cancellation and a reference simulator. Forecasts/notes tools and the conversation console remain later tickets.
 
 ## Local setup
 

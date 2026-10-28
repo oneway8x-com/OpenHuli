@@ -6,7 +6,7 @@ composes PostgreSQL metadata, the registered executor, and a server-to-server Ge
 name, room, location and capabilities, explicitly labelled configuration rather than live telemetry.
 [MQTT telemetry](MQTT_TELEMETRY.md) provides ingestion and a grounded telemetry-tool factory; those tools
 are not automatically added to this adapter's default registry. Live forecasts/notes POST belong to #11;
-console owner sessions/UI to #18; speaker playback to #17.
+console owner sessions/UI to #18. [Response playback](RESPONSE_PLAYBACK.md) adds bounded output and a reference simulator.
 
 ## Provider and configuration
 
@@ -28,7 +28,7 @@ Model access and availability must be verified by the opt-in smoke test for the 
 The existing gateway additionally bounds input/queued bytes, output buffering, concurrent sockets,
 credential expiry, collecting-turn time, and session lifetime. Gemini handshake is capped at 5 s;
 its incoming message size is 128 KiB, pending events 64, and outgoing buffer 256 KiB. Responses are
-limited to 1024 output tokens, 4096 text characters, 512 processed events/turn, and 2 MiB of encoded
+limited to 1024 output tokens, 4096 text characters, 2,048 processed events/turn, and 1,920,000 bytes of encoded
 audio/turn. Exceeding a bound closes the provider instead of silently dropping input/results.
 
 Set the normal database and owner/auth environment from `.env.example` as well: executor policy uses
@@ -42,11 +42,10 @@ provider handshake and can fail if Google is unavailable or rejects the model/ke
 Gemini expects 16 kHz PCM16LE input; the gateway forwards each 20 ms chunk as it arrives. Automatic
 activity detection is disabled. Only an authenticated `turn.commit` ends manual audio activity;
 provider calls/content before commit fail closed. Tool declarations explicitly use `BLOCKING`
-behavior so the provider must consume results before continuing. Audio generation is currently
-consumed and bounded at the provider boundary; 24 kHz provider audio is not forwarded as 16 kHz
-protocol audio. Responses use output transcription, with thought parts discarded. Text is delivered
-once the provider sends final turn completion and all tool results have been returned. This ticket
-does not provide incremental response playback or a voice latency/hardware guarantee.
+behavior so the provider must consume results before continuing. Public 24 kHz native audio is
+converted to the negotiated 16 kHz format. See [response playback](RESPONSE_PLAYBACK.md) for text
+streaming opt-in, truthful tool-turn buffering, generation/playback receipts and cancellation.
+Thought parts are discarded; no physical speaker or live latency guarantee is implied.
 
 ## Typed turns and session context
 

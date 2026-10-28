@@ -16,6 +16,7 @@ export const OpenHuliVoiceClientMessageSchema = z.discriminatedUnion("type", [
       ...openHuliEnvelope,
       type: z.literal("session.start"),
       conversationId: OpenHuliIdSchema,
+      streamingResponses: z.literal(true).optional(),
       inputFormat: OpenHuliPcmFormatSchema,
       outputFormat: OpenHuliPcmFormatSchema.optional(),
     })
@@ -56,9 +57,36 @@ export const OpenHuliVoiceClientMessageSchema = z.discriminatedUnion("type", [
 export const OpenHuliVoiceServerMessageSchema = z.discriminatedUnion("type", [
   z
     .object({
+      ...turn,
+      type: z.literal("response.delta"),
+      text: z.string().min(1).max(4096),
+    })
+    .strict(),
+  z
+    .object({
+      ...turn,
+      type: z.literal("tool.result"),
+      executionId: OpenHuliIdSchema,
+      status: z.enum([
+        "succeeded",
+        "failed",
+        "denied",
+        "unknown",
+        "awaiting_approval",
+        "queued",
+        "running",
+        "cancelled",
+        "expired",
+      ]),
+    })
+    .strict(),
+
+  z
+    .object({
       ...openHuliEnvelope,
       type: z.literal("session.ready"),
       sessionId: OpenHuliIdSchema,
+      streamingResponses: z.literal(true).optional(),
       inputFormat: OpenHuliPcmFormatSchema,
       outputFormat: OpenHuliPcmFormatSchema.optional(),
     })

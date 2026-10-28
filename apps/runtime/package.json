@@ -9,7 +9,8 @@
     "build": "tsdown",
     "start": "node --env-file-if-exists=../../.env dist/main.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "smoke:live": "node --env-file-if-exists=../../.env --import tsx src/live-smoke.ts"
+    "smoke:live": "node --env-file-if-exists=../../.env --import tsx src/live-smoke.ts",
+    "smoke:playback": "node --env-file-if-exists=../../.env --import tsx src/playback-smoke.ts"
   },
   "dependencies": {
     "@corely/contracts": "workspace:*",
