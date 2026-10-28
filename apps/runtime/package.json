@@ -17,7 +17,9 @@
     "zod": "catalog:",
     "@corely/modules-voice": "workspace:*",
     "@corely/modules-devices": "workspace:*",
-    "@corely/data": "workspace:*"
+    "@corely/data": "workspace:*",
+    "@corely/modules-telemetry": "workspace:*",
+    "@prisma/client": "catalog:"
   },
   "devDependencies": {
     "@corely/tsconfig": "workspace:*",

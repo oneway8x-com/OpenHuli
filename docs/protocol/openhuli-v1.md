@@ -11,8 +11,8 @@ complete server/simulated-device exchange. This is a contract implementation: th
 All new top-level device, voice, conversation, tool, execution, and approval messages have integer
 `version: 1`. Unknown versions, types, capability kinds, and object fields are rejected. Existing
 copilot, approval-policy, and other scaffold exports remain unchanged. Their permissive schemas are
-not the OpenHuli wire protocol; consumers must explicitly select the new schemas. No database
-migration or environment variable is introduced. A future incompatible layout or format requires
+not the OpenHuli wire protocol; consumers must explicitly select the new schemas. The baseline contract itself needs no database migration or environment variable; transport
+features document their own setup. A future incompatible layout or format requires
 a new version and explicit negotiation; never reinterpret v1 bytes.
 
 No inbound message carries `tenantId`, owner identity, credentials, URLs, or permissions. Device IDs,
@@ -219,3 +219,31 @@ FIN boundary. It buffers at most 664 bytes and emits only on FIN. It rejects sho
 concatenated frames, payload/header length mismatches, unknown version/kind/reserved fields, and
 zero IDs. Call `finish()` on disconnect to detect incomplete fragmentation. This decoder is not a
 raw RFC 6455 parser: the transport owns masking, control frames, UTF-8 validation, TLS, and framing.
+
+## Telemetry ingestion additions (#13)
+
+The deployed contract adds optional `sensorErrors` (at most two entries, each with metric
+`temperature` or `humidity` and code `read_failed` or `unavailable`). `readings` may be empty only
+when an error exists. Each metric has exactly one reading or error; missing sensor values must
+never be replaced with fabricated numbers. Existing packets containing readings remain valid.
+
+`DevicePresenceSchema` defines a new v1 message on `openhuli/v1/devices/<deviceId>/presence`:
+
+```json
+{
+  "version": 1,
+  "messageId": "presence-1",
+  "type": "device.presence",
+  "deviceId": "station-1",
+  "bootId": "boot-1",
+  "sequence": 0,
+  "status": "online",
+  "sentAt": "2026-10-28T10:00:00Z"
+}
+```
+
+`status` is `online` or `offline`. Presence uses its own increasing uint32 sequence per boot;
+reserve the following sequence for the offline Last Will. The next connection must advance beyond
+that Will sequence. The authenticated broker supplies identity; payloads still carry no Tenant or
+permissions. Retained online state alone cannot prove a live connection. Backend freshness,
+retention, and reconnection semantics are documented in [MQTT telemetry](../guides/MQTT_TELEMETRY.md).

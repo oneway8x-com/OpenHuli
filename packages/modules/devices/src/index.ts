@@ -6,3 +6,4 @@ export * from "./device-session-watch";
 export { DeviceAccessRepository } from "./device-access.repository";
 export { DeviceRepository } from "./device.repository";
 export * from "./device.use-cases";
+export * from "./device-mqtt";

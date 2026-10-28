@@ -34,6 +34,11 @@ describe("runtime configuration", () => {
   });
   it.each([
     { RUNTIME_VOICE_ENABLED: "yes" },
+    { RUNTIME_MQTT_TELEMETRY_ENABLED: "true" },
+    { RUNTIME_MQTT_AUTH_TOKEN: "short" },
+    { RUNTIME_TELEMETRY_INTERVAL_SECONDS: "0" },
+    { RUNTIME_TELEMETRY_RETENTION_DAYS: "31" },
+    { RUNTIME_MQTT_AUTH_HOST: "broker.example.com" },
     { RUNTIME_VOICE_QUEUE_BYTES: "663" },
     { RUNTIME_VOICE_QUEUE_MESSAGES: "0" },
     { RUNTIME_VOICE_BUFFERED_BYTES: "0" },

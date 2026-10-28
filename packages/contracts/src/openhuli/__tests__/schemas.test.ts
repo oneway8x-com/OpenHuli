@@ -6,6 +6,7 @@ import {
   DeviceCommandResultSchema,
   DeviceCommandSchema,
   DeviceTelemetrySchema,
+  DevicePresenceSchema,
   OpenHuliApprovalDecisionSchema,
   OpenHuliApprovalRequestSchema,
   OpenHuliConversationSchema,
@@ -239,5 +240,68 @@ describe("bounded JSON and execution outcomes", () => {
         status: "published",
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("sensor errors and presence", () => {
+  it("preserves explicit unavailable metrics without fabricated measurements", () => {
+    const error = { metric: "humidity", code: "read_failed" };
+    expect(
+      DeviceTelemetrySchema.parse({
+        ...telemetry,
+        readings: [],
+        sensorErrors: [error],
+      }).readings,
+    ).toEqual([]);
+    expect(
+      DeviceTelemetrySchema.safeParse({
+        ...telemetry,
+        readings: [],
+        sensorErrors: [],
+      }).success,
+    ).toBe(false);
+    expect(
+      DeviceTelemetrySchema.safeParse({
+        ...telemetry,
+        readings: [{ metric: "humidity", value: 50, unit: "percent" }],
+        sensorErrors: [error],
+      }).success,
+    ).toBe(false);
+    expect(
+      DeviceTelemetrySchema.safeParse({
+        ...telemetry,
+        readings: [],
+        sensorErrors: [error, error],
+      }).success,
+    ).toBe(false);
+    expect(() =>
+      parseDeviceTelemetry(
+        JSON.stringify({ ...telemetry, readings: [], sensorErrors: [error] }),
+        { ...manifest, capabilities: [{ kind: "ping" }] },
+      ),
+    ).toThrow("unsupported");
+  });
+  it("validates presence ordering bounds and rejects caller authority", () => {
+    const presence = {
+      version: 1,
+      messageId: "presence-1",
+      type: "device.presence",
+      deviceId: "station-1",
+      bootId: "boot-1",
+      sequence: 4294967295,
+      status: "offline",
+      sentAt: "2026-10-28T10:00:00Z",
+    };
+    expect(DevicePresenceSchema.parse(presence).status).toBe("offline");
+    for (const extra of [
+      { sequence: -1 },
+      { sequence: 4294967296 },
+      { status: "connected" },
+      { tenantId: "forged" },
+      { sentAt: "yesterday" },
+    ])
+      expect(
+        DevicePresenceSchema.safeParse({ ...presence, ...extra }).success,
+      ).toBe(false);
   });
 });

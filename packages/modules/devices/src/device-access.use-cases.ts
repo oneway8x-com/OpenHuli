@@ -1,3 +1,4 @@
+import { deviceMqttIdentity, deviceMqttClientId } from "./device-mqtt-identity";
 import { randomUUID } from "node:crypto";
 import {
   DeviceCapabilityManifestSchema,
@@ -67,6 +68,16 @@ function newCredential(
       credentialId: generated.credentialId,
       purpose,
       token: generated.token,
+      ...(purpose === "mqtt"
+        ? {
+            mqttUsername: deviceMqttIdentity({
+              tenantId,
+              deviceId,
+              credentialId: generated.credentialId,
+            }),
+            mqttClientId: deviceMqttClientId(generated.credentialId),
+          }
+        : {}),
       expiresAt: new Date(
         now.getTime() + DEVICE_CREDENTIAL_LIFETIME_MS,
       ).toISOString(),
@@ -80,6 +91,7 @@ export function deviceMqttTopics(tenantId: string, deviceId: string) {
   return {
     manifest: `${root}/manifest`,
     telemetry: `${root}/telemetry`,
+    presence: `${root}/presence`,
     commandResults: `${root}/results`,
     commands: `${root}/commands`,
   };
@@ -293,6 +305,7 @@ export async function authorizeDeviceMqtt(
     action === "subscribe"
       ? topic === allowed.commands
       : topic === allowed.telemetry ||
+        topic === allowed.presence ||
         topic === allowed.commandResults ||
         topic === allowed.manifest;
   if (!valid) throw new DeviceAccessError(403, "MQTT topic is not permitted");
