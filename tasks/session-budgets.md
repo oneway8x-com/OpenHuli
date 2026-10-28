@@ -25,7 +25,7 @@ Implement [#20](https://github.com/oneway8x-com/OpenHuli/issues/20) on `20-sessi
 
 ## Remaining work / risks
 
-- Full diff self-reviewed, including cancellation, tenant scoping, expiry and no-replay behavior. PR publication pending. The owned disposable database cluster was stopped and removed after verification.
+- Full diff self-reviewed, including cancellation, tenant scoping, expiry and no-replay behavior. Draft PR: https://github.com/oneway8x-com/OpenHuli/pull/40 (base `main`, head `20-session-budgets`). The owned disposable database cluster was stopped and removed after verification.
 - No provider key is configured, so the required measured live provider trace is unverified. Draft PR until that acceptance check is recorded. No hardware, live billing or deployed TLS acceptance is claimed.
 - Spend reservations cap admission allocations and observed estimates; delayed/missing provider usage cannot guarantee an invoice cap. Provider-side controls and retention remain separate.
 - Payloads/trace events expire; minimal execution tombstones remain to prevent replay. Active dispatch/reconciliation must be resolved before cleanup. Unknown executions whose arguments were deleted cannot be automatically reconciled using those arguments.
