@@ -1,3 +1,4 @@
+import { VoiceLimitError } from "@corely/modules-voice";
 import { setTimeout as pause } from "node:timers/promises";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
@@ -54,21 +55,34 @@ export function createConversationRuntime(
     supportsOutputAudio: true,
     async open(context): Promise<VoiceProviderSession> {
       await deps.journal.start(context);
+      const lease = await deps.budgets?.acquire(context);
+      context = {
+        ...context,
+        signal: AbortSignal.any([
+          context.signal,
+          ...(lease ? [lease.signal] : []),
+        ]),
+      };
       const rendered = prompts.render(
         "device.assistant",
         { environment: "runtime" },
         { DEVICE_ID: context.deviceId },
       );
-      const provider = await deps.provider.open({
-        context,
-        instructions: rendered.content,
-        promptMetadata: {
-          promptId: rendered.promptId,
-          promptVersion: rendered.promptVersion,
-          promptHash: rendered.promptHash,
-        },
-        tools: deps.tools,
-      });
+      const provider = await deps.provider
+        .open({
+          context,
+          instructions: rendered.content,
+          promptMetadata: {
+            promptId: rendered.promptId,
+            promptVersion: rendered.promptVersion,
+            promptHash: rendered.promptHash,
+          },
+          tools: deps.tools,
+        })
+        .catch(async (error) => {
+          await lease?.close();
+          throw error;
+        });
       let outputStream = 0x80000000;
       let closed = false,
         starting = false,
@@ -78,7 +92,13 @@ export function createConversationRuntime(
       const close = (): Promise<void> => {
         if (!closing) {
           closed = true;
-          closing = Promise.resolve().then(() => provider.close());
+          closing = Promise.resolve().then(async () => {
+            try {
+              await provider.close();
+            } finally {
+              await lease?.close();
+            }
+          });
         }
         return closing;
       };
@@ -92,8 +112,20 @@ export function createConversationRuntime(
       }
       return {
         async startTurn(turn, output) {
+          lease?.check();
           if (closed || starting || active || turn.signal.aborted)
             throw new Error("Conversation unavailable");
+          const startedAt = performance.now();
+          const phase = (
+            name: Parameters<NonNullable<typeof deps.journal.phase>>[1],
+            executionId?: string,
+          ) =>
+            deps.journal.phase?.(
+              current,
+              name,
+              Math.min(2147483647, Math.round(performance.now() - startedAt)),
+              executionId,
+            );
           const controller = new AbortController();
           const current: VoiceTurnContext = {
             ...turn,
@@ -112,15 +144,18 @@ export function createConversationRuntime(
             void close().catch(() => {});
           };
           turn.signal.addEventListener("abort", abort, { once: true });
+          context.signal.addEventListener("abort", abort, { once: true });
           starting = true;
           let recorded = false;
           try {
             await deps.journal.turn(current);
             recorded = true;
+            await phase("input_started");
             if (controller.signal.aborted) throw new Error("Cancelled");
             await provider.begin(turn.source ?? "voice");
           } catch (error) {
             turn.signal.removeEventListener("abort", abort);
+            context.signal.removeEventListener("abort", abort);
             if (recorded) await deps.journal.transition(current, "failed");
             await close();
             throw error;
@@ -131,6 +166,8 @@ export function createConversationRuntime(
             async appendAudio(frame: { payload: Uint8Array }) {
               if (committed || text !== undefined || controller.signal.aborted)
                 throw new Error("Input closed");
+              await lease?.audio(frame.payload.byteLength);
+              lease?.check();
               await provider.audio(frame.payload);
             },
             async appendText(value: string) {
@@ -141,6 +178,7 @@ export function createConversationRuntime(
             async commit() {
               if (committed || controller.signal.aborted)
                 throw new Error("Turn already committed or cancelled");
+              lease?.check();
               committed = true;
               // Return promptly: the outer gateway operation budget governs queue acceptance, not model latency.
               task = run();
@@ -149,6 +187,7 @@ export function createConversationRuntime(
             async playbackCompleted() {
               if (!generated || played || controller.signal.aborted)
                 throw new Error("Playback out of order");
+              await phase("playback_completed");
               await deps.journal.audioCompletion?.(current, "playback");
               if (controller.signal.aborted)
                 throw new Error("Playback cancelled");
@@ -166,6 +205,7 @@ export function createConversationRuntime(
                     (async () => {
                       await deps.journal.transition(current, "cancelled");
                       turn.signal.removeEventListener("abort", abort);
+                      context.signal.removeEventListener("abort", abort);
                       if (active === handle) active = undefined;
                     })());
               return stopping;
@@ -219,6 +259,7 @@ export function createConversationRuntime(
                   )
                 )
                   throw new Error("Output closed");
+                if (sequence === 1) await useful();
                 await pause(20, undefined, { signal: controller.signal });
               }
             };
@@ -226,6 +267,16 @@ export function createConversationRuntime(
             const results: { id: string; status: string }[] = [];
             let inputTokens: number | undefined,
               outputTokens: number | undefined;
+            let finalUsageReceived = false;
+            let estimatedCostMicros: number | null = null;
+            let firstEvent = false,
+              usefulOutput = false;
+            const useful = async () => {
+              if (!usefulOutput) {
+                usefulOutput = true;
+                await phase("first_useful_output");
+              }
+            };
             const send = (
               type: "response.text" | "turn.completed",
               value?: string,
@@ -238,11 +289,17 @@ export function createConversationRuntime(
                   ? { type, text: value ?? "" }
                   : { type }),
               });
-            timer = setTimeout(abort, deps.turnTimeoutMs);
+            timer = setTimeout(() => {
+              controller.abort(new VoiceLimitError("Turn time budget reached"));
+              void close().catch(() => {});
+            }, deps.turnTimeoutMs);
             try {
               await deps.journal.transition(current, "committed");
               await deps.journal.message(current, "user", text);
               if (controller.signal.aborted) throw new Error("Cancelled");
+              await phase("input_committed");
+              lease?.check();
+              await phase("provider_requested");
               await provider.commit(text);
               await deps.journal.transition(current, "responding");
               while (!controller.signal.aborted) {
@@ -253,10 +310,16 @@ export function createConversationRuntime(
                   controller.signal,
                 );
                 if (controller.signal.aborted) throw new Error("Cancelled");
+                lease?.check();
+                if (!firstEvent) {
+                  firstEvent = true;
+                  await phase("provider_first_event");
+                }
                 if (event.type === "text") {
                   answer += event.text;
                   if (answer.length > 4096)
                     throw new Error("Response too long");
+
                   if (
                     context.streamingResponses &&
                     streamImmediately &&
@@ -264,6 +327,12 @@ export function createConversationRuntime(
                     !control({ type: "response.delta", text: event.text })
                   )
                     throw new Error("Output closed");
+                  if (
+                    context.streamingResponses &&
+                    streamImmediately &&
+                    event.text.length
+                  )
+                    await useful();
                 } else if (event.type === "audio") {
                   const frames = converter.push(event.pcm24);
                   if (context.outputAudio) {
@@ -276,7 +345,7 @@ export function createConversationRuntime(
                   }
                 } else if (event.type === "tool") {
                   if (++calls > deps.maxToolCalls)
-                    throw new Error("Tool budget exceeded");
+                    throw new VoiceLimitError("Tool call budget reached");
                   const id = OpenHuliIdSchema.parse(event.id);
                   if (identities.has(id))
                     throw new Error("Repeated provider call identity");
@@ -290,6 +359,8 @@ export function createConversationRuntime(
                     result = { status: "denied", error: "Tool not available" };
                   else {
                     try {
+                      lease?.check();
+                      await phase("tool_started");
                       result = await untilAbort(
                         deps.execute(
                           current,
@@ -322,6 +393,13 @@ export function createConversationRuntime(
                     }
                   }
                   const safe = OpenHuliJsonObjectSchema.parse(result);
+                  await phase(
+                    "tool_finished",
+                    typeof safe.executionId === "string"
+                      ? safe.executionId
+                      : undefined,
+                  );
+                  lease?.check();
                   if (
                     [
                       "unknown",
@@ -366,6 +444,7 @@ export function createConversationRuntime(
                   buffered = [];
                   converter = new OpenHuliPcmOutput();
                 } else if (event.type === "usage") {
+                  finalUsageReceived = event.final === true;
                   inputTokens = z
                     .number()
                     .int()
@@ -378,6 +457,12 @@ export function createConversationRuntime(
                     .min(0)
                     .max(2147483647)
                     .parse(event.outputTokens);
+                  estimatedCostMicros =
+                    (await lease?.usage(
+                      inputTokens,
+                      outputTokens,
+                      turn.turnId,
+                    )) ?? null;
                 } else {
                   // Non-success tool outcomes always produce an authoritative status, not a model success claim.
                   const uncertain = results.some(
@@ -391,13 +476,22 @@ export function createConversationRuntime(
                     : "";
                   const final = (body + evidence).slice(0, 4096);
                   await deps.journal.message(current, "assistant", final);
-                  if (inputTokens !== undefined)
+                  await deps.journal.finalUsage?.(
+                    current,
+                    finalUsageReceived &&
+                      inputTokens !== undefined &&
+                      outputTokens !== undefined
+                      ? "reported"
+                      : "unknown",
+                    estimatedCostMicros,
+                  );
+                  if (finalUsageReceived && inputTokens !== undefined)
                     await deps.journal.usage(
                       current,
                       "input_tokens",
                       inputTokens,
                     );
-                  if (outputTokens !== undefined)
+                  if (finalUsageReceived && outputTokens !== undefined)
                     await deps.journal.usage(
                       current,
                       "output_tokens",
@@ -412,6 +506,7 @@ export function createConversationRuntime(
                         current,
                         "generation",
                       );
+                      await phase("generation_completed");
                       generated = true;
                       if (
                         !control({
@@ -429,17 +524,39 @@ export function createConversationRuntime(
                   finished = true;
                   // Detach abort before emitting: turn completion disposes the gateway's turn handle synchronously.
                   turn.signal.removeEventListener("abort", abort);
-                  if (!send("response.text", final) || !send("turn.completed"))
+                  context.signal.removeEventListener("abort", abort);
+                  if (!send("response.text", final)) {
                     await close();
+                    return;
+                  }
+                  await useful();
+                  await phase("completed");
+                  if (!send("turn.completed")) await close();
                   return;
                 }
               }
               throw new Error("Cancelled");
-            } catch {
+            } catch (error) {
+              const limit =
+                error instanceof VoiceLimitError
+                  ? error
+                  : lease?.signal.reason instanceof VoiceLimitError
+                    ? lease.signal.reason
+                    : controller.signal.reason instanceof VoiceLimitError
+                      ? controller.signal.reason
+                      : undefined;
+              const cancelled = controller.signal.aborted && !limit;
+              controller.abort(limit ?? error);
               await close();
+              await deps.journal.finalUsage?.(
+                current,
+                "unknown",
+                estimatedCostMicros,
+              );
+              await phase(cancelled ? "cancelled" : "failed");
               await deps.journal.transition(
                 current,
-                controller.signal.aborted ? "cancelled" : "failed",
+                cancelled ? "cancelled" : "failed",
               );
               output.control({
                 version: 1,
@@ -447,10 +564,14 @@ export function createConversationRuntime(
                 messageId: randomUUID(),
                 turnId: turn.turnId,
                 error: {
-                  code: controller.signal.aborted
-                    ? "cancelled"
-                    : "provider_unavailable",
-                  message: "Turn stopped; no successful outcome is implied",
+                  code: limit
+                    ? "limit_exceeded"
+                    : cancelled
+                      ? "cancelled"
+                      : "provider_unavailable",
+                  message:
+                    limit?.message ??
+                    "Turn stopped; no successful outcome is implied",
                   correlationId: turn.turnId,
                   retryable: false,
                 },
@@ -459,6 +580,7 @@ export function createConversationRuntime(
               finished = true;
               clearTimeout(timer);
               turn.signal.removeEventListener("abort", abort);
+              context.signal.removeEventListener("abort", abort);
               if (active === handle && !(generated && !played))
                 active = undefined;
             }

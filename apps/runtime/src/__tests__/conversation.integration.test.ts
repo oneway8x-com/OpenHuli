@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, expect, it, vi } from "vitest";
 import { WebSocket } from "ws";
 import { PrismaService } from "@corely/data";
 import {
@@ -62,6 +62,11 @@ beforeAll(async () => {
     owner(),
     devices,
   );
+});
+afterEach(async () => {
+  for (const client of clients.splice(0)) client.terminate();
+  await Promise.all(hosts.splice(0).map((host) => host.stop()));
+  await Promise.all(compositions.splice(0).map((factory) => factory.close()));
 });
 afterAll(async () => {
   for (const client of clients) client.terminate();
@@ -144,7 +149,7 @@ it("runs voice and typed follow-ups through durable authorized execution with me
     [
       read("voice-call"),
       { type: "text", text: "Configured room is Kitchen" },
-      { type: "usage", inputTokens: 12, outputTokens: 6 },
+      { type: "usage", inputTokens: 12, outputTokens: 6, final: true },
       { type: "complete" },
     ],
     [

@@ -1,3 +1,4 @@
+import { VoiceLimitError } from "@corely/modules-voice";
 import { createHash, randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import {
@@ -89,6 +90,40 @@ export function createConsoleRuntime(
     }
     const auth = { kind: "owner" as const, token: owner.token };
     try {
+      if (request.method === "GET" && url.pathname === "/console/diagnostics") {
+        response.end(
+          JSON.stringify({
+            policy: composition.operations.policy,
+            trace: await composition.operations.diagnostics(
+              owner.tenantId,
+              url.searchParams.get("id"),
+            ),
+            provider: enabled ? "configured" : "unconfigured",
+            integrationHealth: "not_checked",
+          }),
+        );
+        return;
+      }
+      if (request.method === "POST" && url.pathname === "/console/privacy") {
+        if (!request.headers["content-type"]?.startsWith("application/json"))
+          throw new Error("JSON required");
+        const chunks: Buffer[] = [];
+        let size = 0;
+        for await (const chunk of request) {
+          if (!Buffer.isBuffer(chunk) || (size += chunk.length) > 1024)
+            throw new Error("Body too large");
+          chunks.push(chunk);
+        }
+        response.end(
+          JSON.stringify(
+            await composition.operations.privacy(
+              owner.tenantId,
+              JSON.parse(Buffer.concat(chunks).toString("utf8")),
+            ),
+          ),
+        );
+        return;
+      }
       if (request.method === "GET") {
         const id = url.searchParams.get("id");
         if (!id) {
@@ -223,8 +258,9 @@ export function createConsoleRuntime(
             await live.provider.close();
             throw new Error("Session cancelled");
           }
-        } catch {
+        } catch (error) {
           await dispose(id);
+          if (error instanceof VoiceLimitError) throw error;
           throw new Error("Provider unavailable");
         }
         response.writeHead(201).end(JSON.stringify({ id }));
@@ -354,18 +390,22 @@ export function createConsoleRuntime(
           lastSequence: 0,
           committedAt: new Date(),
         });
-      } catch {
+      } catch (error) {
         await dispose(command.conversationId);
+        if (error instanceof VoiceLimitError) throw error;
         throw new Error("Turn unavailable");
       }
       response.writeHead(202).end(JSON.stringify({ accepted: true }));
-    } catch {
+    } catch (error) {
       if (!response.headersSent)
-        response
-          .writeHead(400)
-          .end(
-            JSON.stringify({ error: "Console request denied or unavailable" }),
-          );
+        response.writeHead(error instanceof VoiceLimitError ? 429 : 400).end(
+          JSON.stringify({
+            error:
+              error instanceof VoiceLimitError
+                ? error.message
+                : "Console request denied or unavailable",
+          }),
+        );
       else response.end();
     }
   }

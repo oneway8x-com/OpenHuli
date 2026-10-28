@@ -153,7 +153,9 @@ export function createRuntime(
           .end(JSON.stringify({ error: "Device management unavailable" }));
     } else if (
       request.url?.split("?")[0] === "/console" ||
-      request.url?.split("?")[0] === "/console/events"
+      request.url?.split("?")[0] === "/console/events" ||
+      request.url?.split("?")[0] === "/console/diagnostics" ||
+      request.url?.split("?")[0] === "/console/privacy"
     ) {
       if (options.console && phase === "running")
         void options.console.handle(request, response).catch(() => {

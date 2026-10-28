@@ -33,6 +33,7 @@ export class ToolExecutionRepository {
         tenantId,
         id: runId,
         status: "active",
+        privacyClearedAt: null,
         OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
         turns: {
           some: {
@@ -134,6 +135,7 @@ export class ToolExecutionRepository {
         id: record.id,
         requestHash: record.requestHash,
         status: "queued",
+        privateDataCleared: false,
         expiresAt: { gt: now },
         turn: { status: { in: ["committed", "responding"] } },
         run: {
@@ -352,6 +354,7 @@ export class ToolExecutionRepository {
         tenantId: record.tenantId,
         id: record.id,
         status: "unknown",
+        privateDataCleared: false,
         requestHash: record.requestHash,
         OR: [{ reconcileUntil: null }, { reconcileUntil: { lte: new Date() } }],
       },
@@ -369,6 +372,7 @@ export class ToolExecutionRepository {
         tenantId: record.tenantId,
         id: record.id,
         status: "unknown",
+        privateDataCleared: false,
         reconcileToken: token,
       },
       data: {

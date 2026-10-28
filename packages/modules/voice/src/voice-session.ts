@@ -1,3 +1,4 @@
+import { VoiceLimitError } from "./voice.types";
 import { randomUUID } from "node:crypto";
 import {
   OpenHuliVoicePeer,
@@ -151,8 +152,10 @@ export class VoiceSession {
         if (!this.closed)
           await this.bounded(work(), this.limits.operationTimeoutMs);
       })
-      .catch(() =>
-        this.fail("provider_unavailable", "Voice operation failed", 1011),
+      .catch((error) =>
+        error instanceof VoiceLimitError
+          ? this.fail("limit_exceeded", error.message, 1008)
+          : this.fail("provider_unavailable", "Voice operation failed", 1011),
       )
       .finally(() => {
         this.queuedBytes -= size;

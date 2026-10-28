@@ -104,7 +104,8 @@ records and may include configured room/location; they are not erased by the tra
 Missing usage is left absent/unknown, never synthesized as zero. Known token counts/tool calls are
 recorded, without claiming measured provider cost. Google's retention is separate; inspect the
 [Gemini terms](https://ai.google.dev/gemini-api/terms) for the account/tier used. Spend policy,
-retention cleanup, broader correlated diagnostics and hosted deployment remain #20/#21.
+retention cleanup and correlated diagnostics are described in [session operations](SESSION_OPERATIONS.md).
+Hosted deployment remains #21.
 
 ## Verification and opt-in live smoke
 

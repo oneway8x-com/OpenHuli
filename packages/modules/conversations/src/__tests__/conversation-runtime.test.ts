@@ -72,7 +72,7 @@ it("streams input before commit without dispatch, feeds actual results back, and
       { type: "text", text: "Provisional success" },
       call,
       { type: "text", text: "Actual read result" },
-      { type: "usage", inputTokens: 10, outputTokens: 5 },
+      { type: "usage", inputTokens: 10, outputTokens: 5, final: true },
       done,
     ],
   ]);
@@ -477,5 +477,79 @@ it("does not claim complete success or speak after a partial executor outcome", 
   const wire = JSON.stringify(vi.mocked(f.output.control).mock.calls);
   expect(wire).toContain("partial");
   expect(wire).not.toContain("Everything succeeded!");
+  await session.close();
+});
+it("closes provider and prevents dispatch when observed usage exceeds the owner allocation", async () => {
+  const f = fixture([
+    [{ type: "usage", inputTokens: 100, outputTokens: 50 }, call, done],
+  ]);
+  const { VoiceLimitError } = await import("@corely/modules-voice");
+  const close = vi.fn(async () => {});
+  const factory = createConversationRuntime({
+    provider: f.fake.factory,
+    journal: f.journal,
+    tools: [{ id: "test_read", description: "test", parameters: {} }],
+    execute: f.execute,
+    maxToolCalls: 1,
+    turnTimeoutMs: 1000,
+    budgets: {
+      async acquire() {
+        return {
+          signal: new AbortController().signal,
+          check() {},
+          async audio() {},
+          async usage() {
+            throw new VoiceLimitError(
+              "Provider session spend allocation reached",
+            );
+          },
+          close,
+        };
+      },
+    },
+  });
+  const session = await factory.open(context),
+    t = turn();
+  await (
+    await session.startTurn(t.current, f.output)
+  ).commit(commit(t.current));
+  await vi.waitFor(() =>
+    expect(f.output.control).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "turn.failed",
+        error: expect.objectContaining({ code: "limit_exceeded" }),
+      }),
+    ),
+  );
+  expect(f.execute).not.toHaveBeenCalled();
+  expect(close).toHaveBeenCalledOnce();
+  expect(f.fake.trace.at(-1)?.kind).toBe("close");
+  await session.close();
+});
+it("does not finalize an intermediate usage estimate when final usage is missing", async () => {
+  const f = fixture([
+    [
+      { type: "usage", inputTokens: 5, outputTokens: 2 },
+      { type: "text", text: "Answer" },
+      done,
+    ],
+  ]);
+  f.journal.finalUsage = vi.fn(async () => {});
+  const session = await f.factory.open(context),
+    t = turn();
+  await (
+    await session.startTurn(t.current, f.output)
+  ).commit(commit(t.current));
+  await vi.waitFor(() =>
+    expect(f.output.control).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "turn.completed" }),
+    ),
+  );
+  expect(f.journal.finalUsage).toHaveBeenCalledWith(
+    expect.anything(),
+    "unknown",
+    null,
+  );
+  expect(f.journal.usage).not.toHaveBeenCalled();
   await session.close();
 });

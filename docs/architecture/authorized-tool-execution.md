@@ -105,6 +105,6 @@ partial completion, cancellation, and remote-acceptance-before-timeout reconcili
 Arguments/approval snapshots, safe output, actor IDs, hashes, status, and timestamps are operational
 records needed to explain an external effect. They can contain user data even with transcript
 retention off; tool schemas and provider adapters must bound/redact sensitive fields. Neither authentication
-tokens nor raw provider exceptions are persisted. Retention cleanup and adapter/network integration
-remain separate tasks; passing deterministic fake-provider checks does not establish live provider or
+tokens nor raw provider exceptions are persisted. Retention cleanup is documented in [session operations](../guides/SESSION_OPERATIONS.md).
+Adapter/network integration remains separate; passing deterministic fake-provider checks does not establish live provider or
 hardware behavior.

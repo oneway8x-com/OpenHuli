@@ -629,13 +629,17 @@ model AgentRun {
   updatedAt       DateTime  @updatedAt
   traceId         String?
 
-  deviceId          String?
-  correlationId     String?
-  retainTranscripts Boolean             @default(false)
-  expiresAt         DateTime?           @db.Timestamptz(6)
-  device            Device?             @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Restrict)
-  turns             ConversationTurn[]
-  usage             ConversationUsage[]
+  deviceId             String?
+  correlationId        String?
+  retainTranscripts    Boolean             @default(false)
+  expiresAt            DateTime?           @db.Timestamptz(6)
+  device               Device?             @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Restrict)
+  budgetReservedMicros Int                 @default(0)
+  leaseExpiresAt       DateTime?           @db.Timestamptz(6)
+  privacyClearedAt     DateTime?           @db.Timestamptz(6)
+  phases               ConversationPhase[]
+  turns                ConversationTurn[]
+  usage                ConversationUsage[]
 
   messages       Message[]
   toolExecutions ToolExecution[]
@@ -686,20 +690,21 @@ model ToolExecution {
   run           AgentRun          @relation(fields: [tenantId, runId], references: [tenantId, id], onDelete: Cascade)
   turn          ConversationTurn? @relation(fields: [tenantId, runId, turnId], references: [tenantId, runId, id], onDelete: Restrict)
 
-  effect           String?
-  requestHash      String?
-  policyHash       String?
-  actorJson        String?
-  targetDeviceId   String?
-  dispatchDeadline DateTime?          @db.Timestamptz(6)
-  outcomeKind      String?
-  attempts         Int                @default(0)
-  reconcileToken   String?
-  reconcileUntil   DateTime?          @db.Timestamptz(6)
-  targetDevice     Device?            @relation("ToolExecutionTarget", fields: [tenantId, targetDeviceId], references: [tenantId, id], onDelete: Restrict)
-  expiresAt        DateTime?          @db.Timestamptz(6)
-  approval         ExecutionApproval?
-  commands         DeviceCommand[]
+  privateDataCleared Boolean            @default(false)
+  effect             String?
+  requestHash        String?
+  policyHash         String?
+  actorJson          String?
+  targetDeviceId     String?
+  dispatchDeadline   DateTime?          @db.Timestamptz(6)
+  outcomeKind        String?
+  attempts           Int                @default(0)
+  reconcileToken     String?
+  reconcileUntil     DateTime?          @db.Timestamptz(6)
+  targetDevice       Device?            @relation("ToolExecutionTarget", fields: [tenantId, targetDeviceId], references: [tenantId, id], onDelete: Restrict)
+  expiresAt          DateTime?          @db.Timestamptz(6)
+  approval           ExecutionApproval?
+  commands           DeviceCommand[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, runId, toolCallId])
@@ -903,6 +908,8 @@ model ConversationTurn {
   createdAt             DateTime            @default(now()) @db.Timestamptz(6)
   completedAt           DateTime?           @db.Timestamptz(6)
   generationCompletedAt DateTime?           @db.Timestamptz(6)
+  usageStatus           String              @default("unknown")
+  estimatedCostMicros   Int?
   playbackCompletedAt   DateTime?           @db.Timestamptz(6)
   run                   AgentRun            @relation(fields: [tenantId, runId], references: [tenantId, id], onDelete: Cascade)
   messages              Message[]
@@ -980,4 +987,32 @@ model DevicePresence {
   device            Device   @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Cascade)
 
   @@id([tenantId, deviceId])
+}
+
+// UTC admission-day counters survive session deletion/restarts; reservations are never refunded.
+model ConversationQuota {
+  tenantId       String
+  deviceId       String
+  day            DateTime @db.Date
+  sessions       Int      @default(0)
+  audioBytes     Int      @default(0)
+  reservedMicros Int      @default(0)
+
+  @@id([tenantId, deviceId, day])
+}
+
+// Allowlisted timings only, never arbitrary provider payloads, audio or text.
+model ConversationPhase {
+  id          String   @id @default(cuid())
+  tenantId    String
+  runId       String
+  turnId      String?
+  executionId String?
+  phase       String
+  elapsedMs   Int
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  run         AgentRun @relation(fields: [tenantId, runId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([tenantId, runId, createdAt])
+  @@index([createdAt])
 }

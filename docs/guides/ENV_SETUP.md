@@ -48,3 +48,7 @@ grants still apply; success requires a timely device receipt. See [device comman
 Registered HTTP tools validate `HTTP_WEATHER_*` and `HTTP_NOTES_*` separately. The notes demo validates
 `NOTES_API_*` and binds only to loopback. See [HTTP tools](HTTP_TOOLS.md) for the complete settings,
 server-only secret references, exact private-demo opt-in, SQLite file location and live smoke commands.
+
+Conversation quotas, spend allocations, optional price estimates and retention settings are documented
+in [session operations](SESSION_OPERATIONS.md). Update runtime configuration and apply migrations
+before enabling the updated runtime.

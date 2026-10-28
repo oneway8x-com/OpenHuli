@@ -648,3 +648,28 @@ it("retries a rolled-back driver conflict before confirming online command prese
     transaction.mockRestore();
   }
 });
+it("does not restore a late device receipt after privacy cleanup cleared the command payload", async () => {
+  const f = await fixture(),
+    { queued } = await f.request(),
+    controller = new AbortController();
+  const pending = dispatchToolExecution(
+    queued.executionId,
+    f.authentication,
+    f.deps,
+    controller.signal,
+  );
+  await vi.waitFor(() => expect(f.published).toHaveLength(1));
+  const command = f.published[0];
+  if (!command) throw new Error("Command missing");
+  const receipt = { ...f.receipt(command), completedAt: command.issuedAt };
+  controller.abort();
+  expect((await pending).status).toBe("unknown");
+  await db.deviceCommand.update({
+    where: { id: command.commandId },
+    data: { payloadJson: "{}", resultJson: null },
+  });
+  expect(await f.acknowledge(receipt)).toBe(false);
+  expect(
+    (await f.commands.store.get(tenantId, command.commandId))?.resultJson,
+  ).toBeNull();
+});

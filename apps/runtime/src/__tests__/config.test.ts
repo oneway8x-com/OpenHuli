@@ -85,3 +85,20 @@ describe("runtime configuration", () => {
     expect(String(error)).not.toContain("broker.example.com");
   });
 });
+it.each([
+  { AI_DEVICE_CONCURRENT_SESSIONS: "0" },
+  { AI_DEVICE_SESSIONS_PER_DAY: "10001" },
+  { AI_DEVICE_AUDIO_SECONDS_PER_DAY: "-1" },
+  { AI_SESSION_AUDIO_SECONDS: "0" },
+  { AI_SESSION_RESERVATION_MICROS: "0" },
+  { AI_DAILY_BUDGET_MICROS: "-1" },
+  { AI_OPERATIONAL_RETENTION_DAYS: "31" },
+  { AI_INPUT_MICROS_PER_MILLION_TOKENS: "1" },
+])(
+  "rejects invalid owner quota/retention configuration without exposing values: %j",
+  (env) => {
+    expect(() => readRuntimeConfig(env)).toThrow(
+      "Invalid runtime configuration",
+    );
+  },
+);

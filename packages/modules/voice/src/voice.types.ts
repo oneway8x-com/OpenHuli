@@ -87,3 +87,6 @@ export const DEFAULT_VOICE_LIMITS: VoiceLimits = {
   sessionTimeoutMs: 600000,
   idleTimeoutMs: 30000,
 };
+
+/** Fixed, safe quota message that transports may return to the authenticated caller. */
+export class VoiceLimitError extends Error {}

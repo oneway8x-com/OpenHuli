@@ -1,3 +1,7 @@
+import type {
+  ConversationBudgets,
+  ConversationPhase,
+} from "./conversation-operations.types";
 import type { z } from "zod";
 import type { OpenHuliJsonObjectSchema } from "@corely/contracts";
 type JsonObject = z.infer<typeof OpenHuliJsonObjectSchema>;
@@ -15,7 +19,12 @@ export type ProviderEvent =
   | { type: "text"; text: string }
   | { type: "audio"; pcm24: Uint8Array }
   | { type: "tool"; id: string; name: string; arguments: JsonObject }
-  | { type: "usage"; inputTokens: number; outputTokens: number }
+  | {
+      type: "usage";
+      inputTokens: number;
+      outputTokens: number;
+      final?: boolean;
+    }
   | { type: "complete" };
 /** One live connection retains history. All methods honor the connection's AbortSignal. */
 export interface ConversationProvider {
@@ -54,6 +63,17 @@ export interface ConversationJournal {
     context: VoiceTurnContext,
     kind: "generation" | "playback",
   ): Promise<void>;
+  phase?(
+    context: VoiceTurnContext,
+    phase: ConversationPhase,
+    elapsedMs: number,
+    executionId?: string,
+  ): Promise<void>;
+  finalUsage?(
+    context: VoiceTurnContext,
+    status: "reported" | "unknown",
+    costMicros: number | null,
+  ): Promise<void>;
   usage(
     context: VoiceTurnContext,
     metric: "input_tokens" | "output_tokens" | "tool_calls",
@@ -61,6 +81,7 @@ export interface ConversationJournal {
   ): Promise<void>;
 }
 export interface ConversationRuntimeDependencies {
+  budgets?: ConversationBudgets;
   provider: ConversationProviderFactory;
   journal: ConversationJournal;
   tools: readonly ConversationTool[];
