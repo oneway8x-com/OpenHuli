@@ -1,6 +1,6 @@
 import path from "node:path";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
-import { readAuthConfig } from "../../packages/modules/identity/src/identity.config";
+import { readAuthConfig } from "@corely/modules-identity/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
