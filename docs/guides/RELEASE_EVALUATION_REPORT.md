@@ -32,6 +32,8 @@ link to reviewed evidence; they are not themselves proof of an HTTP or physical 
 
 ## Timings
 
+Attach the offline `pnpm eval:timings` summary when using diagnostic exports. Its combined useful-output
+metric cannot separate text and audio; add independent channel measurements where available.
 Keep mode, tool class and text/audio measurements separate. Follow the percentile definition in
 [the evaluation guide](RELEASE_EVALUATION.md). Include missing/failed counts, not zero placeholders.
 

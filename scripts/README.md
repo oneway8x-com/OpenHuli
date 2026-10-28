@@ -9,6 +9,8 @@
 - `test-database.ts` — rejects remote/development targets for integration and browser tests
 - `setup-test-database.ts` — applies committed migrations to the explicit local test database
 - `*.test.ts` — Node tests for test-database safeguards and prompt-check file discovery
+- `evaluation-timings.ts` — summarizes exported safe diagnostic phases into counts and p50/p95;
+  see [release evaluation](../docs/guides/RELEASE_EVALUATION.md). It never contacts providers or assesses release readiness.
 
 ## Retired scripts
 

@@ -103,6 +103,43 @@ rank `ceil(p * n)` with one-based indexing. Report n, missing/failed counts, p50
 samples are descriptive. Compare no-tool and fast-read latency with aspirational 3 s and 5 s
 targets respectively; they are not guarantees and do not override truthful tool confirmation.
 
+### Summarize exported diagnostic timings
+
+Save one authenticated `GET /console/diagnostics?id=<conversation-id>` response per conversation
+as private local JSON, using the [session operations](SESSION_OPERATIONS.md) access requirements.
+Keep each complete response envelope with its `trace` field. Do not publish bearer tokens or raw
+exports. Stop the evaluated turns before exporting so partial snapshots do not replace final data.
+Then run, for example:
+
+```sh
+pnpm eval:timings --mode live --group fast-read .local/evaluation/trace-01.json .local/evaluation/trace-02.json
+```
+
+`--mode` is `mock`, `live` or `hardware`; `--group` is `no-tool`, `fast-read`, `write` or `mixed`.
+These labels are operator declarations, not proof of the source or scenario. Use separate files/runs
+for comparable groups. The script is offline and never sends a provider request, authenticates to
+a runtime, or repeats a tool action. It accepts up to 100 files of at most 1 MiB each.
+
+The JSON summary contains aggregate counts and timings without conversation IDs, payloads or policy
+values. `n` counts available endpoint pairs; `missing` counts exported turns without that pair, including
+failed/active turns and turns that do not require that phase. An actual zero duration is valid;
+unmeasured percentiles are `null`. Turn statuses remain separate from timing availability: a quick
+error response is not happy-path success. No success percentage or release verdict is inferred.
+
+`commitToUsefulOutput` measures the runtime's **combined** first useful text/audio event. The current
+trace does not label that event's channel, so these exports cannot establish separate first-text and
+first-audio latency. `commitToPlayback` is separate and requires an actual playback phase; it does
+not establish acoustic output. `toolWindow` encloses the first tool start through the last finish,
+including approval wait and gaps between tools; incomplete windows stay missing. It is not an
+individual API duration or an approval-excluded latency. Record those separately if measured.
+
+The endpoint returns at most 30 turns and 300 phases per conversation. `cappedTraces` flags snapshots
+that reach either cap; older/erased phases may also be absent below the cap. `missingTraces` and
+`emptyTraces` expose absent data. The summary describes only exported evidence and cannot recover
+planned attempts omitted from it. Keep the full planned denominator in the report. Duplicate
+conversation snapshots, malformed timing data and reversed endpoints fail without a partial summary.
+Capture multiple shorter conversations for long runs instead of treating a truncated trace as complete.
+
 A short demo should show the microphone turn, forecast attribution, synthetic note receipt and
 physical display acknowledgement with matching IDs. Publish redacted results rather than tokens,
 raw audio, full transcripts, private endpoint addresses or unreviewed diagnostic dumps.
