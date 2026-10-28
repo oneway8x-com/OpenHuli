@@ -16,6 +16,12 @@ const ConfigSchema = z
         .max(256)
         .regex(/^[A-Za-z0-9_-]+$/),
     ),
+    RUNTIME_COMMAND_ACK_TIMEOUT_MS: z.coerce
+      .number()
+      .int()
+      .min(100)
+      .max(15000)
+      .default(5000),
     AI_MAX_TOOL_CALLS: z.coerce.number().int().min(1).max(16).default(6),
     AI_TURN_TIMEOUT_MS: timeout(25000),
     NODE_ENV: z

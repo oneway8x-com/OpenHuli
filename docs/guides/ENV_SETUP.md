@@ -40,3 +40,7 @@ voice remains unconfigured/503. `AI_MAX_TOOL_CALLS` (default 6, range 1–16) an
 (default 25000, range 100–30000 ms) bound the committed model/tool loop. See
 [live conversations and opt-in provider validation](LIVE_CONVERSATIONS.md). See [voice gateway setup and limits](VOICE_GATEWAY.md). Defaults and bounded
 queue/operation/turn/session limits are in `.env.example`; provider keys remain server-only.
+
+Device commands use authenticated MQTT telemetry mode and the shared executor.
+`RUNTIME_COMMAND_ACK_TIMEOUT_MS` defaults to 5000 (100–15000 ms). Owner consent and exact device
+grants still apply; success requires a timely device receipt. See [device commands](DEVICE_COMMANDS.md).

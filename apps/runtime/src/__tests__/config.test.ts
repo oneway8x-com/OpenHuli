@@ -35,6 +35,8 @@ describe("runtime configuration", () => {
   it.each([
     { GEMINI_API_KEY: "too-short" },
     { GEMINI_API_KEY: "synthetic-secret-with-invalid-value?" },
+    { RUNTIME_COMMAND_ACK_TIMEOUT_MS: "99" },
+    { RUNTIME_COMMAND_ACK_TIMEOUT_MS: "15001" },
     { AI_MAX_TOOL_CALLS: "0" },
     { AI_MAX_TOOL_CALLS: "17" },
     { AI_TURN_TIMEOUT_MS: "99" },

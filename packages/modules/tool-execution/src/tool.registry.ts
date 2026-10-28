@@ -85,7 +85,8 @@ export function defineTool<
       input.parse(OpenHuliJsonObjectSchema.parse(value)),
     );
   const validateOutcome = (outcome: ToolOutcome<O>): ToolOutcome => {
-    if (outcome.kind === "failed") return { kind: "failed" };
+    if (outcome.kind === "failed" && outcome.output === undefined)
+      return { kind: "failed" };
     const result = OpenHuliJsonObjectSchema.parse(output.parse(outcome.output));
     canonicalJson(result);
     return { kind: outcome.kind, output: result };

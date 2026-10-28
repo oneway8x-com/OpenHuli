@@ -94,7 +94,8 @@ records a cancelled turn. The socket must reconnect to use a cancelled/failed pr
 Completed turns retain their provider connection for follow-ups. An already dispatched external
 write may have an unknown outcome; the executor conservatively retains that state. Never replay a
 voice turn, reconnect with old tool IDs, or retry an uncertain write under a new ID. Operator review
-and query-only reconciliation use the existing executor. No such writes are registered by default.
+and query-only reconciliation use the existing executor. [Ping/display command tools](DEVICE_COMMANDS.md) are registered only when authenticated MQTT telemetry
+is enabled. They require owner consent and exact target grants; no command is registered for a disabled broker.
 
 Raw audio is not persisted. Conversation transcript retention stays off: durable user/assistant rows
 contain role/correlation metadata, no text. Tool arguments/results and usage remain operational

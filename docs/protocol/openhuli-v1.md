@@ -255,3 +255,11 @@ reserve the following sequence for the offline Last Will. The next connection mu
 that Will sequence. The authenticated broker supplies identity; payloads still carry no Tenant or
 permissions. Retained online state alone cannot prove a live connection. Backend freshness,
 retention, and reconnection semantics are documented in [MQTT telemetry](../guides/MQTT_TELEMETRY.md).
+
+## Command execution rules (#14)
+
+Command ID is the originating stable execution ID. Publish with `retain=false`, an expiry deadline
+and no offline/reconnect replay. A receipt must come from the exact authenticated target device after
+execution, with matching command/execution IDs. First timely terminal result wins; late receipts cannot
+revive uncertain outcomes. Devices must check synchronized time and reserve IDs before acting.
+See [command lifecycle and firmware deduplication](../guides/DEVICE_COMMANDS.md).

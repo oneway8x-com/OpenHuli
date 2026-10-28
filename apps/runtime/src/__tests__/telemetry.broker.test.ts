@@ -18,6 +18,30 @@ import {
   getTelemetryHistory,
   type TelemetryDependencies,
 } from "@corely/modules-telemetry";
+import {
+  DeviceCommandRepository,
+  createDeviceCommandTools,
+  getCommandOutcome,
+  type DeviceCommandDependencies,
+} from "@corely/modules-device-commands";
+import {
+  IdentityRepository,
+  readAuthConfig,
+  issueAccessToken,
+} from "@corely/modules-identity";
+import {
+  ToolExecutionRepository,
+  ToolRegistry,
+  submitToolCall,
+  dispatchToolExecution,
+  preauthorizeTool,
+} from "@corely/modules-tool-execution";
+import {
+  OpenHuliCommandReceiver,
+  DeviceCapabilityManifestSchema,
+  type DeviceCommand,
+  type DeviceCommandResult,
+} from "@corely/contracts";
 import { createTelemetryMqttDependency } from "../mqtt-telemetry";
 import { readRuntimeConfig } from "../config";
 
@@ -28,6 +52,12 @@ const run = promisify(execFile),
 const owner = { tenantId: randomUUID(), userId: randomUUID() };
 const name = `openhuli-mqtt-test-${randomUUID().slice(0, 8)}`;
 const clients: MqttClient[] = [];
+let commands: DeviceCommandDependencies;
+let ownerToken: string;
+const authConfig = readAuthConfig({
+  NODE_ENV: "development",
+  OWNER_EMAIL: `broker-${randomUUID()}@example.test`,
+});
 let dependency: ReturnType<typeof createTelemetryMqttDependency> | undefined;
 let deps: TelemetryDependencies, port: number, authPort: number;
 let device: Awaited<ReturnType<typeof pairOwnerDevice>>,
@@ -109,10 +139,20 @@ function config(epoch: string) {
     RUNTIME_MQTT_USERNAME: "openhuli-service-test",
     RUNTIME_MQTT_PASSWORD: "synthetic-server-only-broker-password",
   });
-  return createTelemetryMqttDependency(configuration, {
+  commands = {
+    store: new DeviceCommandRepository(db),
+    devices: access,
     telemetry: deps,
+    acknowledgementTimeoutMs: 1000,
+    publisher: { isReady: () => false, publishCommand: async () => "not_sent" },
+  };
+  const adapter = createTelemetryMqttDependency(configuration, {
+    telemetry: deps,
+    commands,
     close: async () => {},
   });
+  commands.publisher = adapter;
+  return adapter;
 }
 beforeAll(async () => {
   await db.connect();
@@ -123,6 +163,37 @@ beforeAll(async () => {
       slug: owner.tenantId,
     },
   });
+  await db.user.create({
+    data: {
+      id: owner.userId,
+      email: authConfig.ownerEmail,
+      passwordHash: "",
+      name: "Broker test",
+    },
+  });
+  const role = await db.role.create({
+    data: {
+      tenantId: owner.tenantId,
+      systemKey: "OWNER",
+      scope: "TENANT",
+      name: "Owner",
+    },
+  });
+  await db.membership.create({
+    data: { tenantId: owner.tenantId, userId: owner.userId, roleId: role.id },
+  });
+  const user = {
+    ...owner,
+    email: authConfig.ownerEmail,
+    name: "Broker test",
+    tenantName: "Broker test",
+  };
+  const session = await new IdentityRepository(db).createSession(
+    user,
+    randomUUID(),
+    new Date(Date.now() + 3600000),
+  );
+  ownerToken = issueAccessToken(user, session.id, authConfig.secret);
   device = await pairOwnerDevice(fixture, owner, access);
   other = await pairOwnerDevice(fixture, owner, access);
   port = await freePort();
@@ -154,8 +225,19 @@ afterAll(async () => {
   for (const client of clients) await client.endAsync(true).catch(() => {});
   await dependency?.stop().catch(() => {});
   await run("docker", ["stop", name]).catch(() => {});
+  const scope = { tenantId: owner.tenantId };
+  await db.deviceCommand.deleteMany({ where: scope });
+  await db.toolPreauthorization.deleteMany({ where: scope });
+  await db.auditLog.deleteMany({ where: scope });
+  await db.toolExecution.deleteMany({ where: scope });
+  await db.conversationTurn.deleteMany({ where: scope });
+  await db.agentRun.deleteMany({ where: scope });
+  await db.refreshToken.deleteMany({ where: scope });
+  await db.membership.deleteMany({ where: scope });
+  await db.role.deleteMany({ where: scope });
   await db.device.deleteMany({ where: { tenantId: owner.tenantId } });
   await db.tenant.deleteMany({ where: { id: owner.tenantId } });
+  await db.user.delete({ where: { id: owner.userId } });
   await db.disconnect();
 });
 describe("real Mosquitto integration", () => {
@@ -376,4 +458,200 @@ describe("real Mosquitto integration", () => {
         .connectivity,
     ).toBe("offline");
   });
+});
+
+it("executes acknowledged commands through real MQTT and deduplicates physical effects", async () => {
+  const paired = await pairOwnerDevice(
+    {
+      ...fixture,
+      capabilities: [
+        ...fixture.capabilities,
+        { kind: "display", maxTextLength: 32 },
+      ],
+    },
+    owner,
+    access,
+  );
+  const actor = { kind: "owner" as const, token: ownerToken };
+  const toolDeps = {
+    store: new ToolExecutionRepository(db),
+    devices: access,
+    identity: new IdentityRepository(db),
+    auth: authConfig,
+    registry: new ToolRegistry(createDeviceCommandTools(commands)),
+  };
+  const client = await connectAsync(
+    `mqtt://127.0.0.1:${port}`,
+    options(paired),
+  );
+  clients.push(client);
+  await client.subscribeAsync(paired.mqtt.commands, { qos: 1 });
+  const stored = await access.findDevice(owner.tenantId, paired.device.id);
+  if (!stored) throw new Error("device");
+  const receiver = new OpenHuliCommandReceiver(
+    DeviceCapabilityManifestSchema.parse(JSON.parse(stored.manifestJson)),
+    Date.now,
+    () => true,
+  );
+  let effects = 0;
+  const receipts: DeviceCommandResult[] = [],
+    received: DeviceCommand[] = [];
+  client.on("message", (_topic, payload, packet) => {
+    expect(packet.retain).toBe(false);
+    expect(packet.qos).toBe(0);
+    const wire = payload.toString();
+    received.push(JSON.parse(wire));
+    void receiver
+      .receive(wire, async () => {
+        effects++;
+        return "succeeded";
+      })
+      .then((result) => {
+        receipts.push(result);
+      });
+  });
+  const presence = (sequence: number, status: "online" | "offline") =>
+    client.publishAsync(
+      paired.mqtt.presence,
+      JSON.stringify({
+        version: 1,
+        type: "device.presence",
+        messageId: randomUUID(),
+        deviceId: paired.device.id,
+        bootId: "command-boot",
+        sequence,
+        status,
+        sentAt: new Date().toISOString(),
+      }),
+      { qos: 1, retain: true },
+    );
+  await presence(0, "online");
+  await expect
+    .poll(
+      async () =>
+        (await getTelemetryLatest({ deviceId: paired.device.id }, owner, deps))
+          .connectivity,
+    )
+    .toBe("online");
+  async function request(toolId: string, args: Record<string, unknown>) {
+    await preauthorizeTool(
+      {
+        toolId,
+        sourceDeviceId: null,
+        targetDeviceId: paired.device.id,
+        expiresAt: new Date(Date.now() + 60000).toISOString(),
+      },
+      actor,
+      toolDeps,
+    );
+    const runId = randomUUID(),
+      turnId = randomUUID();
+    await db.agentRun.create({
+      data: { id: runId, tenantId: owner.tenantId, status: "active" },
+    });
+    await db.conversationTurn.create({
+      data: {
+        id: turnId,
+        tenantId: owner.tenantId,
+        runId,
+        sequence: 1,
+        source: "text",
+        status: "committed",
+        correlationId: turnId,
+      },
+    });
+    return submitToolCall(
+      {
+        toolCall: {
+          version: 1,
+          conversationId: runId,
+          turnId,
+          toolCallId: randomUUID(),
+          toolId,
+          arguments: args,
+        },
+        correlationId: turnId,
+      },
+      actor,
+      toolDeps,
+    );
+  }
+  const ping = await request("device.ping", { deviceId: paired.device.id });
+  const pending = dispatchToolExecution(ping.executionId, actor, toolDeps);
+  await expect.poll(() => receipts.length).toBe(1);
+  expect(
+    (await getCommandOutcome(ping.executionId, owner, commands)).status,
+  ).toBe("pending");
+  const attacker = await connectAsync(
+    `mqtt://127.0.0.1:${port}`,
+    options(other),
+  );
+  clients.push(attacker);
+  await attacker.publishAsync(
+    other.mqtt.commandResults,
+    JSON.stringify(receipts[0]),
+    { qos: 1 },
+  );
+  expect(
+    (await getCommandOutcome(ping.executionId, owner, commands)).status,
+  ).toBe("pending");
+  await client.publishAsync(
+    paired.mqtt.commandResults,
+    JSON.stringify(receipts[0]),
+    { qos: 1 },
+  );
+  expect((await pending).status).toBe("succeeded");
+  await dependency?.publishCommand(received[0], new AbortController().signal); // Explicit duplicate injection, not production replay.
+  await expect.poll(() => receipts.length).toBe(2);
+  expect(effects).toBe(1);
+  await client.publishAsync(
+    paired.mqtt.commandResults,
+    JSON.stringify(receipts[1]),
+    { qos: 1 },
+  );
+  expect(
+    (await getCommandOutcome(ping.executionId, owner, commands)).status,
+  ).toBe("succeeded");
+  const display = await request("display.message", {
+    deviceId: paired.device.id,
+    text: "Hello",
+  });
+  const missing = dispatchToolExecution(display.executionId, actor, toolDeps);
+  await expect.poll(() => receipts.length).toBe(3);
+  expect((await missing).status).toBe("unknown");
+  await client.publishAsync(
+    paired.mqtt.commandResults,
+    JSON.stringify(receipts[2]),
+    { qos: 1 },
+  );
+  await expect
+    .poll(
+      async () =>
+        (await getCommandOutcome(display.executionId, owner, commands)).result
+          ?.lateAcknowledgement,
+    )
+    .toBeTruthy();
+  expect(
+    (await getCommandOutcome(display.executionId, owner, commands)).status,
+  ).toBe("unknown");
+  await presence(1, "offline");
+  await client.endAsync(false);
+  const offline = await request("device.ping", { deviceId: paired.device.id });
+  expect(
+    (await dispatchToolExecution(offline.executionId, actor, toolDeps)).output
+      ?.status,
+  ).toBe("failed");
+  const reconnected = await connectAsync(
+    `mqtt://127.0.0.1:${port}`,
+    options(paired),
+  );
+  clients.push(reconnected);
+  let replayed = 0;
+  reconnected.on("message", () => {
+    replayed++;
+  });
+  await reconnected.subscribeAsync(paired.mqtt.commands, { qos: 1 });
+  await new Promise((resolve) => setTimeout(resolve, 250));
+  expect(replayed).toBe(0);
+  expect(effects).toBe(2);
 });

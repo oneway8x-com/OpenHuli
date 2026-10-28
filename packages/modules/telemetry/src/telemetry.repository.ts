@@ -13,12 +13,18 @@ export class TelemetryRepository {
           isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
         });
       } catch (error) {
-        if (
-          !(error instanceof Prisma.PrismaClientKnownRequestError) ||
-          error.code !== "P2034" ||
-          attempt >= 4
-        )
-          throw error;
+        // Prisma 7's driver adapter may expose a commit-time serialization conflict directly.
+        // Retry only rolled-back database work; no external publish/effect occurs in this transaction.
+        const conflict =
+          (error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "P2034") ||
+          (error instanceof Error &&
+            error.name === "DriverAdapterError" &&
+            error.cause !== null &&
+            typeof error.cause === "object" &&
+            "kind" in error.cause &&
+            error.cause.kind === "TransactionWriteConflict");
+        if (!conflict || attempt >= 4) throw error;
       }
     }
   }

@@ -114,3 +114,10 @@ Set `TEST_DATABASE_URL` to an explicitly named local test database; the test scr
 boundary. Broker tests start their own synthetic-credential container and private bridge, cover
 ACLs, malformed/oversized readings, Last Will, retained-online restart handling, and revocation,
 and remove their container. They require Docker; CI builds the same image and runs these checks.
+
+## Device execution receipts
+
+When command services are composed, the backend also subscribes to broker-attested `/results` packets
+and publishes non-retained commands through the existing backend ACL. Command IDs, acknowledgements,
+expiry, deduplication and cancellation are handled by the [command feature](DEVICE_COMMANDS.md).
+Telemetry ingestion never interprets a broker publish acknowledgement as physical execution.
