@@ -153,3 +153,8 @@ apps/.DS_Store
 /deployment.local/
 
 !docker/deploy/stack.env.example
+
+# Local ESP32 provisioning and firmware build outputs
+firmware/**/.pio/
+firmware/**/include/config.local.h
+firmware/**/.venv/

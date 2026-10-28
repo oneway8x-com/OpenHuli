@@ -4,7 +4,11 @@ import { OpenHuliIdSchema } from "./common";
 
 export const DevicePurposeSchema = z.enum(["voice", "mqtt"]);
 export type DevicePurpose = z.infer<typeof DevicePurposeSchema>;
-export const DeviceProfileIdSchema = z.enum(["esp32-voice", "weather-station"]);
+export const DeviceProfileIdSchema = z.enum([
+  "esp32-voice",
+  "weather-station",
+  "esp32-microphone",
+]);
 export const DeviceLocationSchema = z
   .object({
     label: z.string().trim().min(1).max(120),

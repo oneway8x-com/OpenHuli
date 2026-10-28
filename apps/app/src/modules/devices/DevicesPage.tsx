@@ -159,6 +159,9 @@ export function DevicesPage() {
   const display = detail.data?.device.capabilities.find(
     (c) => c.kind === "display",
   );
+  const ping = detail.data?.device.capabilities.some(
+    (capability) => capability.kind === "ping",
+  );
   const pending = command.data?.status === "awaiting_approval";
   const commandBusy = Boolean(
     command.isError ||
@@ -382,12 +385,18 @@ export function DevicesPage() {
                     Confirmation requires an actual device receipt. Reopening
                     this page only reads status.
                   </p>
-                  <Button
-                    disabled={busy || !active || commandBusy}
-                    onClick={() => void send("device.ping")}
-                  >
-                    Ping device
-                  </Button>
+                  {ping ? (
+                    <Button
+                      disabled={busy || !active || commandBusy}
+                      onClick={() => void send("device.ping")}
+                    >
+                      Ping device
+                    </Button>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Ping commands are unsupported by this device.
+                    </p>
+                  )}
                   {display?.kind === "display" ? (
                     <div className="space-y-2">
                       <label className="block text-sm">

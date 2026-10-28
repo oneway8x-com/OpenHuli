@@ -328,3 +328,59 @@ test("a lost command receipt recovers by request identity after refresh without 
     await db.disconnect();
   }
 });
+
+test("owner pairs a microphone-only firmware endpoint without unsupported capabilities", async ({
+  page,
+}) => {
+  await page.goto("/devices");
+  await expect(
+    page.getByText("No devices yet. Pair your first device below."),
+  ).toBeVisible();
+  await page.getByLabel("Has a display").check();
+  await page
+    .getByRole("combobox", { name: "Profile", exact: true })
+    .selectOption("esp32-microphone");
+  await expect(page.getByLabel("Has a display")).toHaveCount(0);
+  await expect(page.getByLabel("Has a speaker")).toHaveCount(0);
+  await page
+    .getByLabel("Device name", { exact: true })
+    .fill("Microphone reference");
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({
+    path: "/tmp/openhuli15-pair-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: "/tmp/openhuli15-pair-mobile.png",
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Pair device", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Save your device configuration" }),
+  ).toBeVisible();
+  const id = new URL(page.url()).searchParams.get("id");
+  expect(id).toBeTruthy();
+  const response = await page.request.get(`/api/devices/${id}`);
+  expect(response.ok()).toBe(true);
+  const data = await response.json();
+  await page.getByRole("button", { name: "Hide credentials" }).click();
+  await expect(
+    page.getByRole("button", { name: "Ping device", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("Ping commands are unsupported by this device."),
+  ).toBeVisible();
+  expect(data.device.profileId).toBe("esp32-microphone");
+  expect(
+    data.device.capabilities.map(
+      (capability: { kind: string }) => capability.kind,
+    ),
+  ).toEqual(["microphone"]);
+  expect(JSON.stringify(data)).not.toContain('"token"');
+});
