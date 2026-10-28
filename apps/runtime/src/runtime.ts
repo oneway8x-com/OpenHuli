@@ -1,3 +1,4 @@
+import { createVoiceGateway, type VoiceGatewayOptions } from "./voice-gateway";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
@@ -49,6 +50,7 @@ export function createRuntime(
   options: {
     dependencies?: RuntimeDependency[];
     connections?: RuntimeConnectionHooks;
+    voice?: VoiceGatewayOptions;
   } = {},
 ) {
   const dependencies = options.dependencies ?? [];
@@ -65,6 +67,24 @@ export function createRuntime(
   let httpFailed = false;
   let starting: Promise<AddressInfo> | undefined;
   let stopping: Promise<void> | undefined;
+  if (config.RUNTIME_VOICE_ENABLED && !options.voice)
+    throw new Error("Voice authorization is not configured");
+  const gateway: ReturnType<typeof createVoiceGateway> | undefined =
+    config.RUNTIME_VOICE_ENABLED && options.voice
+      ? createVoiceGateway(
+          config,
+          options.voice,
+          () =>
+            phase === "running" &&
+            !cleanupFailed &&
+            connections.size + cleanups.size + (gateway?.count() ?? 0) <
+              config.RUNTIME_MAX_CONNECTIONS,
+          () => health().ready,
+          () => {
+            cleanupFailed = true;
+          },
+        )
+      : undefined;
   const sockets = new WebSocketServer({
     noServer: true,
     maxPayload: OPENHULI_MAX_JSON_BYTES,
@@ -95,10 +115,11 @@ export function createRuntime(
         !httpFailed &&
         !cleanupFailed &&
         phase === "running" &&
-        !Object.values(states).includes("unavailable"),
+        !Object.values(states).includes("unavailable") &&
+        (!gateway || gateway.state() === "ready"),
       dependencies: states,
-      voice: "unconfigured" as const,
-      connections: connections.size,
+      voice: gateway?.state() ?? "unconfigured",
+      connections: connections.size + (gateway?.count() ?? 0),
     };
   }
 
@@ -171,6 +192,10 @@ export function createRuntime(
   });
 
   server.on("upgrade", (request, socket, head) => {
+    if (request.url === "/voice" && gateway) {
+      gateway.upgrade(request, socket, head);
+      return;
+    }
     if (request.url !== "/internal/probe" || !config.RUNTIME_PROBE_TOKEN) {
       rejectUpgrade(socket, 404);
       return;
@@ -186,7 +211,10 @@ export function createRuntime(
       rejectUpgrade(socket, 503);
       return;
     }
-    if (connections.size + cleanups.size >= config.RUNTIME_MAX_CONNECTIONS) {
+    if (
+      connections.size + cleanups.size + (gateway?.count() ?? 0) >=
+      config.RUNTIME_MAX_CONNECTIONS
+    ) {
       rejectUpgrade(socket, 503);
       return;
     }
@@ -225,6 +253,7 @@ export function createRuntime(
               ]);
               await Promise.all([...cleanups]);
             })(),
+            ...(gateway ? [gateway.stop()] : []),
             ...dependencies.map((item) =>
               Promise.resolve().then(() => item.stop()),
             ),

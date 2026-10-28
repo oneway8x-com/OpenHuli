@@ -1,8 +1,9 @@
 # Device pairing and credential lifecycle
 
 Issue #7 adds owner-only provisioning APIs and shared device-access policy. The console's full
-onboarding UI is tracked in #19. Voice WSS transport and broker ingestion/ACL integration remain
-#9 and #13: issuing credentials does not mean those transports are deployed or reachable.
+onboarding UI is tracked in #19. The [voice gateway](VOICE_GATEWAY.md) now composes voice authentication and revocation policy;
+broker ingestion/ACL integration remains #13. Issuing credentials does not imply a deployed live
+provider or reachable transport.
 The runtime probe token is an operator diagnostic credential, never a device credential.
 
 ## Owner flow
@@ -107,6 +108,6 @@ Use the devices package's public use cases:
   stops further work, and calls the returned cleanup function on disconnect. New handshakes fail
   immediately after revocation. An already dispatched external effect is not undone or retried.
 
-No broker authentication plugin, public credential-check endpoint, or device WSS route is added
-here. #9/#13 must wire these guards before enabling device access; default broker anonymous access
-must remain disabled. Routine checks use synthetic credentials and a disposable local database.
+The voice gateway wires these guards for `/voice`. No broker authentication plugin or public
+credential-check endpoint is added here. #13 must wire the broker guards before enabling MQTT
+device access; default broker anonymous access must remain disabled. Routine checks use synthetic credentials and a disposable local database.

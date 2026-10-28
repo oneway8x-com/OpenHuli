@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  DeviceCapabilityManifestSchema,
   AssignDeviceGrantSchema,
   DevicePurposeSchema,
   OpenHuliIdSchema,
@@ -363,4 +364,33 @@ export async function authorizePairedDeviceTool(
     await requireActive(session.tenantId, targetDeviceId, store);
   }
   return session;
+}
+
+export async function resolveVoiceDevice(
+  token: string,
+  store: DeviceAccessStore,
+  now = new Date(),
+) {
+  const session = await authenticateScopedDevice(token, "voice", store, now);
+  const device = await requireActive(session.tenantId, session.deviceId, store);
+  const credential = await store.findCredential(
+    session.tenantId,
+    session.credentialId,
+  );
+  if (!credential || credential.revokedAt || credential.expiresAt <= now)
+    throw new DeviceAccessError(401, "Invalid device credential");
+  const manifest = DeviceCapabilityManifestSchema.parse(
+    JSON.parse(device.manifestJson),
+  );
+  if (
+    manifest.deviceId !== session.deviceId ||
+    !manifest.capabilities.some((item) => item.kind === "microphone")
+  )
+    throw new DeviceAccessError(403, "Configured microphone required");
+  validateDeviceAdvertisement(
+    manifest,
+    session.deviceId,
+    configuration(device),
+  );
+  return { session, manifest, expiresAt: credential.expiresAt };
 }

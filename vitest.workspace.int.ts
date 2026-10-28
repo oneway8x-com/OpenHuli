@@ -1,3 +1,4 @@
+import runtimeConfig from "./apps/runtime/vitest.config";
 import appConfig from "./apps/app/vitest.config";
 import { defineWorkspace } from "vitest/config";
 import { getTestDatabaseUrl } from "./scripts/test-database";
@@ -7,6 +8,17 @@ process.env.DATABASE_URL = databaseUrl;
 process.env.DIRECT_DATABASE_URL = databaseUrl;
 
 export default defineWorkspace([
+  {
+    resolve: runtimeConfig.resolve,
+    root: "./apps/runtime",
+    test: {
+      name: "voice-integration",
+      include: ["src/**/__tests__/**/*.integration.test.ts"],
+      exclude: ["node_modules", "dist"],
+      testTimeout: 10000,
+      env: { DATABASE_URL: databaseUrl, DIRECT_DATABASE_URL: databaseUrl },
+    },
+  },
   ...["devices", "conversations", "tool-execution"].map((feature) => ({
     root: `./packages/modules/${feature}`,
     test: {

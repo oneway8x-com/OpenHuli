@@ -15,7 +15,15 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     return;
   }
+  const voice = config.RUNTIME_VOICE_ENABLED
+    ? {
+        authorization: (
+          await import("./device-authorization")
+        ).createVoiceAuthorization(),
+      }
+    : undefined;
   const runtime = createRuntime(config, {
+    ...(voice ? { voice } : {}),
     dependencies: config.RUNTIME_MQTT_URL ? [createMqttDependency(config)] : [],
   });
   let stopping = false;

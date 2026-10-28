@@ -33,3 +33,9 @@ The persistent host validates its `RUNTIME_*` settings independently. Its intern
 is not an owner or device credential. See the [persistent runtime guide](PERSISTENT_RUNTIME.md) for
 settings, `.env` loading, MQTT TLS, lifecycle checks, and cross-process trust boundaries. Device voice
 and verified external deployment remain separate work; this is not a Vercel-only deployment.
+
+Voice transport is opt-in through `RUNTIME_VOICE_ENABLED`. When enabled, `DATABASE_URL` must be a
+valid PostgreSQL connection and a streaming provider must be composed into the runtime. No live
+provider is supplied before #10: the CLI reports unavailable voice readiness rather than accepting
+and discarding audio. See [voice gateway setup and limits](VOICE_GATEWAY.md). Defaults and bounded
+queue/operation/turn/session limits are in `.env.example`; provider keys remain server-only.

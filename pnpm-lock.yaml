@@ -304,6 +304,15 @@ importers:
 
   apps/runtime:
     dependencies:
+      '@corely/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@corely/modules-devices':
+        specifier: workspace:*
+        version: link:../../packages/modules/devices
+      '@corely/modules-voice':
+        specifier: workspace:*
+        version: link:../../packages/modules/voice
       '@corely/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -621,6 +630,25 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+
+  packages/modules/voice:
+    dependencies:
+      '@corely/contracts':
+        specifier: workspace:*
+        version: link:../../contracts
+    devDependencies:
+      '@corely/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.11
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 2.1.9(@types/node@22.19.11)(lightningcss@1.31.1)(terser@5.46.0)
 
   packages/prompts:
     dependencies:
