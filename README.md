@@ -26,6 +26,13 @@ The [release evaluation guide](docs/guides/RELEASE_EVALUATION.md) defines 32 sce
 report template for live and physical acceptance. Hardware wiring, endurance and provider latency
 require recorded evidence before the MVP release gate can pass.
 
+## Arduino and PlatformIO devices
+
+The [OpenHuli C++ client](libraries/OpenHuli/README.md) provides ESP32 MQTT telemetry, presence,
+ping and acknowledged display commands. It includes an Arduino/PlatformIO example and shares its
+protocol implementation with the reference weather firmware. Voice support remains in the reference
+firmware; physical device acceptance is tracked separately.
+
 ## Local setup
 
 Requires Node.js 22.19+ (see `package.json`), pnpm 10.26.0, and Docker Compose.

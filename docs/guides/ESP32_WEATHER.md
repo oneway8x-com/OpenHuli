@@ -6,6 +6,10 @@ optional LCD1602. **Physical acceptance is pending.** The user selected an LCD16
 parallel header; its exact manufacturer/controller, supply, signal thresholds, GPIO map and USB power
 budget have not been verified. No ESP32 GPIO assignments are proposed here.
 
+The reusable MQTT/protocol code now lives in the [OpenHuli Arduino/PlatformIO client](../../libraries/OpenHuli/README.md).
+The reference keeps its DHT11/LCD/GPIO adapters and consumes the library from this checkout; keep
+`libraries/OpenHuli` alongside `firmware` when building it.
+
 ## Configuration and hardware
 
 Use the same ignored `firmware/esp32-voice/include/config.local.h`, copied from the updated example.
@@ -91,8 +95,8 @@ capture task. Actual timing and heap under radio load still require a mixed hard
 
 A failed read publishes empty `readings` and explicit `read_failed` entries for both metrics. It never
 reuses the last good values with a fresh timestamp. Before clock sync, a reading can update the local
-screen but is not later stamped as a newly measured cloud reading. At most one fresh sample is held;
-o offline backlog is uploaded or persisted. Samples keep their original timestamp.
+screen but is not later stamped as a newly measured cloud reading. Samples are sent only while
+connected; no offline backlog is uploaded or persisted. Samples keep their original timestamp.
 
 With the optional LCD, each sample replaces the two rows with measured temperature/humidity or
 `Sensor read error`, even if AI is unavailable. A display command writes up to 32 printable ASCII

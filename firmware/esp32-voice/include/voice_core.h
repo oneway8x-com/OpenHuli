@@ -1,4 +1,5 @@
 #pragma once
+#include <OpenHuliProtocol.h>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -14,7 +15,7 @@ constexpr uint32_t max_turns =
     64; // Reconnect before the v1 256-turn maximum; no unbounded ID history.
 enum class State { offline, negotiating, ready, recording, draining, waiting, fault };
 enum class Control { session, start, commit, cancel };
-bool valid_id(const char* text);
+using device::valid_id;
 bool write_control(char* out, size_t capacity, Control kind, const char* message_id,
                    const char* reference, uint32_t turn = 0, uint32_t stream = 0,
                    uint32_t sequence = 0);

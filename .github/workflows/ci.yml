@@ -91,16 +91,30 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.platformio
-          key: firmware-${{ runner.os }}-${{ hashFiles('firmware/esp32-voice/platformio.ini') }}
+          key: firmware-${{ runner.os }}-${{ hashFiles('firmware/esp32-voice/platformio.ini', 'libraries/OpenHuli/library.json', 'libraries/OpenHuli/examples/Telemetry/platformio.ini') }}
       - run: pio run --project-dir firmware/esp32-voice --environment s2_mini --environment s2_mini_check
+      - run: pio run --project-dir libraries/OpenHuli/examples/Telemetry --environment s2_mini_check
+      - run: pio pkg pack libraries/OpenHuli --output /tmp/OpenHuli.tar.gz
+      - run: python scripts/package-arduino-client.py --output /tmp/OpenHuli.zip
       - name: Test firmware command JSON boundary
         run: |
           binary="$(mktemp)"
           trap 'rm -f "$binary"' EXIT
           c++ -std=c++17 -Wall -Wextra -Werror -pedantic \
-            -Ifirmware/esp32-voice/include \
+            -Ilibraries/OpenHuli/src \
             -Ifirmware/esp32-voice/.pio/libdeps/s2_mini/ArduinoJson/src \
-            firmware/esp32-voice/src/voice_core.cpp firmware/esp32-voice/src/weather_core.cpp \
-            firmware/esp32-voice/src/command_json.cpp firmware/esp32-voice/test/command_json.cpp \
+            libraries/OpenHuli/src/OpenHuliProtocol.cpp libraries/OpenHuli/src/OpenHuliCommand.cpp \
+            firmware/esp32-voice/test/command_json.cpp \
             -o "$binary"
+          "$binary"
+      - name: Test Arduino client transport lifecycle with fake ESP32 boundaries
+        run: |
+          binary="$(mktemp)"
+          trap 'rm -f "$binary"' EXIT
+          c++ -std=c++11 -Wall -Wextra -Werror -pedantic -DESP32 \
+            -Ilibraries/OpenHuli/src -Ilibraries/OpenHuli/test/fakes \
+            -Ifirmware/esp32-voice/.pio/libdeps/s2_mini/ArduinoJson/src \
+            libraries/OpenHuli/src/OpenHuli.cpp libraries/OpenHuli/src/OpenHuliConfig.cpp \
+            libraries/OpenHuli/src/OpenHuliProtocol.cpp libraries/OpenHuli/src/OpenHuliCommand.cpp \
+            libraries/OpenHuli/test/client.cpp -o "$binary"
           "$binary"

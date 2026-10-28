@@ -1,8 +1,8 @@
-#include "command_json.h"
-#include "voice_core.h"
+#include "OpenHuliProtocol.h"
 #include <ArduinoJson.h>
 #include <cstring>
-namespace openhuli::weather {
+namespace openhuli {
+namespace device {
 namespace {
 const char* string_value(JsonVariantConst value) {
   if (!value.is<const char*>())
@@ -12,9 +12,47 @@ const char* string_value(JsonVariantConst value) {
 }
 } // namespace
 bool parse_command(char* json, size_t length, const char* device_id, Command& out) {
+  out = Command{};
   if (!json || !length || length > command_bytes || !valid_id(device_id))
     return false;
   if (std::memchr(json, '\0', length))
+    return false;
+  // ArduinoJson stops at the closing object. Require exactly one complete JSON object,
+  // with only JSON whitespace after it, before decoding the command fields.
+  size_t depth = 0;
+  bool quoted = false, escaped = false, complete = false;
+  for (size_t i = 0; i < length; ++i) {
+    const char c = json[i];
+    const bool space = c == ' ' || c == '\t' || c == '\r' || c == '\n';
+    if (complete) {
+      if (!space)
+        return false;
+      continue;
+    }
+    if (quoted) {
+      if (escaped)
+        escaped = false;
+      else if (c == '\\')
+        escaped = true;
+      else if (c == '\"')
+        quoted = false;
+    } else if (c == '\"') {
+      if (!depth)
+        return false;
+      quoted = true;
+    } else if (c == '{' || c == '[') {
+      if (!depth && c != '{')
+        return false;
+      if (++depth > 4)
+        return false;
+    } else if (c == '}' || c == ']') {
+      if (!depth)
+        return false;
+      complete = --depth == 0;
+    } else if (!depth && !space)
+      return false;
+  }
+  if (!complete || quoted)
     return false;
   StaticJsonDocument<1536> doc;
   if (deserializeJson(doc, json, length, DeserializationOption::NestingLimit(4)))
@@ -58,4 +96,5 @@ bool parse_command(char* json, size_t length, const char* device_id, Command& ou
     std::memcpy(out.text, text.c_str(), text.size() + 1);
   return true;
 }
-} // namespace openhuli::weather
+} // namespace device
+} // namespace openhuli

@@ -4,21 +4,6 @@
 #include <limits>
 
 namespace openhuli {
-bool valid_id(const char* text) {
-  if (!text)
-    return false;
-  const size_t size = std::strlen(text);
-  if (!size || size > 64)
-    return false;
-  for (size_t i = 0; i < size; ++i) {
-    const char c = text[i];
-    const bool alpha_numeric =
-        (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9');
-    if (!alpha_numeric && !(i && (c == '.' || c == '_' || c == '-')))
-      return false;
-  }
-  return true;
-}
 bool write_control(char* out, size_t capacity, Control kind, const char* id, const char* ref,
                    uint32_t turn, uint32_t stream, uint32_t sequence) {
   if (!out || !capacity || !valid_id(id) || !valid_id(ref))

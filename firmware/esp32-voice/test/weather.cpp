@@ -200,7 +200,7 @@ int main() {
   std::cout << "RECONNECTED " << output << '\n';
   assert(write_telemetry(output, sizeof(output), "device-1", "boot-1", 0, c.issued_at, reading));
   std::cout << "TELEMETRY " << output << '\n';
-  assert(write_telemetry(output, sizeof(output), "device-1", "boot-1", 1, c.issued_at, {}));
+  assert(write_telemetry(output, sizeof(output), "device-1", "boot-1", 1, c.issued_at, Reading{}));
   std::cout << "SENSOR_ERROR " << output << '\n';
   assert(!write_telemetry(output, sizeof(output), "device-1", "boot-1", 2, c.issued_at,
                           {true, std::numeric_limits<float>::quiet_NaN(), 50}));
