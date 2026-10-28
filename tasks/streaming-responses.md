@@ -28,4 +28,4 @@ Implement [#17](https://github.com/oneway8x-com/OpenHuli/issues/17) on `17-strea
 - The reference sink models playback time without a physical sound device. Physical I2S output is intentionally not claimed; no board/amplifier profile has been validated.
 - Production tool-capable replies buffer speech until tool outcomes are confirmed; the synthetic tool-free demo demonstrates playback before generation completion. Provider bursts/slow consumers fail closed at explicit bounds.
 - Owner console authentication/rendering/browser sink remains #18. This change routes only on the originating authenticated device connection and provides shared event contracts; it does not expose a broadcast endpoint.
-- PR: pending creation.
+- PR: [#35](https://github.com/oneway8x-com/OpenHuli/pull/35), `17-streaming-responses` → `main`.
