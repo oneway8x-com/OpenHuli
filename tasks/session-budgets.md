@@ -45,7 +45,8 @@ Implement [#20](https://github.com/oneway8x-com/OpenHuli/issues/20) on `20-sessi
   lint (98 existing warnings), changed-file formatting and whitespace checks passed. The focused
   18-case device-command suite and five-case conversation browser suite also passed.
 - Self-review covered atomic privacy fencing, conservative status settlement, Tenant scope,
-  sequential provider-slot release and nonrefundable daily allocations. Follow-up PR pending.
+  sequential provider-slot release and nonrefundable daily allocations. Opened [PR #41](https://github.com/oneway8x-com/OpenHuli/pull/41) from
+  `20-privacy-cleanup-race` into `main`; CI pending at handoff.
 
 - The complete browser suite also exposed sequential conversations leaking idle provider slots under
   the new concurrency policy. New conversation now stops the selected live session before opening its
@@ -53,3 +54,6 @@ Implement [#20](https://github.com/oneway8x-com/OpenHuli/issues/20) on `20-sessi
   journey checks both prior sessions are read-only without weakening concurrency limits.
 - Stabilized the late-arrival regression by fixing its simulated completion time inside the command
   window. The 150ms test deadline and receipt validation are unchanged.
+
+- Stopped and removed the follow-up’s owned disposable PostgreSQL cluster and generated build cache.
+  No merge, deployment, live provider call or hardware action was performed.
