@@ -39,10 +39,13 @@ a deterministic voice-to-HTTP scenario, and an explicit opt-in live-provider flo
   inspection of matching actual API receipts and optional final public response output.
 - Changed-file formatting, document links and diff whitespace checks passed. Complete diff self-reviewed
   for credential/endpoint boundaries, Tenant-scoped fixture cleanup, input/output pacing, cancellation,
-  uncertain command receipts and separation from production startup. PR handoff pending.
+  uncertain command receipts and separation from production startup. Final affected CLI/MQTT tests
+  and runtime typecheck also passed after making broker disconnects unsuccessful.
 
 ## Remaining work / risks
 
 Live provider smoke requires a locally paired device, recorded PCM and explicit opt-in; no provider
 key belongs in device configuration or fixtures. Actual Mosquitto client coverage is pending CI.
-Software pacing/playback does not establish physical device behavior. PR handoff pending.
+Software pacing/playback does not establish physical device behavior. Published
+[PR #39](https://github.com/oneway8x-com/OpenHuli/pull/39) from `12-device-simulator` into `main`;
+GitHub CI pending at handoff. Owned test PostgreSQL cluster stopped and removed. No merge/deployment.
