@@ -51,4 +51,6 @@ credential lifecycle, measured telemetry, manual commands, grants and minimal in
   APIs need authenticated `GET /health`. Saved Tenant settings override environment defaults.
 - An already-dispatched action may finish after disable/cancel; unknown results require checking the
   device before another action. Charts show up to 100 latest samples, not full-history aggregation.
-- PR handoff pending. No merge or deployment authorized.
+- Opened [PR #38](https://github.com/oneway8x-com/OpenHuli/pull/38), targeting `main` from
+  `19-device-console`. CI pending at handoff. No merge or deployment authorized.
+- Stopped and removed the owned disposable PostgreSQL cluster and generated build cache.
