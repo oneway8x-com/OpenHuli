@@ -32,4 +32,4 @@ Implement [#13](https://github.com/oneway8x-com/OpenHuli/issues/13): authenticat
 - Presence uses the authenticated private WRITE callback because Mosquitto does not emit MESSAGE events for Last Will; ordinary telemetry/manifest uses broker-attested MQTT metadata. The native bridge is synchronous and intended for the single-owner MVP.
 - Synthetic MQTT clients and real PostgreSQL/Mosquitto were verified. Physical firmware and the separate network simulator/provider journey were not exercised.
 - Registered read tools are exported for conversation composition; current provider work remains separate (#10).
-- PR handoff pending; no merge or deployment requested.
+- PR: [#33](https://github.com/oneway8x-com/OpenHuli/pull/33), branch `13-mqtt-telemetry` into `main`. Scoped implementation committed and pushed; GitHub CI pending at handoff. No merge or deployment requested.
