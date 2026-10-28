@@ -34,8 +34,8 @@ to all interfaces is needed for this local container arrangement: restrict that 
 with host/network rules. The HTTP bridge requires its separate secret on every request. Do not
 expose it as a public device API. The supplied plaintext broker port binds only to host loopback.
 For physical devices and production, provide a private reachable broker listener with TLS and
-trusted certificates; use `mqtts://` in production. Production TLS/hosting provisioning is separate
-work, not supplied by this development Compose profile.
+trusted certificates; use `mqtts://` in production. The development Compose profile does not supply production TLS. The separate
+[deployment profile](DOCKER_DEPLOYMENT.md) provides verified MQTT TLS and a private broker bridge.
 
 ## Broker boundary
 

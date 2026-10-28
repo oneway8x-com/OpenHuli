@@ -148,3 +148,8 @@ apps/.DS_Store
 .local/
 *.sqlite-wal
 *.sqlite-shm
+
+# Operator deployment secrets, private CA and recovery archives
+/deployment.local/
+
+!docker/deploy/stack.env.example

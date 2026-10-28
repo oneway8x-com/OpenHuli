@@ -45,6 +45,14 @@ The example connection is for the local Compose database. Check `.env` before ru
 or seed; never copy a remote connection into this setup. `pnpm prisma:deploy` applies committed
 migrations; `pnpm prisma:migrate --name <description>` creates a new development migration.
 
+## Container deployment
+
+The [single-host Docker guide](docs/guides/DOCKER_DEPLOYMENT.md) packages the console, persistent
+runtime, private PostgreSQL, authenticated MQTT TLS and HTTPS/WSS proxy. It includes local test
+certificates, operator-managed cloud certificates, health checks and backup/isolated restore.
+Cloud and hardware acceptance require their own recorded live checks; packaged files alone do not
+establish a working device deployment.
+
 ## Checks
 
 After client generation, these checks need no live database:
