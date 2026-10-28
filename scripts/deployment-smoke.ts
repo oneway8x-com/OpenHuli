@@ -6,6 +6,8 @@ import {
   writeFileSync,
   rmSync,
   chmodSync,
+  readFileSync,
+  readdirSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -168,15 +170,19 @@ try {
     );
   // Broker's own healthcheck verifies a successful authenticated TLS SUBACK.
   compose(["exec", "-T", "mqtt", "/bin/sh", "/deployment/broker-health.sh"]);
-  assert.throws(() =>
-    compose([
-      "exec",
-      "-T",
-      "mqtt",
-      "/bin/sh",
-      "-c",
-      'exec mosquitto_sub -h "$OPENHULI_MQTT_HOST" -p 8883 --cafile /run/secrets/tls_ca -V mqttv5 -E -W 3 -i openhuli-denied -u openhuli-runtime -P "$(cat /run/secrets/mqtt_password)" -t "#"',
-    ]),
+  const denied = compose([
+    "exec",
+    "-T",
+    "mqtt",
+    "/bin/sh",
+    "-c",
+    'exec mosquitto_sub -h "$OPENHULI_MQTT_HOST" -p 8883 --cafile /run/secrets/tls_ca -V mqttv5 -d -E -W 3 -i openhuli-denied -u openhuli-runtime -P "$(cat /run/secrets/mqtt_password)" -t "#"',
+  ]);
+  const suback = /^Subscribed \(mid: \d+\): (\d+)$/m.exec(denied);
+  assert.ok(suback, "Denied subscription must receive a SUBACK");
+  assert.ok(
+    Number(suback[1]) >= 128 && Number(suback[1]) <= 255,
+    "Wildcard SUBACK must deny access",
   );
   compose(["run", "--rm", "--no-deps", "bootstrap"]);
   sql(`INSERT INTO "AgentRun" (id,"tenantId",status,"updatedAt") SELECT 'smoke-run',id,'closed',now() FROM "Tenant" LIMIT 1;
@@ -252,14 +258,45 @@ try {
   console.log(
     "Deployment smoke passed: HTTPS/WSS auth boundary, MQTT TLS/auth/ACL, dependency failure, restart, backup, isolated restore, preserved unknown write identity. No live provider call or hardware acceptance.",
   );
-} catch {
+} catch (error) {
+  // This suite creates its own synthetic secrets; redact even those before sharing failure evidence.
+  const redact = (value: string) => {
+    let safe = value;
+    for (const file of readdirSync(join(root, "secrets"))) {
+      const secret = readFileSync(join(root, "secrets", file), "utf8").trim();
+      if (secret) safe = safe.replaceAll(secret, "[redacted]");
+    }
+    return safe.slice(-16000);
+  };
+  if (error instanceof Error) console.error(redact(error.message));
+  if (error && typeof error === "object") {
+    for (const key of ["stderr", "stdout"]) {
+      const value: unknown = Object.getOwnPropertyDescriptor(error, key)?.value;
+      if (Buffer.isBuffer(value) || typeof value === "string")
+        console.error(redact(value.toString()));
+    }
+  }
   try {
-    console.error(compose(["ps"]));
+    console.error(redact(compose(["ps"])));
+    console.error(
+      redact(
+        compose([
+          "logs",
+          "--no-color",
+          "--tail",
+          "50",
+          "app",
+          "runtime",
+          "mqtt",
+          "migrate",
+        ]),
+      ),
+    );
   } catch {
-    /* Report the original failure without dumping credentials. */
+    console.error("Smoke-owned container diagnostics unavailable");
   }
   console.error(
-    "Deployment smoke failed. Inspect the CI step and container health; private configuration and logs are not dumped automatically.",
+    "Deployment smoke failed; diagnostics above are from disposable synthetic services only.",
   );
   process.exitCode = 1;
 } finally {

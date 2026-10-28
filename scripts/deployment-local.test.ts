@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import {
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+  rmSync,
+  statSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -162,4 +169,76 @@ test("deployment smoke refuses a remote Docker endpoint before creating resource
       ),
     /responsive local Docker daemon/,
   );
+});
+
+test("container secret failures return fixed diagnostics without secret values or file paths", () => {
+  const parent = mkdtempSync(join(tmpdir(), "openhuli-entrypoint-test-"));
+  try {
+    const secret = join(parent, "database-secret");
+    const value = "sensitive-value-that-must-not-appear@";
+    writeFileSync(secret, value, { mode: 0o600 });
+    for (const file of [secret, join(parent, "absent-private-file")]) {
+      try {
+        execFileSync(
+          process.execPath,
+          ["docker/deploy/entrypoint.mjs", "runtime"],
+          {
+            env: { ...process.env, POSTGRES_PASSWORD_FILE: file },
+            stdio: "pipe",
+          },
+        );
+        assert.fail("Invalid secret must fail before starting runtime");
+      } catch (error) {
+        assert.ok(
+          error &&
+            typeof error === "object" &&
+            "stderr" in error &&
+            Buffer.isBuffer(error.stderr),
+        );
+        const diagnostic = error.stderr.toString();
+        assert.match(
+          diagnostic,
+          /Deployment secret files are missing or invalid/,
+        );
+        assert.ok(!diagnostic.includes(value) && !diagnostic.includes(parent));
+      }
+    }
+  } finally {
+    rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("broker health requires an allowed SUBACK even when a denied client exits zero", () => {
+  const directory = mkdtempSync(join(tmpdir(), "openhuli-suback-test-"));
+  try {
+    mkdirSync(join(directory, "bin"));
+    writeFileSync(
+      join(directory, "bin", "cat"),
+      "#!/bin/sh\nprintf synthetic-password\n",
+      { mode: 0o755 },
+    );
+    writeFileSync(
+      join(directory, "bin", "mosquitto_sub"),
+      '#!/bin/sh\nprintf "%s\\n" "$SUBACK_TEST_OUTPUT"\nexit "${SUBACK_TEST_STATUS:-0}"\n',
+      { mode: 0o755 },
+    );
+    const check = (output: string, status = "0") =>
+      execFileSync("sh", ["docker/deploy/broker-health.sh"], {
+        env: {
+          ...process.env,
+          PATH: `${join(directory, "bin")}:${process.env.PATH}`,
+          OPENHULI_MQTT_HOST: "synthetic.invalid",
+          SUBACK_TEST_OUTPUT: output,
+          SUBACK_TEST_STATUS: status,
+        },
+        stdio: "pipe",
+      });
+    check("Subscribed (mid: 1): 0");
+    for (const code of [128, 135])
+      assert.throws(() => check(`Subscribed (mid: 1): ${code}`));
+    assert.throws(() => check("No acknowledgement"));
+    assert.throws(() => check("Subscribed (mid: 1): 0", "1"));
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });

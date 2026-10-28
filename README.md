@@ -20,6 +20,9 @@ exact approvals. [Forecast and notes tools](docs/guides/HTTP_TOOLS.md) can be en
 
 The [ESP32 microphone reference](docs/guides/ESP32_VOICE.md) is configurable and cross-buildable;
 its exact wiring, real audio and physical acceptance remain unverified.
+The [release evaluation guide](docs/guides/RELEASE_EVALUATION.md) defines 32 scenarios and a
+report template for live and physical acceptance. Hardware wiring, endurance and provider latency
+require recorded evidence before the MVP release gate can pass.
 
 ## Local setup
 
