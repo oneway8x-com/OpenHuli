@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import {
+  mkdtempSync,
+  readFileSync,
+  writeFileSync,
+  rmSync,
+  statSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
@@ -162,4 +168,41 @@ test("deployment smoke refuses a remote Docker endpoint before creating resource
       ),
     /responsive local Docker daemon/,
   );
+});
+
+test("container secret failures return fixed diagnostics without secret values or file paths", () => {
+  const parent = mkdtempSync(join(tmpdir(), "openhuli-entrypoint-test-"));
+  try {
+    const secret = join(parent, "database-secret");
+    const value = "sensitive-value-that-must-not-appear@";
+    writeFileSync(secret, value, { mode: 0o600 });
+    for (const file of [secret, join(parent, "absent-private-file")]) {
+      try {
+        execFileSync(
+          process.execPath,
+          ["docker/deploy/entrypoint.mjs", "runtime"],
+          {
+            env: { ...process.env, POSTGRES_PASSWORD_FILE: file },
+            stdio: "pipe",
+          },
+        );
+        assert.fail("Invalid secret must fail before starting runtime");
+      } catch (error) {
+        assert.ok(
+          error &&
+            typeof error === "object" &&
+            "stderr" in error &&
+            Buffer.isBuffer(error.stderr),
+        );
+        const diagnostic = error.stderr.toString();
+        assert.match(
+          diagnostic,
+          /Deployment secret files are missing or invalid/,
+        );
+        assert.ok(!diagnostic.includes(value) && !diagnostic.includes(parent));
+      }
+    }
+  } finally {
+    rmSync(parent, { recursive: true, force: true });
+  }
 });

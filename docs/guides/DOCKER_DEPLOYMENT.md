@@ -145,7 +145,11 @@ It does not open public ports or modify the original project. Use the backup's e
 then deliberately apply necessary forward migrations before starting the restored services. Stop the
 original stack or use different public ports before starting a recovery project. Test restored scoped
 credentials, device history and unknown execution identity; never recreate or redispatch uncertain
-writes. Preserve the original data until recovery is verified.
+writes. An older backup also rolls back revocations, grants, budget counters and ledger entries
+created after that backup. Before public cutover, rotate/revoke credentials affected by the recovery
+point and reconcile external effects since the snapshot. A missing restored ledger entry is not proof
+that an effect never happened. Keep the original stack quiesced during cutover and preserve its data
+until recovery is verified.
 
 For application rollback, retain the previous image digest and select it via `OPENHULI_IMAGE` using
 `up --no-build`; do not silently rebuild a rollback tag. Database migrations are forward-only and
