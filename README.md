@@ -18,6 +18,9 @@ audio conversion, cancellation and a reference simulator. The [device console](d
 manual commands, grants and Tenant integration settings. The [conversation console](docs/guides/CONVERSATION_CONSOLE.md) provides typed turns, activity and
 exact approvals. [Forecast and notes tools](docs/guides/HTTP_TOOLS.md) can be enabled through server configuration.
 
+The [ESP32 microphone reference](docs/guides/ESP32_VOICE.md) is configurable and cross-buildable;
+its exact wiring, real audio and physical acceptance remain unverified.
+
 ## Local setup
 
 Requires Node.js 22.19+ (see `package.json`), pnpm 10.26.0, and Docker Compose.
@@ -67,7 +70,8 @@ pnpm test
 pnpm build
 ```
 
-Typechecking builds the shared packages it consumes. Unit tests exercise auth handlers and identity
+Typechecking builds the shared packages it consumes. The script suite also compiles the portable firmware core with a C++17 compiler (`c++` or `CXX`).
+Unit tests exercise auth handlers and identity
 use cases. Database-backed tests also verify two-tenant access, revocation, OTP races, and refresh replay:
 
 ```sh

@@ -39,16 +39,16 @@ export function PairForm({
               profileId: profile,
               profileVersion: 1,
               capabilities: [
-                ...(profile === "esp32-voice"
+                ...(profile !== "weather-station"
                   ? [
                       { kind: "microphone", format: OPENHULI_PCM_FORMAT },
-                      ...(speaker
+                      ...(profile === "esp32-voice" && speaker
                         ? [{ kind: "speaker", format: OPENHULI_PCM_FORMAT }]
                         : []),
                     ]
                   : [{ kind: "temperature" }, { kind: "humidity" }]),
-                { kind: "ping" },
-                ...(display
+                ...(profile === "esp32-microphone" ? [] : [{ kind: "ping" }]),
+                ...(profile !== "esp32-microphone" && display
                   ? [
                       {
                         kind: "display",
@@ -77,17 +77,20 @@ export function PairForm({
             >
               <option value="weather-station">Weather station</option>
               <option value="esp32-voice">ESP32 voice</option>
+              <option value="esp32-microphone">ESP32 microphone only</option>
             </select>
           </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={display}
-              onChange={(e) => setDisplay(e.target.checked)}
-            />
-            Has a display
-          </label>
-          {display && (
+          {profile !== "esp32-microphone" && (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={display}
+                onChange={(e) => setDisplay(e.target.checked)}
+              />
+              Has a display
+            </label>
+          )}
+          {profile !== "esp32-microphone" && display && (
             <label className="block text-sm">
               Display character limit
               <input

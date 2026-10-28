@@ -19,6 +19,10 @@ const profiles = {
       "humidity",
     ],
   },
+  "esp32-microphone": {
+    required: ["microphone"],
+    allowed: ["microphone"],
+  },
   "weather-station": {
     required: ["temperature", "humidity", "ping"],
     allowed: ["temperature", "humidity", "display", "ping"],

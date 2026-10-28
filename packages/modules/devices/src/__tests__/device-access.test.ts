@@ -85,6 +85,38 @@ const manifest = {
 };
 afterEach(() => vi.useRealTimers());
 describe("known profile and owner capabilities", () => {
+  it("pairs a microphone-only endpoint without inventing ping, speaker or display support", async () => {
+    const config: PairDeviceInput = {
+      ...profile,
+      profileId: "esp32-microphone",
+      capabilities: [{ kind: "microphone", format: OPENHULI_PCM_FORMAT }],
+    };
+    expect(validateDeviceProfile(config).capabilities).toHaveLength(1);
+    expect(
+      validateDeviceAdvertisement(
+        { ...manifest, capabilities: config.capabilities },
+        device.id,
+        config,
+      ).capabilities,
+    ).toEqual(config.capabilities);
+    expect(
+      (await pairOwnerDevice(config, owner, store())).device.profileId,
+    ).toBe("esp32-microphone");
+    for (const kind of ["ping", "temperature"] as const)
+      expect(() =>
+        validateDeviceProfile({
+          ...config,
+          capabilities: [...config.capabilities, { kind }],
+        }),
+      ).toThrow();
+    expect(() =>
+      validateDeviceProfile({ ...config, capabilities: [] }),
+    ).toThrow();
+    // Existing fuller profiles keep their required ping capability.
+    expect(() =>
+      validateDeviceProfile({ ...config, profileId: "esp32-voice" }),
+    ).toThrow();
+  });
   it("represents absent display/speaker without inventing hardware", () => {
     expect(validateDeviceProfile(profile).capabilities).toHaveLength(2);
     expect(() =>
