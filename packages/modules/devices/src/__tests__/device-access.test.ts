@@ -85,6 +85,54 @@ const manifest = {
 };
 afterEach(() => vi.useRealTimers());
 describe("known profile and owner capabilities", () => {
+  it("pairs a minimal sensor node without inventing sensors or a voice credential", async () => {
+    const config = {
+      ...profile,
+      profileId: "sensor-node" as const,
+      capabilities: [{ kind: "ping" as const }],
+    };
+    expect(validateDeviceProfile(config).capabilities).toEqual([
+      { kind: "ping" },
+    ]);
+    expect(
+      (await pairOwnerDevice(config, owner, store())).credentials.map(
+        (c) => c.purpose,
+      ),
+    ).toEqual(["mqtt"]);
+    for (const capabilities of [
+      [],
+      [{ kind: "temperature" }],
+      [{ kind: "ping" }, { kind: "microphone", format: OPENHULI_PCM_FORMAT }],
+      [{ kind: "ping" }, { kind: "display", maxTextLength: 33 }],
+    ])
+      expect(() =>
+        validateDeviceProfile({ ...config, capabilities }),
+      ).toThrow();
+    const displayConfig = {
+      ...config,
+      capabilities: [
+        { kind: "ping" as const },
+        { kind: "display" as const, maxTextLength: 32 },
+      ],
+    };
+    expect(
+      validateDeviceAdvertisement(
+        { ...manifest, capabilities: displayConfig.capabilities },
+        device.id,
+        displayConfig,
+      ),
+    ).toBeDefined();
+    expect(() =>
+      validateDeviceAdvertisement(
+        {
+          ...manifest,
+          capabilities: [...config.capabilities, { kind: "humidity" }],
+        },
+        device.id,
+        config,
+      ),
+    ).toThrow();
+  });
   it("pairs a microphone-only endpoint without inventing ping, speaker or display support", async () => {
     const config: PairDeviceInput = {
       ...profile,

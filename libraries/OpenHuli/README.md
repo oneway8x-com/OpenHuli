@@ -15,6 +15,10 @@ this package does not expose AI/provider credentials or owner provisioning APIs.
 - Compilation does not establish physical TLS, GPIO, sensor, LCD or outage/recovery acceptance.
   Track those release checks in [#22](https://github.com/oneway8x-com/OpenHuli/issues/22).
 
+For classic Uno/Nano use the separate [OpenHuliSerial companion](https://github.com/oneway8x-com/OpenHuli/blob/main/libraries/OpenHuliSerial/README.md).
+The ESP-01 gateway reuses these v1 codecs with its own ESP8266 transport; the `OpenHuliClient`
+class remains the ESP32 direct adapter.
+
 ## Install
 
 For Arduino IDE, from the repository root:

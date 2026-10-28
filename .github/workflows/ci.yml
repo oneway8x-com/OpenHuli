@@ -118,3 +118,23 @@ jobs:
             libraries/OpenHuli/src/OpenHuliProtocol.cpp libraries/OpenHuli/src/OpenHuliCommand.cpp \
             libraries/OpenHuli/test/client.cpp -o "$binary"
           "$binary"
+
+  serial-devices:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install platformio==6.2.0
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: serial-devices-${{ runner.os }}-${{ hashFiles('firmware/esp01-gateway/platformio.ini', 'libraries/OpenHuliSerial/library.json') }}
+      - run: pio run --project-dir libraries/OpenHuliSerial/examples/Node
+      - run: pio run --project-dir libraries/OpenHuliSerial/examples/Sensors
+      - run: pio run --project-dir firmware/esp01-gateway --environment esp01_1m --environment esp01_check
+      - run: pio run --project-dir firmware/esp01-gateway --environment esp01_check --target buildfs
+      - run: pio pkg pack libraries/OpenHuliSerial --output /tmp/OpenHuliSerial.tar.gz
+      - run: python scripts/package-arduino-client.py --library OpenHuliSerial --output /tmp/OpenHuliSerial.zip

@@ -1,7 +1,5 @@
 #include "OpenHuli.h"
-#if !defined(ESP32)
-#error "OpenHuli transport requires ESP32 with Arduino ESP32 core 2.0.17 (ESP-IDF 4.4)"
-#endif
+#if defined(ESP32)
 #include <WiFi.h>
 #include <atomic>
 #include <cstdio>
@@ -283,3 +281,5 @@ void OpenHuliClient::end() {
   impl_ = nullptr;
 }
 } // namespace openhuli
+
+#endif // ESP32 direct transport; ESP8266 gateways use the shared protocol only.

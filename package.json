@@ -50,7 +50,8 @@
     "simulate": "pnpm --filter @corely/runtime simulate",
     "deploy:local:prepare": "tsx scripts/deployment-local.ts",
     "test:deployment": "tsx scripts/deployment-smoke.ts",
-    "eval:timings": "tsx scripts/evaluation-timings.ts"
+    "eval:timings": "tsx scripts/evaluation-timings.ts",
+    "bridge:serial": "pnpm --filter @corely/runtime bridge:serial"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",

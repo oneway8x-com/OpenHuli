@@ -7,6 +7,7 @@ export type DevicePurpose = z.infer<typeof DevicePurposeSchema>;
 export const DeviceProfileIdSchema = z.enum([
   "esp32-voice",
   "weather-station",
+  "sensor-node",
   "esp32-microphone",
 ]);
 export const DeviceLocationSchema = z

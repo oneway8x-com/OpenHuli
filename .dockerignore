@@ -23,3 +23,7 @@ deployment.local
 **/.ssh
 **/*.p12
 **/*.pfx
+
+# Device credentials and embedded build outputs never enter server images.
+**/config.local.h
+**/.pio

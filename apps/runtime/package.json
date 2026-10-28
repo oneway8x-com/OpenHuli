@@ -11,7 +11,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "smoke:live": "node --env-file-if-exists=../../.env --import tsx src/live-smoke.ts",
     "smoke:playback": "node --env-file-if-exists=../../.env --import tsx src/playback-smoke.ts",
-    "simulate": "node --env-file-if-exists=../../.env --import tsx src/simulator/main.ts"
+    "simulate": "node --env-file-if-exists=../../.env --import tsx src/simulator/main.ts",
+    "bridge:serial": "node --import tsx src/serial-bridge/main.ts"
   },
   "dependencies": {
     "@corely/contracts": "workspace:*",
@@ -27,7 +28,8 @@
     "@corely/modules-telemetry": "workspace:*",
     "@prisma/client": "catalog:",
     "@corely/modules-device-commands": "workspace:*",
-    "@corely/modules-http-tools": "workspace:*"
+    "@corely/modules-http-tools": "workspace:*",
+    "serialport": "13.0.0"
   },
   "devDependencies": {
     "@corely/tsconfig": "workspace:*",

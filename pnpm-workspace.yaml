@@ -79,6 +79,7 @@ catalog:
   zod: 3.25.76
 
 onlyBuiltDependencies:
+  - '@serialport/bindings-cpp'
   - '@prisma/client'
   - '@prisma/engines'
   - '@scarf/scarf'

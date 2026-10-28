@@ -33,6 +33,10 @@ ping and acknowledged display commands. It includes an Arduino/PlatformIO exampl
 protocol implementation with the reference weather firmware. Voice support remains in the reference
 firmware; physical device acceptance is tracked separately.
 
+For classic Uno/Nano, the [serial-device guide](docs/guides/SERIAL_DEVICES.md) covers the small
+AVR companion, a USB computer bridge, and dedicated ESP-01 Wi-Fi gateway firmware. Both routes
+preserve the existing cloud protocol; physical module qualification remains separate.
+
 ## Local setup
 
 Requires Node.js 22.19+ (see `package.json`), pnpm 10.26.0, and Docker Compose.

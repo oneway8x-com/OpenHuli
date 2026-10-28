@@ -14,6 +14,8 @@ export function PairForm({
   const [profile, setProfile] = useState("weather-station"),
     [display, setDisplay] = useState(false),
     [speaker, setSpeaker] = useState(false);
+  const [temperature, setTemperature] = useState(false),
+    [humidity, setHumidity] = useState(false);
   const [locationLabel, setLocationLabel] = useState("");
   return (
     <Card>
@@ -39,14 +41,19 @@ export function PairForm({
               profileId: profile,
               profileVersion: 1,
               capabilities: [
-                ...(profile !== "weather-station"
+                ...(profile === "sensor-node"
                   ? [
-                      { kind: "microphone", format: OPENHULI_PCM_FORMAT },
-                      ...(profile === "esp32-voice" && speaker
-                        ? [{ kind: "speaker", format: OPENHULI_PCM_FORMAT }]
-                        : []),
+                      ...(temperature ? [{ kind: "temperature" }] : []),
+                      ...(humidity ? [{ kind: "humidity" }] : []),
                     ]
-                  : [{ kind: "temperature" }, { kind: "humidity" }]),
+                  : profile !== "weather-station"
+                    ? [
+                        { kind: "microphone", format: OPENHULI_PCM_FORMAT },
+                        ...(profile === "esp32-voice" && speaker
+                          ? [{ kind: "speaker", format: OPENHULI_PCM_FORMAT }]
+                          : []),
+                      ]
+                    : [{ kind: "temperature" }, { kind: "humidity" }]),
                 ...(profile === "esp32-microphone" ? [] : [{ kind: "ping" }]),
                 ...(profile !== "esp32-microphone" && display
                   ? [
@@ -75,11 +82,33 @@ export function PairForm({
               value={profile}
               onChange={(e) => setProfile(e.target.value)}
             >
+              <option value="sensor-node">Sensor node (Uno / Nano)</option>
               <option value="weather-station">Weather station</option>
               <option value="esp32-voice">ESP32 voice</option>
               <option value="esp32-microphone">ESP32 microphone only</option>
             </select>
           </label>
+          {profile === "sensor-node" && (
+            <fieldset className="space-y-2">
+              <legend className="text-sm">Optional sensors</legend>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={temperature}
+                  onChange={(e) => setTemperature(e.target.checked)}
+                />
+                Temperature sensor
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={humidity}
+                  onChange={(e) => setHumidity(e.target.checked)}
+                />
+                Humidity sensor
+              </label>
+            </fieldset>
+          )}
           {profile !== "esp32-microphone" && (
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -95,11 +124,12 @@ export function PairForm({
               Display character limit
               <input
                 className={field}
+                key={profile}
                 name="maxTextLength"
                 type="number"
                 min={1}
-                max={512}
-                defaultValue={128}
+                max={profile === "sensor-node" ? 32 : 512}
+                defaultValue={profile === "sensor-node" ? 32 : 128}
                 required
               />
             </label>
