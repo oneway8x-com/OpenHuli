@@ -951,6 +951,90 @@ importers:
         specifier: workspace:*
         version: link:../tooling/tsconfig
 
+  apps/notes-api:
+    dependencies:
+      '@corely/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@corely/modules-notes':
+        specifier: workspace:*
+        version: link:../../packages/modules/notes
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@corely/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@corely/modules-devices':
+        specifier: workspace:*
+        version: link:../../packages/modules/devices
+      '@corely/modules-http-tools':
+        specifier: workspace:*
+        version: link:../../packages/modules/http-tools
+      '@corely/modules-identity':
+        specifier: workspace:*
+        version: link:../../packages/modules/identity
+      '@corely/modules-tool-execution':
+        specifier: workspace:*
+        version: link:../../packages/modules/tool-execution
+      '@corely/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tooling/tsconfig
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.11
+      tsdown:
+        specifier: 'catalog:'
+        version: 0.18.4(typescript@5.9.3)
+      tsx:
+        specifier: 'catalog:'
+        version: 4.21.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  packages/modules/http-tools:
+    dependencies:
+      '@corely/contracts':
+        specifier: workspace:*
+        version: link:../../contracts
+      '@corely/modules-tool-execution':
+        specifier: workspace:*
+        version: link:../tool-execution
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@corely/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.11
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  packages/modules/notes:
+    dependencies:
+      '@corely/contracts':
+        specifier: workspace:*
+        version: link:../../contracts
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@corely/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.11
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
 packages:
 
   '@0no-co/graphql.web@1.2.0':

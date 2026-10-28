@@ -44,3 +44,7 @@ queue/operation/turn/session limits are in `.env.example`; provider keys remain 
 Device commands use authenticated MQTT telemetry mode and the shared executor.
 `RUNTIME_COMMAND_ACK_TIMEOUT_MS` defaults to 5000 (100–15000 ms). Owner consent and exact device
 grants still apply; success requires a timely device receipt. See [device commands](DEVICE_COMMANDS.md).
+
+Registered HTTP tools validate `HTTP_WEATHER_*` and `HTTP_NOTES_*` separately. The notes demo validates
+`NOTES_API_*` and binds only to loopback. See [HTTP tools](HTTP_TOOLS.md) for the complete settings,
+server-only secret references, exact private-demo opt-in, SQLite file location and live smoke commands.
