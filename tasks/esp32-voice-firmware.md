@@ -7,6 +7,7 @@ Physical acceptance requires a confirmed ESP32-S2 Mini and microphone; do not cl
 
 ## Notes
 
+- Draft PR: [#45](https://github.com/oneway8x-com/OpenHuli/pull/45). Hosted CI is pending.
 - Project 3 In progress verified before editing; branch `15-esp32-voice-firmware` from main `2906eee`.
 - User approved a general microphone/button/indicator profile first. No GPIO assignments or microphone model
   have been confirmed, and no USB serial board is present. Keep local credentials and unverified pins unset.
@@ -31,7 +32,7 @@ Physical acceptance requires a confirmed ESP32-S2 Mini and microphone; do not cl
   Native coverage includes 20 logical turns, cancellation/disconnect, size/history/sequence limits, debounce
   rollover, PCM clipping/endian framing and fragmented input. These are not 20 hardware turns.
 - Passed: ESP32-S2 cross-build. Inert image: 65,968 bytes static RAM / 622,690 bytes flash.
-  A separate synthetic enabled configuration also linked: 78,664 bytes RAM / 856,078 bytes flash.
+  A separate synthetic enabled configuration also linked: 78,664 bytes RAM / 856,050 bytes flash.
   Synthetic local header was removed; nothing was uploaded. Linker sizes do not establish runtime headroom.
 - Passed: all 5 affected device Playwright journeys, including persisted microphone-only pairing and
   absence of unsupported command controls. Corrected the test select locator to its accessible role.
@@ -42,6 +43,6 @@ Physical acceptance requires a confirmed ESP32-S2 Mini and microphone; do not cl
 
 ## Remaining work / risks
 
-Open a draft PR, retain issue #15 In progress, and complete the explicit physical acceptance record before
+Retain issue #15 In progress and complete the explicit physical acceptance record before
 calling the ticket done. Exact board/microphone identity, wiring, audio quality and stable memory under
 Wi-Fi load remain unverified. Do not close #15 from host-native or cross-compilation results.
