@@ -38,6 +38,8 @@ live forecast mapping and a separate persisted notes API with durable idempotenc
 
 ## Remaining work / risks
 
-- Publish a PR targeting main after validation and self-review. No merge or deployment authorized.
+- Published [PR #36](https://github.com/oneway8x-com/OpenHuli/pull/36), targeting `main` from
+  `11-http-tools-main`. Current branch checks passed; GitHub CI pending at handoff. No merge or
+  deployment authorized. The owned disposable PostgreSQL cluster was stopped and removed.
 - The notes API is a loopback demo, not a publicly hardened hosted service.
 - Physical hardware and live voice-to-provider-to-API behavior remain outside this adapter handoff.
