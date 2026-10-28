@@ -24,7 +24,7 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-10 border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="container flex items-center justify-between py-4">
+        <div className="container flex flex-wrap items-center justify-between gap-3 py-4">
           <div className="flex items-center gap-3">
             <Link
               href="/todos"
@@ -37,6 +37,7 @@ export default async function DashboardLayout({
             </Badge>
           </div>
           <nav className="flex items-center gap-4 text-sm text-muted-foreground">
+            <Link href="/conversations">Conversations</Link>
             <Link href="/todos">Todos</Link>
             <OwnerMenu />
           </nav>

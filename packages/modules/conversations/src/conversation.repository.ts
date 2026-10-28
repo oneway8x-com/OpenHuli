@@ -14,6 +14,57 @@ import type {
 export class ConversationRepository {
   constructor(private readonly db: PrismaClient) {}
 
+  consoleList(tenantId: string) {
+    return this.db.agentRun.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: "desc" },
+      take: 30,
+      select: {
+        id: true,
+        deviceId: true,
+        createdAt: true,
+        retainTranscripts: true,
+      },
+    });
+  }
+  consoleActivity(tenantId: string, id: string) {
+    return this.db.agentRun.findUnique({
+      where: { tenantId_id: { tenantId, id } },
+      select: {
+        id: true,
+        deviceId: true,
+        retainTranscripts: true,
+        turns: {
+          orderBy: { sequence: "desc" },
+          take: 30,
+          select: { id: true, sequence: true, status: true, createdAt: true },
+        },
+        messages: {
+          orderBy: { createdAt: "desc" },
+          take: 50,
+          select: { id: true, role: true, contentText: true, createdAt: true },
+        },
+        toolExecutions: {
+          orderBy: { startedAt: "desc" },
+          take: 30,
+          select: {
+            id: true,
+            turnId: true,
+            toolName: true,
+            status: true,
+            outcomeKind: true,
+            inputJson: true,
+            outputJson: true,
+            targetDeviceId: true,
+            requestHash: true,
+            expiresAt: true,
+            startedAt: true,
+            approval: { select: { id: true, status: true } },
+          },
+        },
+      },
+    });
+  }
   start(tenantId: string, input: StartConversationInput) {
     return this.db.agentRun.create({
       data: {

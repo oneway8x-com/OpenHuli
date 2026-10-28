@@ -51,6 +51,13 @@ export function createRuntime(
     dependencies?: RuntimeDependency[];
     connections?: RuntimeConnectionHooks;
     voice?: VoiceGatewayOptions;
+    console?: {
+      handle(
+        request: import("node:http").IncomingMessage,
+        response: import("node:http").ServerResponse,
+      ): Promise<void>;
+      stop(): Promise<void>;
+    };
   } = {},
 ) {
   const dependencies = options.dependencies ?? [];
@@ -127,7 +134,20 @@ export function createRuntime(
     const status = health();
     response.setHeader("Content-Type", "application/json");
     response.setHeader("Cache-Control", "no-store");
-    if (request.method === "GET" && request.url === "/health/live") {
+    if (
+      request.url?.split("?")[0] === "/console" ||
+      request.url?.split("?")[0] === "/console/events"
+    ) {
+      if (options.console && phase === "running")
+        void options.console.handle(request, response).catch(() => {
+          if (!response.headersSent) response.writeHead(500);
+          response.end();
+        });
+      else
+        response
+          .writeHead(503)
+          .end(JSON.stringify({ error: "Console unavailable" }));
+    } else if (request.method === "GET" && request.url === "/health/live") {
       response
         .writeHead(status.live ? 200 : 503)
         .end(JSON.stringify({ live: status.live }));
@@ -253,6 +273,7 @@ export function createRuntime(
               ]);
               await Promise.all([...cleanups]);
             })(),
+            ...(options.console ? [options.console.stop()] : []),
             ...(gateway ? [gateway.stop()] : []),
             ...dependencies.map((item) =>
               Promise.resolve().then(() => item.stop()),

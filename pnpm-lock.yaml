@@ -304,6 +304,9 @@ importers:
 
   apps/runtime:
     dependencies:
+      '@corely/modules-http-tools':
+        specifier: workspace:*
+        version: link:../../packages/modules/http-tools
       '@corely/modules-device-commands':
         specifier: workspace:*
         version: link:../../packages/modules/device-commands

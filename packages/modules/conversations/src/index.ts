@@ -4,3 +4,4 @@ export * from "./conversation.use-cases";
 export * from "./conversation-runtime.types";
 export { createConversationRuntime } from "./conversation-runtime";
 export { createConversationJournal } from "./conversation-journal";
+export * from "./console.use-cases";

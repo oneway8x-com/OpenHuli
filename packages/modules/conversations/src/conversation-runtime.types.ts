@@ -67,6 +67,7 @@ export interface ConversationRuntimeDependencies {
   execute(
     context: VoiceTurnContext,
     call: { id: string; name: string; arguments: JsonObject },
+    pending?: (executionId: string) => void,
   ): Promise<JsonObject>;
   maxToolCalls: number;
   turnTimeoutMs: number;

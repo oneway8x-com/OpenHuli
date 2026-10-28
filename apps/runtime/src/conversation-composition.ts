@@ -1,3 +1,11 @@
+import {
+  createHttpTools,
+  readHttpToolsConfig,
+  type HttpToolsConfig,
+  type SecretStore,
+  type JsonHttpClient,
+} from "@corely/modules-http-tools";
+import { setTimeout as pause } from "node:timers/promises";
 import { z } from "zod";
 import {
   createDeviceCommandTools,
@@ -16,6 +24,8 @@ import {
   defineTool,
   submitToolCall,
   dispatchToolExecution,
+  getToolExecution,
+  cancelToolExecution,
   type ToolAuthentication,
 } from "@corely/modules-tool-execution";
 import {
@@ -32,11 +42,32 @@ export function createLiveConversationRuntime(
   config: RuntimeConfig,
   provider?: ConversationProviderFactory,
   commands?: DeviceCommandDependencies,
+  http?: {
+    config: HttpToolsConfig;
+    secrets: SecretStore;
+    client?: JsonHttpClient;
+  },
 ) {
   const auth = readAuthConfig();
   const persistence = new PrismaService();
   const devices = new DeviceAccessRepository(persistence);
+  const httpConfig = http?.config ?? readHttpToolsConfig(process.env);
+  const httpTools = createHttpTools(
+    httpConfig,
+    http?.secrets ?? {
+      async get(reference) {
+        if (
+          reference !== httpConfig.notes?.secretReference ||
+          !process.env.NOTES_API_TOKEN
+        )
+          throw new Error("Notes credential unavailable");
+        return process.env.NOTES_API_TOKEN;
+      },
+    },
+    http?.client,
+  );
   const registry = new ToolRegistry([
+    ...httpTools,
     ...(commands ? createDeviceCommandTools(commands) : []),
     defineTool({
       id: "device_context",
@@ -68,101 +99,164 @@ export function createLiveConversationRuntime(
     registry,
   };
   const inflight = new Set<Promise<unknown>>();
-  const factory = createConversationRuntime({
-    provider: provider ?? createGeminiLiveProvider(config.GEMINI_API_KEY ?? ""),
-    journal: createConversationJournal(new ConversationRepository(persistence)),
-    tools: [
-      ...(commands
-        ? [
-            {
-              id: "device.ping",
-              description:
-                "Ask one exact authorized online device to acknowledge a ping. Success requires a device receipt. Clarify ambiguous targets.",
-              parameters: {
-                type: "OBJECT",
-                properties: { deviceId: { type: "STRING" } },
-                required: ["deviceId"],
-              },
-            },
-            {
-              id: "display.message",
-              description:
-                "Display text on one exact authorized device with a configured display. Requires owner consent and a device acknowledgement. Never guess a target.",
-              parameters: {
-                type: "OBJECT",
-                properties: {
-                  deviceId: { type: "STRING" },
-                  text: { type: "STRING" },
+  const factory = (ownerToken?: string) =>
+    createConversationRuntime({
+      provider:
+        provider ?? createGeminiLiveProvider(config.GEMINI_API_KEY ?? ""),
+      journal: createConversationJournal(
+        new ConversationRepository(persistence),
+      ),
+      tools: [
+        ...(httpTools.some((tool) => tool.id === "weather.forecast")
+          ? [
+              {
+                id: "weather.forecast",
+                description:
+                  "Read an attributed Open-Meteo forecast for the owner-configured location. This is a forecast, not a device sensor measurement. Include source and fetch time.",
+                parameters: {
+                  type: "OBJECT",
+                  properties: {
+                    days: { type: "INTEGER", minimum: 1, maximum: 3 },
+                  },
                 },
-                required: ["deviceId", "text"],
               },
-            },
-          ]
-        : []),
-      {
-        id: "device_context",
-        description:
-          "Read owner-configured name, room, location and capabilities for one exact authorized device ID. This is configuration, not a live sensor reading. Ask for clarification if the target is ambiguous.",
-        parameters: {
-          type: "OBJECT",
-          properties: { deviceId: { type: "STRING" } },
-          required: ["deviceId"],
+            ]
+          : []),
+        ...(httpTools.some((tool) => tool.id === "notes.create")
+          ? [
+              {
+                id: "notes.create",
+                description:
+                  "Create one exact note through the owner-configured notes service. Requires owner consent. Report success only after a confirmed receipt.",
+                parameters: {
+                  type: "OBJECT",
+                  properties: { text: { type: "STRING" } },
+                  required: ["text"],
+                },
+              },
+            ]
+          : []),
+        ...(commands
+          ? [
+              {
+                id: "device.ping",
+                description:
+                  "Ask one exact authorized online device to acknowledge a ping. Success requires a device receipt. Clarify ambiguous targets.",
+                parameters: {
+                  type: "OBJECT",
+                  properties: { deviceId: { type: "STRING" } },
+                  required: ["deviceId"],
+                },
+              },
+              {
+                id: "display.message",
+                description:
+                  "Display text on one exact authorized device with a configured display. Requires owner consent and a device acknowledgement. Never guess a target.",
+                parameters: {
+                  type: "OBJECT",
+                  properties: {
+                    deviceId: { type: "STRING" },
+                    text: { type: "STRING" },
+                  },
+                  required: ["deviceId", "text"],
+                },
+              },
+            ]
+          : []),
+        {
+          id: "device_context",
+          description:
+            "Read owner-configured name, room, location and capabilities for one exact authorized device ID. This is configuration, not a live sensor reading. Ask for clarification if the target is ambiguous.",
+          parameters: {
+            type: "OBJECT",
+            properties: { deviceId: { type: "STRING" } },
+            required: ["deviceId"],
+          },
         },
-      },
-    ],
-    maxToolCalls: config.AI_MAX_TOOL_CALLS,
-    turnTimeoutMs: config.AI_TURN_TIMEOUT_MS,
-    execute(context, call) {
-      const task = (async () => {
-        const auth: ToolAuthentication = {
-          kind: "verified-device",
-          session: {
-            tenantId: context.tenantId,
-            deviceId: context.deviceId,
-            credentialId: context.credentialId,
-            purpose: "voice",
-          },
-        };
-        const queued = await submitToolCall(
-          {
-            toolCall: {
-              version: 1,
-              conversationId: context.conversationId,
-              turnId: context.turnId,
-              toolCallId: call.id,
-              toolId: call.name,
-              arguments: call.arguments,
+      ],
+      maxToolCalls: config.AI_MAX_TOOL_CALLS,
+      turnTimeoutMs: config.AI_TURN_TIMEOUT_MS,
+      execute(context, call, pending) {
+        const task = (async () => {
+          const auth: ToolAuthentication = ownerToken
+            ? { kind: "owner", token: ownerToken }
+            : {
+                kind: "verified-device",
+                session: {
+                  tenantId: context.tenantId,
+                  deviceId: context.deviceId,
+                  credentialId: context.credentialId,
+                  purpose: "voice",
+                },
+              };
+          const queued = await submitToolCall(
+            {
+              toolCall: {
+                version: 1,
+                conversationId: context.conversationId,
+                turnId: context.turnId,
+                toolCallId: call.id,
+                toolId: call.name,
+                arguments: call.arguments,
+              },
+              correlationId: context.turnId,
             },
-            correlationId: context.turnId,
-          },
-          auth,
-          deps,
+            auth,
+            deps,
+          );
+          let result = await dispatchToolExecution(
+            queued.executionId,
+            auth,
+            deps,
+            context.signal,
+          );
+          if (result.status === "awaiting_approval") {
+            pending?.(result.executionId);
+            try {
+              while (result.status === "awaiting_approval") {
+                await pause(200, undefined, { signal: context.signal });
+                result = await getToolExecution(result.executionId, auth, deps);
+              }
+              if (result.status === "queued")
+                result = await dispatchToolExecution(
+                  result.executionId,
+                  auth,
+                  deps,
+                  context.signal,
+                );
+            } catch {
+              await cancelToolExecution(result.executionId, auth, deps);
+              throw new Error("Approval wait stopped");
+            }
+          }
+          return {
+            executionId: result.executionId,
+            status: result.status,
+            outcome: result.outcome,
+            output: result.output,
+            error: result.error,
+            approvalId: result.approvalId,
+          };
+        })();
+        inflight.add(task);
+        void task.then(
+          () => inflight.delete(task),
+          () => inflight.delete(task),
         );
-        const result = await dispatchToolExecution(
-          queued.executionId,
-          auth,
-          deps,
-          context.signal,
-        );
-        return {
-          executionId: result.executionId,
-          status: result.status,
-          outcome: result.outcome,
-          output: result.output,
-          error: result.error,
-          approvalId: result.approvalId,
-        };
-      })();
-      inflight.add(task);
-      void task.then(
-        () => inflight.delete(task),
-        () => inflight.delete(task),
-      );
-      return task;
-    },
-  });
+        return task;
+      },
+    });
   return {
-    ...factory,
+    ...factory(),
+    isReady: () => Boolean(provider || config.GEMINI_API_KEY),
+    tools: deps,
+    repository: new ConversationRepository(persistence),
+    openOwner(
+      context: Parameters<ReturnType<typeof factory>["open"]>[0],
+      token: string,
+    ) {
+      return factory(token).open(context);
+    },
     async close() {
       await Promise.allSettled([...inflight]);
       await persistence.disconnect();

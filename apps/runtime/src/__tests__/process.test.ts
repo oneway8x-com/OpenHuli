@@ -94,6 +94,29 @@ describe("runtime process entrypoint", () => {
     replacement.child.kill("SIGINT");
     expect(await replacement.exited).toBe(0);
   });
+  it("keeps voice unconfigured without a provider key and protects console metadata", async () => {
+    const process = launch({
+      DATABASE_URL: "postgresql://synthetic@127.0.0.1/unused",
+      RUNTIME_VOICE_ENABLED: "true",
+      RUNTIME_MQTT_TELEMETRY_ENABLED: "false",
+      GEMINI_API_KEY: "",
+      JWT_SECRET: "synthetic-console-process-secret-at-least-32",
+      OWNER_EMAIL: "owner@example.test",
+      APP_URL: "http://127.0.0.1:3100",
+      HTTP_WEATHER_LATITUDE: "",
+      HTTP_WEATHER_LONGITUDE: "",
+      HTTP_WEATHER_TIMEZONE: "",
+      HTTP_NOTES_URL: "",
+      HTTP_NOTES_PRIVATE_DEMO: "false",
+    });
+    const port = await started(process);
+    expect((await fetch(`http://127.0.0.1:${port}/health/ready`)).status).toBe(
+      503,
+    );
+    expect((await fetch(`http://127.0.0.1:${port}/console`)).status).toBe(401);
+    process.child.kill("SIGTERM");
+    expect(await process.exited).toBe(0);
+  });
   it("fails invalid startup with setting names and no secret-bearing values", async () => {
     const secret = "synthetic_only_do_not_print_1234567890";
     const process = launch({

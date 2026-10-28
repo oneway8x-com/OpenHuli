@@ -28,12 +28,11 @@ async function main(): Promise<void> {
   const mqtt =
     telemetryMqtt ??
     (config.RUNTIME_MQTT_URL ? createMqttDependency(config) : undefined);
-  const conversation =
-    config.RUNTIME_VOICE_ENABLED && config.GEMINI_API_KEY
-      ? (
-          await import("./conversation-composition")
-        ).createLiveConversationRuntime(config, undefined, services?.commands)
-      : undefined;
+  const conversation = config.RUNTIME_VOICE_ENABLED
+    ? (
+        await import("./conversation-composition")
+      ).createLiveConversationRuntime(config, undefined, services?.commands)
+    : undefined;
   const authorization = config.RUNTIME_VOICE_ENABLED
     ? (await import("./device-authorization")).createVoiceAuthorization()
     : undefined;
@@ -43,13 +42,19 @@ async function main(): Promise<void> {
           ...authorization,
           async close() {
             await authorization.close();
-            await conversation?.close();
           },
         },
         ...(conversation ? { provider: conversation } : {}),
       }
     : undefined;
+  const consoleRuntime = conversation
+    ? (await import("./console")).createConsoleRuntime(
+        conversation,
+        Boolean(config.GEMINI_API_KEY),
+      )
+    : undefined;
   const runtime = createRuntime(config, {
+    ...(consoleRuntime ? { console: consoleRuntime } : {}),
     ...(voice ? { voice } : {}),
     dependencies: mqtt ? [mqtt] : [],
   });
@@ -58,7 +63,8 @@ async function main(): Promise<void> {
     stopping = true;
     void runtime
       .stop()
-      .then(() => {
+      .then(async () => {
+        await conversation?.close();
         process.off("SIGTERM", shutdown);
         process.off("SIGINT", shutdown);
       })
@@ -81,6 +87,7 @@ async function main(): Promise<void> {
     );
   } catch {
     if (!stopping) {
+      await conversation?.close();
       console.error("Runtime startup failed");
       process.off("SIGTERM", shutdown);
       process.off("SIGINT", shutdown);

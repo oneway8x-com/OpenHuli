@@ -76,5 +76,5 @@ flushes it. There is no reconnect/replay. The demo checks that its first consume
 generation completion; timing is local synthetic evidence, not a cloud latency claim.
 
 No physical I2S board/amplifier profile, playback driver, acoustic test or live Gemini measurement
-is claimed. Physical output requires a separately verified profile/hardware log. The owner console
-and its browser audio sink remain #18; firmware remains #15/#16.
+is claimed. Physical output requires a separately verified profile/hardware log. The [owner console](CONVERSATION_CONSOLE.md) is text-only; physical/browser audio sinks require
+separate validation. Firmware remains #15/#16.

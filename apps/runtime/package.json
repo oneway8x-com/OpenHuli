@@ -25,7 +25,8 @@
     "@corely/modules-identity": "workspace:*",
     "@corely/modules-telemetry": "workspace:*",
     "@prisma/client": "catalog:",
-    "@corely/modules-device-commands": "workspace:*"
+    "@corely/modules-device-commands": "workspace:*",
+    "@corely/modules-http-tools": "workspace:*"
   },
   "devDependencies": {
     "@corely/tsconfig": "workspace:*",

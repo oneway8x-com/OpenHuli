@@ -4,9 +4,9 @@ Issue [#11](https://github.com/oneway8x-com/OpenHuli/issues/11) provides `create
 `createHttpToolRegistry` in `@corely/modules-http-tools`. Compose these server-side with the
 [shared executor](../architecture/authorized-tool-execution.md). Pass its registry in
 `ToolDependencies`; use `submitToolCall`, owner consent and `dispatchToolExecution` for both AI and
-manual actions. The shared conversation runtime exists, while composing these HTTP tools into
-the reproducible voice-to-API scenario is tracked in #12. This adapter handoff alone does not
-establish a complete live voice-to-API deployment.
+manual actions. The persistent runtime composes configured HTTP tools into the shared voice and
+[console](CONVERSATION_CONSOLE.md) registry. The paced voice-to-API simulator remains #12;
+registration alone does not establish a complete live speech-to-API deployment.
 
 ## Registration and secret ownership
 
