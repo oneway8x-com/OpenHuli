@@ -96,3 +96,6 @@ in a [task diary](tasks/TEMPLATE.md). Legacy package scopes remain `@corely/*`; 
 
 [MIT](LICENSE). The maintainer selected MIT for OpenHuli; package metadata uses the same license.
 The original Corely AI copyright notice is preserved. Third-party dependencies retain their own licenses.
+
+For hardware-free paced voice input, telemetry and command fault scenarios, see the
+[device simulator guide](docs/guides/DEVICE_SIMULATOR.md). Mock and paid live-provider modes are explicit.

@@ -13,9 +13,19 @@ const hosts: ReturnType<typeof createRuntime>[] = [];
 afterEach(async () => {
   await Promise.all(hosts.splice(0).map((host) => host.stop()));
 });
-async function fixture(speaker = true) {
+async function fixture(speaker = true, progress = false) {
   const fake = createFakeConversationProvider([
     [
+      ...(progress
+        ? [
+            {
+              type: "tool" as const,
+              id: "call",
+              name: "synthetic.read",
+              arguments: {},
+            },
+          ]
+        : []),
       { type: "text", text: "Public greeting" },
       { type: "audio", pcm24: new Uint8Array(9600) },
       { type: "complete" },
@@ -32,8 +42,20 @@ async function fixture(speaker = true) {
   const provider = createConversationRuntime({
     provider: fake.factory,
     journal,
-    tools: [],
-    execute: vi.fn(async () => ({})),
+    tools: progress
+      ? [
+          {
+            id: "synthetic.read",
+            description: "Synthetic client progress fixture",
+            parameters: { type: "OBJECT", properties: {} },
+          },
+        ]
+      : [],
+    execute: async (_context, _call, pending) => {
+      pending?.("execution");
+      await pause(5);
+      return { executionId: "execution", status: "succeeded" };
+    },
     maxToolCalls: 1,
     turnTimeoutMs: 2000,
   });
@@ -204,4 +226,23 @@ it("settles a pre-cancelled connection without opening a provider or leaking a s
     }),
   ).rejects.toThrow(/cancelled/);
   expect(f.fake.opened).toBe(0);
+});
+
+it("keeps the terminal tool status after intermediate approval progress", async () => {
+  const f = await fixture(false, true),
+    statuses: string[] = [];
+  const result = await runPlaybackSimulator({
+    endpoint: f.endpoint,
+    token: "synthetic",
+    text: "Synthetic read",
+    speaker: false,
+    async sink() {},
+    onEvent(message) {
+      if (message.type === "tool.result") statuses.push(message.status);
+    },
+  });
+  expect(statuses).toEqual(["awaiting_approval", "succeeded"]);
+  expect(result.toolResults).toEqual([
+    { executionId: "execution", status: "succeeded" },
+  ]);
 });
