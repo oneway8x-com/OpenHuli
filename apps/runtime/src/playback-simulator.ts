@@ -3,6 +3,8 @@ import { setTimeout as pause } from "node:timers/promises";
 import { WebSocket } from "ws";
 import {
   OPENHULI_PCM_FORMAT,
+  encodeOpenHuliAudio,
+  type OpenHuliVoiceServerMessage,
   OpenHuliPlayback,
   OpenHuliVoicePeer,
   parseOpenHuliVoiceServerMessage,
@@ -13,7 +15,10 @@ import {
 export async function runPlaybackSimulator(input: {
   endpoint: string;
   token: string;
-  text: string;
+  text?: string;
+  pcm?: Uint8Array;
+  interrupt?: { kind: "cancel" | "disconnect"; afterFrames: number };
+  onEvent?(message: OpenHuliVoiceServerMessage): void;
   sink(pcm16: Uint8Array, signal: AbortSignal): Promise<void>;
   signal?: AbortSignal;
   speaker?: boolean;
@@ -32,7 +37,21 @@ export async function runPlaybackSimulator(input: {
     endpoint.hash
   )
     throw new Error("Use verified WSS /voice or loopback WS");
-  if (!input.token || input.text.length < 1 || input.text.length > 4096)
+  if (
+    !input.token ||
+    Boolean(input.text) === Boolean(input.pcm) ||
+    (input.text !== undefined &&
+      (input.text.length < 1 || input.text.length > 4096)) ||
+    (input.pcm !== undefined &&
+      (input.pcm.byteLength < 640 ||
+        input.pcm.byteLength > 320000 ||
+        input.pcm.byteLength % 640 !== 0)) ||
+    (input.interrupt &&
+      (!input.pcm ||
+        !Number.isInteger(input.interrupt.afterFrames) ||
+        input.interrupt.afterFrames < 1 ||
+        input.interrupt.afterFrames >= input.pcm.byteLength / 640))
+  )
     throw new Error("Invalid simulator input");
   const peer = new OpenHuliVoicePeer("device", {
     version: 1,
@@ -57,7 +76,19 @@ export async function runPlaybackSimulator(input: {
     firstFrameBeforeGeneration = false;
   const startedAt = performance.now();
   let firstFrameMs: number | undefined;
+  let sessionId = "",
+    inputFrames = 0,
+    inputDurationMs = 0,
+    responseCharacters = 0;
+  const toolResults: { executionId: string; status: string }[] = [];
   return new Promise<{
+    outcome: "completed" | "cancelled" | "disconnected";
+    sessionId: string;
+    turnId: string;
+    inputFrames: number;
+    inputDurationMs: number;
+    responseCharacters: number;
+    toolResults: { executionId: string; status: string }[];
     frames: number;
     firstFrameBeforeGeneration: boolean;
     firstFrameMs?: number;
@@ -80,7 +111,10 @@ export async function runPlaybackSimulator(input: {
       peer.sendControl(wire);
       socket.send(wire);
     };
-    const finish = (error?: Error) => {
+    const finish = (
+      error?: Error,
+      outcome: "completed" | "cancelled" | "disconnected" = "completed",
+    ) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
@@ -92,6 +126,13 @@ export async function runPlaybackSimulator(input: {
       if (error) reject(error);
       else
         resolve({
+          outcome,
+          sessionId,
+          turnId,
+          inputFrames,
+          inputDurationMs,
+          responseCharacters,
+          toolResults,
           frames,
           firstFrameBeforeGeneration,
           ...(firstFrameMs === undefined ? {} : { firstFrameMs }),
@@ -154,12 +195,81 @@ export async function runPlaybackSimulator(input: {
         peer.receiveControl(data.toString());
         if ("turnId" in message && message.turnId !== turnId)
           throw new Error("Wrong response turn");
+        input.onEvent?.(message);
         switch (message.type) {
           case "session.ready":
             if (started || (input.speaker !== false && !message.outputFormat))
               throw new Error("Output not negotiated");
             started = true;
-            send("turn.text", { turnId, turnSequence: 1, text: input.text });
+            sessionId = message.sessionId;
+            if (input.pcm) {
+              const pcm = input.pcm;
+              send("turn.start", { turnId, turnSequence: 1, streamId: 1 });
+              void (async () => {
+                const captureStart = performance.now();
+                try {
+                  for (let offset = 0; offset < pcm.byteLength; offset += 640) {
+                    // Await each frame's recording duration. Never catch up by bursting old frames.
+                    await pause(20, undefined, { signal: controller.signal });
+                    if (settled) return;
+                    if (socket.bufferedAmount > 65536)
+                      throw new Error("Input backpressure");
+                    const wire = encodeOpenHuliAudio({
+                      kind: "input",
+                      turnSequence: 1,
+                      streamId: 1,
+                      sequence: inputFrames,
+                      payload: pcm.subarray(offset, offset + 640),
+                    });
+                    peer.sendAudio(wire);
+                    socket.send(wire);
+                    inputFrames++;
+                    inputDurationMs = Math.round(
+                      performance.now() - captureStart,
+                    );
+                    if (input.interrupt?.afterFrames === inputFrames) {
+                      if (input.interrupt.kind === "cancel")
+                        send("turn.cancel", { turnId });
+                      finish(
+                        undefined,
+                        input.interrupt.kind === "cancel"
+                          ? "cancelled"
+                          : "disconnected",
+                      );
+                      return;
+                    }
+                  }
+                  send("turn.commit", {
+                    turnId,
+                    lastSequence: inputFrames - 1,
+                  });
+                } catch {
+                  if (!settled)
+                    finish(new Error("Audio input failed or cancelled"));
+                }
+              })();
+            } else
+              send("turn.text", { turnId, turnSequence: 1, text: input.text });
+            break;
+          case "response.text":
+            responseCharacters = message.text.length;
+            break;
+          case "tool.result":
+            {
+              const index = toolResults.findIndex(
+                (item) => item.executionId === message.executionId,
+              );
+              const result = {
+                executionId: message.executionId,
+                status: message.status,
+              };
+              if (index >= 0) toolResults[index] = result;
+              else {
+                if (toolResults.length >= 16)
+                  throw new Error("Too many simulator results");
+                toolResults.push(result);
+              }
+            }
             break;
           case "audio.start":
             player.start(turnId, 1, message.streamId);

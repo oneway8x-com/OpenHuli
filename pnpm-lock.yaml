@@ -347,6 +347,12 @@ importers:
         specifier: 'catalog:'
         version: 3.25.76
     devDependencies:
+      mqtt-packet:
+        specifier: 9.0.2
+        version: 9.0.2
+      '@corely/modules-notes':
+        specifier: workspace:*
+        version: link:../../packages/modules/notes
       '@corely/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tooling/tsconfig

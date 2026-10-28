@@ -14,6 +14,8 @@
 `apps/runtime` contains the persistent Node host, authenticated voice transport, and opt-in MQTT
 telemetry adapter. `packages/modules/telemetry` owns measured context/history and presence use cases,
 repositories, and registered read tools. See [MQTT telemetry](../guides/MQTT_TELEMETRY.md) for its broker
-boundary and setup. Live provider execution and firmware remain separate MVP work.
+boundary and setup. The [device simulator](../guides/DEVICE_SIMULATOR.md) exercises the shared
+voice/HTTP path without hardware; mock and live-provider modes are explicit. Firmware remains separate
+MVP work.
 The pnpm workspace and package scopes retain their scaffold names. See [architecture](architect.md)
 and [the MVP specification](../mvp-spec.md) for current versus intended runtime behavior.

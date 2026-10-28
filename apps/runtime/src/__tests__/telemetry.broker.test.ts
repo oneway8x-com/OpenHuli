@@ -37,6 +37,7 @@ import {
   preauthorizeTool,
 } from "@corely/modules-tool-execution";
 import {
+  DeviceCommandSchema,
   OpenHuliCommandReceiver,
   DeviceCapabilityManifestSchema,
   type DeviceCommand,
@@ -44,6 +45,8 @@ import {
 } from "@corely/contracts";
 import { createTelemetryMqttDependency } from "../mqtt-telemetry";
 import { readRuntimeConfig } from "../config";
+import { simulatorDevice } from "../simulator/device";
+import { startMqttSimulator } from "../simulator/mqtt-device";
 
 const run = promisify(execFile),
   db = new PrismaService(),
@@ -654,4 +657,73 @@ it("executes acknowledged commands through real MQTT and deduplicates physical e
   await new Promise((resolve) => setTimeout(resolve, 250));
   expect(replayed).toBe(0);
   expect(effects).toBe(2);
+});
+
+it("runs the shipped simulator against Mosquitto with stale/duplicate readings and unsupported commands", async () => {
+  const paired = await pairOwnerDevice(
+    {
+      ...fixture,
+      capabilities: [
+        ...fixture.capabilities,
+        { kind: "display", maxTextLength: 32 },
+      ],
+    },
+    owner,
+    access,
+  );
+  const receipts: {
+    commandId: string;
+    status: string;
+    reason: string | null;
+  }[] = [];
+  const simulator = await startMqttSimulator({
+    endpoint: `mqtt://127.0.0.1:${port}`,
+    device: simulatorDevice(paired, true),
+    stale: true,
+    duplicate: true,
+    onCommand: (event) => receipts.push(event),
+  });
+  try {
+    await expect
+      .poll(
+        async () =>
+          (
+            await getTelemetryLatest(
+              { deviceId: paired.device.id },
+              owner,
+              deps,
+            )
+          ).freshness,
+      )
+      .toBe("stale");
+    expect(
+      (await getTelemetryLatest({ deviceId: paired.device.id }, owner, deps))
+        .connectivity,
+    ).toBe("online");
+    expect(
+      (await getTelemetryHistory({ deviceId: paired.device.id }, owner, deps))
+        .items,
+    ).toHaveLength(1);
+    const id = randomUUID();
+    const command = DeviceCommandSchema.parse({
+      version: 1,
+      messageId: id,
+      type: "device.command",
+      deviceId: paired.device.id,
+      commandId: id,
+      executionId: id,
+      issuedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 5000).toISOString(),
+      action: { kind: "display.write", text: "Synthetic unsupported display" },
+    });
+    // Explicit fixture packet injection; production commands still use the shared executor.
+    await dependency?.publishCommand(command, new AbortController().signal);
+    await expect.poll(() => receipts.length).toBe(1);
+    expect(receipts[0]).toMatchObject({
+      status: "failed",
+      reason: "unsupported_capability",
+    });
+  } finally {
+    await simulator.stop();
+  }
 });

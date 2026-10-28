@@ -46,7 +46,8 @@
     "test:migrations": "tsx scripts/check-persistence-migrations.ts",
     "test:broker": "vitest run --workspace ./vitest.workspace.broker.ts",
     "dev:notes": "pnpm --filter @corely/notes-api dev",
-    "smoke:http": "node --env-file-if-exists=.env --import tsx scripts/smoke-http-tools.ts"
+    "smoke:http": "node --env-file-if-exists=.env --import tsx scripts/smoke-http-tools.ts",
+    "simulate": "pnpm --filter @corely/runtime simulate"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",

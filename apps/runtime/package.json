@@ -10,7 +10,8 @@
     "start": "node --env-file-if-exists=../../.env dist/main.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "smoke:live": "node --env-file-if-exists=../../.env --import tsx src/live-smoke.ts",
-    "smoke:playback": "node --env-file-if-exists=../../.env --import tsx src/playback-smoke.ts"
+    "smoke:playback": "node --env-file-if-exists=../../.env --import tsx src/playback-smoke.ts",
+    "simulate": "node --env-file-if-exists=../../.env --import tsx src/simulator/main.ts"
   },
   "dependencies": {
     "@corely/contracts": "workspace:*",
@@ -34,6 +35,8 @@
     "@types/ws": "^8.18.1",
     "tsx": "catalog:",
     "tsdown": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "@corely/modules-notes": "workspace:*",
+    "mqtt-packet": "9.0.2"
   }
 }

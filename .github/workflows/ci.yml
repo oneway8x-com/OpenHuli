@@ -47,6 +47,7 @@ jobs:
       - run: pnpm test:db:setup
       - run: pnpm test:migrations
       - run: pnpm test:int
+      - run: pnpm simulate --mock
       - run: docker build -t openhuli-test-mosquitto docker/mosquitto
       - run: pnpm test:broker
         env:
