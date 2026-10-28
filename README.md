@@ -18,6 +18,10 @@ audio conversion, cancellation and a reference simulator. The [device console](d
 manual commands, grants and Tenant integration settings. The [conversation console](docs/guides/CONVERSATION_CONSOLE.md) provides typed turns, activity and
 exact approvals. [Forecast and notes tools](docs/guides/HTTP_TOOLS.md) can be enabled through server configuration.
 
+The [release evaluation guide](docs/guides/RELEASE_EVALUATION.md) defines 32 scenarios and a
+report template for live and physical acceptance. Hardware wiring, endurance and provider latency
+require recorded evidence before the MVP release gate can pass.
+
 ## Local setup
 
 Requires Node.js 22.19+ (see `package.json`), pnpm 10.26.0, and Docker Compose.
