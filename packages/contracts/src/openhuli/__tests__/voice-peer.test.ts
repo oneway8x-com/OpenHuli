@@ -413,3 +413,41 @@ it("rejects empty/oversized typed input and duplicate turn sequence", () => {
     p.c("turn.text", { turnId: "typed", turnSequence: 2, text: "Hello" }),
   ).toThrow();
 });
+it("opts into incremental text/tool events while preserving final-only legacy sessions", () => {
+  const legacy = peers();
+  legacy.ready(false);
+  legacy.c("turn.text", { turnId: "t1", turnSequence: 1, text: "Hi" });
+  expect(() =>
+    legacy.s("response.delta", { turnId: "t1", text: "Hi" }),
+  ).toThrow(/order/);
+  legacy.s("response.text", { turnId: "t1", text: "Hi" });
+  legacy.s("turn.completed", { turnId: "t1" });
+  const h = peers();
+  h.c("session.start", {
+    conversationId: "conv",
+    inputFormat: OPENHULI_PCM_FORMAT,
+    streamingResponses: true,
+  });
+  h.s("session.ready", {
+    sessionId: "session",
+    inputFormat: OPENHULI_PCM_FORMAT,
+    streamingResponses: true,
+  });
+  h.c("turn.text", { turnId: "t1", turnSequence: 1, text: "Hi" });
+  h.s("response.delta", { turnId: "t1", text: "Hello" });
+  h.s("response.delta", { turnId: "t1", text: " there" });
+  h.s("tool.result", {
+    turnId: "t1",
+    executionId: "execution",
+    status: "unknown",
+  });
+  h.s("response.text", { turnId: "t1", text: "Not confirmed" });
+  expect(() => h.s("response.delta", { turnId: "t1", text: "late" })).toThrow();
+  h.s("turn.completed", { turnId: "t1" });
+});
+it("allocates output streams without colliding with a device's chosen high stream ID", () => {
+  const h = peers();
+  h.ready();
+  h.c("turn.start", { turnId: "t1", turnSequence: 1, streamId: 0x80000000 });
+  expect(h.server.allocateOutputStream()).toBe(0x80000001);
+});

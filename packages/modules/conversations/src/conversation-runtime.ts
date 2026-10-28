@@ -1,3 +1,4 @@
+import { setTimeout as pause } from "node:timers/promises";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
@@ -5,7 +6,14 @@ import {
   StaticPromptProvider,
   promptDefinitions,
 } from "@corely/prompts";
-import { OpenHuliIdSchema, OpenHuliJsonObjectSchema } from "@corely/contracts";
+import {
+  OpenHuliVoiceServerMessageSchema,
+  OpenHuliPcmOutput,
+  OPENHULI_PCM_FORMAT,
+  encodeOpenHuliAudio,
+  OpenHuliIdSchema,
+  OpenHuliJsonObjectSchema,
+} from "@corely/contracts";
 import type {
   VoiceProviderFactory,
   VoiceProviderSession,
@@ -43,7 +51,7 @@ export function createConversationRuntime(
   z.number().int().min(100).max(30000).parse(deps.turnTimeoutMs);
   return {
     isReady: () => true,
-    supportsOutputAudio: false,
+    supportsOutputAudio: true,
     async open(context): Promise<VoiceProviderSession> {
       await deps.journal.start(context);
       const rendered = prompts.render(
@@ -61,6 +69,7 @@ export function createConversationRuntime(
         },
         tools: deps.tools,
       });
+      let outputStream = 0x80000000;
       let closed = false,
         starting = false,
         actionsBlocked = false;
@@ -93,6 +102,8 @@ export function createConversationRuntime(
           let committed = false,
             finished = false,
             text: string | undefined;
+          let generated = false,
+            played = false;
           let task: Promise<void> | undefined;
           let stopping: Promise<void> | undefined;
           let timer: ReturnType<typeof setTimeout> | undefined;
@@ -135,16 +146,28 @@ export function createConversationRuntime(
               task = run();
               void task.catch(() => {});
             },
+            async playbackCompleted() {
+              if (!generated || played || controller.signal.aborted)
+                throw new Error("Playback out of order");
+              await deps.journal.audioCompletion?.(current, "playback");
+              if (controller.signal.aborted)
+                throw new Error("Playback cancelled");
+              await deps.journal.transition(current, "completed");
+              played = true;
+              if (active === handle) active = undefined;
+            },
             stop(): Promise<void> {
               if (stopping) return stopping;
-              if (!finished) abort();
+              if (!finished || (generated && !played)) abort();
               stopping =
-                task ??
-                (async () => {
-                  await deps.journal.transition(current, "cancelled");
-                  turn.signal.removeEventListener("abort", abort);
-                  if (active === handle) active = undefined;
-                })();
+                generated && !played && finished
+                  ? deps.journal.transition(current, "cancelled")
+                  : (task ??
+                    (async () => {
+                      await deps.journal.transition(current, "cancelled");
+                      turn.signal.removeEventListener("abort", abort);
+                      if (active === handle) active = undefined;
+                    })());
               return stopping;
             },
           };
@@ -153,6 +176,52 @@ export function createConversationRuntime(
             let answer = "",
               calls = 0,
               events = 0;
+            let converter = new OpenHuliPcmOutput();
+            let sequence = 0;
+            const streamId = turn.outputStreamId ?? ++outputStream;
+            let buffered: Uint8Array[] = [];
+            // Tool-capable turns hold model claims until authoritative results are known.
+            const streamImmediately = deps.tools.length === 0;
+            const control = (fields: Record<string, unknown>) => {
+              // All variants are checked again by the transport's wire peer.
+              return output.control(
+                OpenHuliVoiceServerMessageSchema.parse({
+                  version: 1,
+                  messageId: randomUUID(),
+                  turnId: turn.turnId,
+                  ...fields,
+                }),
+              );
+            };
+            const deliver = async (frames: Uint8Array[]) => {
+              if (!context.outputAudio) return;
+              for (const payload of frames) {
+                if (controller.signal.aborted || sequence >= 1500)
+                  throw new Error("Output stopped or too long");
+                if (
+                  sequence === 0 &&
+                  !control({
+                    type: "audio.start",
+                    streamId,
+                    format: OPENHULI_PCM_FORMAT,
+                  })
+                )
+                  throw new Error("Output closed");
+                if (
+                  !output.audio(
+                    encodeOpenHuliAudio({
+                      kind: "output",
+                      streamId,
+                      turnSequence: turn.turnSequence,
+                      sequence: sequence++,
+                      payload,
+                    }),
+                  )
+                )
+                  throw new Error("Output closed");
+                await pause(20, undefined, { signal: controller.signal });
+              }
+            };
             const identities = new Set<string>();
             const results: { id: string; status: string }[] = [];
             let inputTokens: number | undefined,
@@ -177,7 +246,7 @@ export function createConversationRuntime(
               await provider.commit(text);
               await deps.journal.transition(current, "responding");
               while (!controller.signal.aborted) {
-                if (++events > 512)
+                if (++events > 2048)
                   throw new Error("Provider event budget exceeded");
                 const event = await untilAbort(
                   provider.next(),
@@ -188,6 +257,23 @@ export function createConversationRuntime(
                   answer += event.text;
                   if (answer.length > 4096)
                     throw new Error("Response too long");
+                  if (
+                    context.streamingResponses &&
+                    streamImmediately &&
+                    event.text.length &&
+                    !control({ type: "response.delta", text: event.text })
+                  )
+                    throw new Error("Output closed");
+                } else if (event.type === "audio") {
+                  const frames = converter.push(event.pcm24);
+                  if (context.outputAudio) {
+                    if (streamImmediately) await deliver(frames);
+                    else {
+                      buffered.push(...frames);
+                      if (buffered.length > 1500)
+                        throw new Error("Output too long");
+                    }
+                  }
                 } else if (event.type === "tool") {
                   if (++calls > deps.maxToolCalls)
                     throw new Error("Tool budget exceeded");
@@ -243,9 +329,21 @@ export function createConversationRuntime(
                   });
                   await deps.journal.usage(current, "tool_calls", 1);
                   if (controller.signal.aborted) throw new Error("Cancelled");
+                  const status = results.at(-1)!;
+                  if (
+                    context.streamingResponses &&
+                    !control({
+                      type: "tool.result",
+                      executionId: status.id,
+                      status: status.status,
+                    })
+                  )
+                    throw new Error("Output closed");
                   await provider.result(id, event.name, safe);
                   // Discard provisional language before calls: only a final post-result answer is delivered.
                   answer = "";
+                  buffered = [];
+                  converter = new OpenHuliPcmOutput();
                 } else if (event.type === "usage") {
                   inputTokens = z
                     .number()
@@ -285,7 +383,27 @@ export function createConversationRuntime(
                       outputTokens,
                     );
                   if (controller.signal.aborted) throw new Error("Cancelled");
-                  await deps.journal.transition(current, "completed");
+                  if (!uncertain && context.outputAudio) {
+                    await deliver([...buffered, ...converter.finish()]);
+                    buffered = [];
+                    if (sequence) {
+                      await deps.journal.audioCompletion?.(
+                        current,
+                        "generation",
+                      );
+                      generated = true;
+                      if (
+                        !control({
+                          type: "audio.generation.completed",
+                          streamId,
+                          lastSequence: sequence - 1,
+                        })
+                      )
+                        throw new Error("Output closed");
+                    }
+                  }
+                  if (!generated)
+                    await deps.journal.transition(current, "completed");
                   if (controller.signal.aborted) throw new Error("Cancelled");
                   finished = true;
                   // Detach abort before emitting: turn completion disposes the gateway's turn handle synchronously.
@@ -320,7 +438,8 @@ export function createConversationRuntime(
               finished = true;
               clearTimeout(timer);
               turn.signal.removeEventListener("abort", abort);
-              if (active === handle) active = undefined;
+              if (active === handle && !(generated && !played))
+                active = undefined;
             }
           }
           return handle;

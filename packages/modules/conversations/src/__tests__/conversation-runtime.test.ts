@@ -7,6 +7,7 @@ import type {
 } from "../conversation-runtime.types";
 import type { VoiceTurnContext, VoiceOutput } from "@corely/modules-voice";
 const context = {
+  streamingResponses: true,
   tenantId: "tenant",
   deviceId: "device",
   credentialId: "credential",
@@ -337,6 +338,112 @@ it("bounds a silent provider even when next ignores connection cleanup", async (
     expect(f.output.control).toHaveBeenCalledWith(
       expect.objectContaining({ type: "turn.failed" }),
     ),
+  );
+  await session.close();
+});
+
+it("streams tool-free text and converted audio before final generation, then records playback separately", async () => {
+  const f = fixture([
+    [
+      { type: "text", text: "Hello" },
+      { type: "audio", pcm24: new Uint8Array(960) },
+    ],
+  ]);
+  const factory = createConversationRuntime({
+    provider: f.fake.factory,
+    journal: f.journal,
+    tools: [],
+    execute: f.execute,
+    maxToolCalls: 1,
+    turnTimeoutMs: 1000,
+  });
+  const audioCompletion = vi.fn(async () => {});
+  f.journal.audioCompletion = audioCompletion;
+  const session = await factory.open({ ...context, outputAudio: true }),
+    t = turn();
+  const handle = await session.startTurn(t.current, f.output);
+  await handle.commit(commit(t.current));
+  await vi.waitFor(() => expect(f.output.audio).toHaveBeenCalledOnce());
+  expect(f.output.control).toHaveBeenCalledWith(
+    expect.objectContaining({ type: "response.delta", text: "Hello" }),
+  );
+  expect(f.output.control).not.toHaveBeenCalledWith(
+    expect.objectContaining({ type: "turn.completed" }),
+  );
+  t.controller.abort();
+  await handle.stop();
+  await session.close();
+  expect(audioCompletion).not.toHaveBeenCalled();
+});
+it("records generation before playback and completes only after the validated receipt", async () => {
+  const f = fixture([
+    [
+      { type: "text", text: "Hello" },
+      { type: "audio", pcm24: new Uint8Array(960) },
+      done,
+    ],
+  ]);
+  f.journal.audioCompletion = vi.fn(async () => {});
+  const session = await f.factory.open({ ...context, outputAudio: true }),
+    t = turn();
+  const handle = await session.startTurn(t.current, f.output);
+  await handle.commit(commit(t.current));
+  await vi.waitFor(() =>
+    expect(f.output.control).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "audio.generation.completed",
+        lastSequence: 0,
+      }),
+    ),
+  );
+  expect(f.journal.audioCompletion).toHaveBeenCalledWith(
+    expect.anything(),
+    "generation",
+  );
+  expect(f.journal.transition).not.toHaveBeenCalledWith(
+    expect.anything(),
+    "completed",
+  );
+  await handle.playbackCompleted?.();
+  expect(f.journal.audioCompletion).toHaveBeenLastCalledWith(
+    expect.anything(),
+    "playback",
+  );
+  expect(f.journal.transition).toHaveBeenLastCalledWith(
+    expect.anything(),
+    "completed",
+  );
+  await expect(handle.playbackCompleted?.()).rejects.toThrow();
+  await session.close();
+});
+it("does not speak model success after an uncertain tool result and still supplies text to speakerless devices", async () => {
+  const f = fixture(
+    [
+      [
+        call,
+        { type: "audio", pcm24: new Uint8Array(960) },
+        { type: "text", text: "Success!" },
+        done,
+      ],
+    ],
+    vi.fn(async () => ({ status: "unknown", output: { value: "actual" } })),
+  );
+  const session = await f.factory.open({ ...context, outputAudio: true }),
+    t = turn();
+  await (
+    await session.startTurn(t.current, f.output)
+  ).commit(commit(t.current));
+  await vi.waitFor(() =>
+    expect(f.output.control).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "turn.completed" }),
+    ),
+  );
+  expect(f.output.audio).not.toHaveBeenCalled();
+  expect(f.output.control).toHaveBeenCalledWith(
+    expect.objectContaining({ type: "tool.result", status: "unknown" }),
+  );
+  expect(JSON.stringify(vi.mocked(f.output.control).mock.calls)).not.toContain(
+    "Success!",
   );
   await session.close();
 });

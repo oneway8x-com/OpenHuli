@@ -22,6 +22,8 @@ type ActiveTurn = {
   inputNext: number;
   committed: boolean;
   text: boolean;
+  deltaChars: number;
+  toolResults: number;
   outputStream?: number;
   outputNext: number;
   generated: boolean;
@@ -33,11 +35,14 @@ export class OpenHuliVoicePeer {
   private readonly manifest: DeviceCapabilityManifest;
   private phase: "new" | "offered" | "ready" | "closed" = "new";
   private offeredOutput = false;
+  private offeredStreaming = false;
+  private streaming = false;
   private outputEnabled = false;
   private readonly messages = new Set<string>();
   private readonly turns = new Set<string>();
   private readonly streams = new Set<number>();
   private turnSequence = 0;
+  private nextOutput = 0x80000000;
   private active: ActiveTurn | undefined;
 
   constructor(
@@ -45,6 +50,16 @@ export class OpenHuliVoicePeer {
     boundManifest: DeviceCapabilityManifest,
   ) {
     this.manifest = DeviceCapabilityManifestSchema.parse(boundManifest);
+  }
+
+  /** Server allocation uses the same connection-local stream history as wire validation. */
+  allocateOutputStream(): number {
+    this.require(
+      this.role === "server" && this.phase === "ready",
+      "Output allocation unavailable",
+    );
+    while (this.streams.has(this.nextOutput)) this.nextOutput++;
+    return this.nextOutput++;
   }
 
   sendControl(text: string): OpenHuliVoiceMessage {
@@ -95,6 +110,7 @@ export class OpenHuliVoicePeer {
         "Speaker capability required",
       );
       this.offeredOutput = Boolean(message.outputFormat);
+      this.offeredStreaming = Boolean(message.streamingResponses);
       this.phase = "offered";
     } else if (message.type === "session.ready") {
       this.require(this.phase === "offered", "Session format was not offered");
@@ -102,6 +118,11 @@ export class OpenHuliVoicePeer {
         !message.outputFormat || this.offeredOutput,
         "Output format was not offered",
       );
+      this.require(
+        !message.streamingResponses || this.offeredStreaming,
+        "Streaming was not offered",
+      );
+      this.streaming = Boolean(message.streamingResponses);
       this.outputEnabled = Boolean(message.outputFormat);
       this.phase = "ready";
     } else {
@@ -126,6 +147,8 @@ export class OpenHuliVoicePeer {
           inputNext: 0,
           committed: message.type === "turn.text",
           text: false,
+          deltaChars: 0,
+          toolResults: 0,
           outputNext: 0,
           generated: false,
           played: false,
@@ -152,6 +175,26 @@ export class OpenHuliVoicePeer {
           case "turn.cancel":
           case "turn.failed":
             this.active = undefined;
+            break;
+          case "response.delta":
+            this.require(
+              this.streaming &&
+                active.committed &&
+                !active.text &&
+                active.deltaChars + message.text.length <= 4096,
+              "Progress is out of order or too long",
+            );
+            active.deltaChars += message.text.length;
+            break;
+          case "tool.result":
+            this.require(
+              this.streaming &&
+                active.committed &&
+                !active.text &&
+                active.toolResults < 16,
+              "Tool progress is out of order or too long",
+            );
+            active.toolResults++;
             break;
           case "response.text":
             this.require(

@@ -41,6 +41,7 @@ beforeAll(async () => {
       profileVersion: 1,
       capabilities: [
         { kind: "microphone", format: OPENHULI_PCM_FORMAT },
+        { kind: "speaker", format: OPENHULI_PCM_FORMAT },
         { kind: "ping" },
       ],
     },
@@ -73,7 +74,7 @@ afterAll(async () => {
   }
   await db.disconnect();
 });
-async function setup(turns: ProviderEvent[][]) {
+async function setup(turns: ProviderEvent[][], outputAudio = false) {
   const fake = createFakeConversationProvider(turns);
   const config = readRuntimeConfig({
     ...process.env,
@@ -93,7 +94,20 @@ async function setup(turns: ProviderEvent[][]) {
   });
   clients.push(client);
   const messages: Record<string, unknown>[] = [];
-  client.on("message", (data) => messages.push(JSON.parse(data.toString())));
+  const audio: Uint8Array[] = [];
+  client.on("message", (data, binary) => {
+    if (binary)
+      audio.push(
+        new Uint8Array(
+          Buffer.isBuffer(data)
+            ? data
+            : Array.isArray(data)
+              ? Buffer.concat(data)
+              : Buffer.from(data),
+        ),
+      );
+    else messages.push(JSON.parse(data.toString()));
+  });
   await new Promise<void>((resolve, reject) => {
     client.once("open", resolve);
     client.once("error", reject);
@@ -105,10 +119,14 @@ async function setup(turns: ProviderEvent[][]) {
   send("session.start", {
     conversationId: "untrusted-run",
     inputFormat: OPENHULI_PCM_FORMAT,
+    ...(outputAudio
+      ? { outputFormat: OPENHULI_PCM_FORMAT, streamingResponses: true }
+      : {}),
   });
   await vi.waitFor(() => expect(messages[0]?.type).toBe("session.ready"));
   return {
     fake,
+    audio,
     client,
     send,
     messages,
@@ -253,4 +271,82 @@ it("rejects cross-tenant targets and revoked grants without a success claim", as
       where: { tenantId, runId: f.conversationId },
     }),
   ).toBe(0);
+});
+
+it("persists generation and actual playback receipt separately through the authenticated use cases", async () => {
+  const f = await setup(
+    [
+      [
+        { type: "text", text: "Hello" },
+        { type: "audio", pcm24: new Uint8Array(960) },
+        { type: "complete" },
+      ],
+    ],
+    true,
+  );
+  f.send("turn.text", {
+    turnId: "playback-turn",
+    turnSequence: 1,
+    text: "Hello",
+  });
+  await vi.waitFor(() =>
+    expect(
+      f.messages.some((m) => m.type === "audio.generation.completed"),
+    ).toBe(true),
+  );
+  expect(f.audio).toHaveLength(1);
+  const pending = await db.conversationTurn.findFirstOrThrow({
+    where: { tenantId, runId: f.conversationId, id: "playback-turn" },
+  });
+  expect(pending.status).toBe("responding");
+  expect(pending.generationCompletedAt).not.toBeNull();
+  expect(pending.playbackCompletedAt).toBeNull();
+  expect(f.messages.some((m) => m.type === "turn.completed")).toBe(false);
+  const receipt = f.messages.find(
+    (m) => m.type === "audio.generation.completed",
+  )!;
+  f.send("playback.completed", {
+    turnId: "playback-turn",
+    streamId: receipt.streamId,
+    lastSequence: receipt.lastSequence,
+  });
+  await vi.waitFor(() =>
+    expect(f.messages.some((m) => m.type === "turn.completed")).toBe(true),
+  );
+  const done = await db.conversationTurn.findFirstOrThrow({
+    where: { tenantId, runId: f.conversationId, id: "playback-turn" },
+  });
+  expect(done.status).toBe("completed");
+  expect(done.playbackCompletedAt).not.toBeNull();
+});
+it("cancels generated but unacknowledged output without inventing a playback timestamp", async () => {
+  const f = await setup(
+    [
+      [
+        { type: "text", text: "Hello" },
+        { type: "audio", pcm24: new Uint8Array(960) },
+        { type: "complete" },
+      ],
+    ],
+    true,
+  );
+  f.send("turn.text", {
+    turnId: "cancel-playback",
+    turnSequence: 1,
+    text: "Hello",
+  });
+  await vi.waitFor(() =>
+    expect(
+      f.messages.some((m) => m.type === "audio.generation.completed"),
+    ).toBe(true),
+  );
+  f.send("turn.cancel", { turnId: "cancel-playback" });
+  await vi.waitFor(async () => {
+    const turn = await db.conversationTurn.findFirstOrThrow({
+      where: { tenantId, runId: f.conversationId, id: "cancel-playback" },
+    });
+    expect(turn.status).toBe("cancelled");
+    expect(turn.playbackCompletedAt).toBeNull();
+  });
+  expect(f.messages.some((m) => m.type === "turn.completed")).toBe(false);
 });

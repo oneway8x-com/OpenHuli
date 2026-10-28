@@ -224,11 +224,22 @@ export function createGeminiLiveProvider(
           }
           const content = message.serverContent;
           if (content?.interrupted) throw failure();
-          // Native audio is consumed but never forwarded as incompatible 24 kHz protocol audio (#17).
+          // Only public PCM is exposed; thought parts are never forwarded.
           for (const part of content?.modelTurn?.parts ?? []) {
-            if (part.inlineData) {
+            if (part.inlineData && !part.thought) {
               outputBytes += part.inlineData.data.length;
-              if (outputBytes > 2097152) throw failure();
+              if (outputBytes > 1920000) throw failure();
+              const { data, mimeType } = part.inlineData;
+              if (
+                mimeType !== "audio/pcm;rate=24000" ||
+                !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
+                  data,
+                )
+              )
+                throw failure();
+              const pcm24 = Buffer.from(data, "base64");
+              if (!pcm24.length || pcm24.length % 2) throw failure();
+              push({ type: "audio", pcm24 });
             }
           }
           if (content?.outputTranscription?.text)

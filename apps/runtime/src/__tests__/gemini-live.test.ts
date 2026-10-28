@@ -198,3 +198,42 @@ it("closes an opening connection when cancelled, without waiting for setup", asy
   controller.abort();
   await expect(opening).rejects.toThrow("AI provider unavailable");
 });
+it("forwards only validated public native PCM and never thought audio", async () => {
+  const f = await fixture();
+  await f.provider.begin("text");
+  await f.provider.commit("Hi");
+  const data = Buffer.alloc(960).toString("base64");
+  f.send({
+    serverContent: {
+      modelTurn: {
+        parts: [
+          {
+            thought: true,
+            inlineData: { mimeType: "audio/pcm;rate=24000", data },
+          },
+          { inlineData: { mimeType: "audio/pcm;rate=24000", data } },
+        ],
+      },
+      turnComplete: true,
+    },
+  });
+  expect(await f.provider.next()).toEqual({
+    type: "audio",
+    pcm24: Buffer.alloc(960),
+  });
+  expect(await f.provider.next()).toEqual({ type: "complete" });
+});
+it.each(["audio/pcm;rate=16000", "audio/wav", "audio/pcm;rate=48000"])(
+  "rejects unsupported public output format %s",
+  async (mimeType) => {
+    const f = await fixture();
+    await f.provider.begin("text");
+    await f.provider.commit("Hi");
+    f.send({
+      serverContent: {
+        modelTurn: { parts: [{ inlineData: { mimeType, data: "AAAA" } }] },
+      },
+    });
+    await expect(f.provider.next()).rejects.toThrow("AI provider unavailable");
+  },
+);

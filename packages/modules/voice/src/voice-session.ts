@@ -23,6 +23,9 @@ type Turn = {
   committed: boolean;
   handle: VoiceProviderTurn | undefined;
   timer: ReturnType<typeof setTimeout>;
+  expectsPlayback?: boolean;
+  played?: boolean;
+  completion?: OpenHuliVoiceServerMessage;
 };
 export class VoiceSession {
   readonly sessionId = randomUUID();
@@ -31,6 +34,8 @@ export class VoiceSession {
   private readonly abort = new AbortController();
   private provider: VoiceProviderSession | undefined;
   private active: Turn | undefined;
+  private outputAudio = false;
+  private streamingResponses = false;
   private queuedBytes = 0;
   private queuedMessages = 0;
   private work: Promise<void> = Promise.resolve();
@@ -74,6 +79,8 @@ export class VoiceSession {
       tenantId: this.device.identity.tenantId,
       deviceId: this.device.identity.deviceId,
       signal: this.abort.signal,
+      outputAudio: this.outputAudio,
+      streamingResponses: this.streamingResponses,
     };
   }
   private async bounded<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
@@ -169,6 +176,15 @@ export class VoiceSession {
         try {
           if (!("turnId" in message) || message.turnId !== turn.id)
             return false;
+          if (message.type === "audio.start") turn.expectsPlayback = true;
+          if (
+            message.type === "turn.completed" &&
+            turn.expectsPlayback &&
+            !turn.played
+          ) {
+            turn.completion = message;
+            return true;
+          }
           this.send(message);
         } catch {
           this.fail("invalid_message", "Invalid provider response", 1011);
@@ -220,6 +236,10 @@ export class VoiceSession {
           this.enqueue(bytes.byteLength, async () => {
             await this.assertActive();
             if (this.closed) return;
+            this.streamingResponses = Boolean(message.streamingResponses);
+            this.outputAudio = Boolean(
+              message.outputFormat && this.factory.supportsOutputAudio,
+            );
             const opening = this.track(this.factory.open(this.context()));
             void opening.then(
               (handle) => {
@@ -235,6 +255,9 @@ export class VoiceSession {
               messageId: randomUUID(),
               sessionId: this.sessionId,
               inputFormat: message.inputFormat,
+              ...(this.streamingResponses
+                ? { streamingResponses: true as const }
+                : {}),
               ...(message.outputFormat && this.factory.supportsOutputAudio
                 ? { outputFormat: message.outputFormat }
                 : {}),
@@ -274,6 +297,7 @@ export class VoiceSession {
                   source: message.type === "turn.text" ? "text" : "voice",
                   turnId: turn.id,
                   turnSequence: turn.sequence,
+                  outputStreamId: this.peer.allocateOutputStream(),
                   signal: turn.abort.signal,
                 },
                 this.output(turn),
@@ -338,8 +362,21 @@ export class VoiceSession {
           if (turn) this.cancelTurn(turn);
           break;
         }
-        case "playback.completed":
-          break; // Wire peer validates acknowledgement; output orchestration is #17.
+        case "playback.completed": {
+          const turn = this.active;
+          if (!turn) throw new Error("No playback turn");
+          this.enqueue(bytes.byteLength, async () => {
+            await this.assertActive();
+            if (turn.abort.signal.aborted || this.closed) return;
+            await this.track(
+              turn.handle?.playbackCompleted?.() ?? Promise.resolve(),
+            );
+            if (turn.abort.signal.aborted || this.closed) return;
+            turn.played = true;
+            if (turn.completion) this.output(turn).control(turn.completion);
+          });
+          break;
+        }
       }
     } catch {
       this.fail("invalid_message", "Invalid voice message", 1008);

@@ -26,11 +26,14 @@ export interface VoiceSessionContext {
   tenantId: string;
   deviceId: string;
   signal: AbortSignal;
+  outputAudio?: boolean;
+  streamingResponses?: boolean;
 }
 export interface VoiceTurnContext extends VoiceSessionContext {
   source?: "text" | "voice";
   turnId: string;
   turnSequence: number;
+  outputStreamId?: number;
 }
 export interface CommittedVoiceTurn extends VoiceTurnContext {
   lastSequence: number;
@@ -45,6 +48,7 @@ export interface VoiceProviderTurn {
   appendAudio(frame: OpenHuliAudioFrame): Promise<void>;
   appendText?(text: string): Promise<void>;
   commit(context: CommittedVoiceTurn): Promise<void>;
+  playbackCompleted?(): Promise<void>;
   stop(): Promise<void>;
 }
 export interface VoiceProviderSession {

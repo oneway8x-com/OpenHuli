@@ -13,6 +13,7 @@ export interface ConversationTool {
 }
 export type ProviderEvent =
   | { type: "text"; text: string }
+  | { type: "audio"; pcm24: Uint8Array }
   | { type: "tool"; id: string; name: string; arguments: JsonObject }
   | { type: "usage"; inputTokens: number; outputTokens: number }
   | { type: "complete" };
@@ -48,6 +49,10 @@ export interface ConversationJournal {
     context: VoiceTurnContext,
     role: "user" | "assistant",
     text?: string,
+  ): Promise<void>;
+  audioCompletion?(
+    context: VoiceTurnContext,
+    kind: "generation" | "playback",
   ): Promise<void>;
   usage(
     context: VoiceTurnContext,
