@@ -116,6 +116,11 @@ test("denial, partial and unknown results never become confirmed from assistant 
     .getByRole("button", { name: "New conversation", exact: true })
     .click();
   await expect(page).not.toHaveURL(deniedURL);
+  const deniedId = new URL(deniedURL).searchParams.get("id");
+  expect(
+    (await (await page.request.get(`/api/conversations?id=${deniedId}`)).json())
+      .live,
+  ).toBe(false);
   await expect(page.getByLabel("Message", { exact: true })).toBeEnabled();
   await send(page, "partial");
   await page
@@ -129,6 +134,14 @@ test("denial, partial and unknown results never become confirmed from assistant 
     .getByRole("button", { name: "New conversation", exact: true })
     .click();
   await expect(page).not.toHaveURL(partialURL);
+  const partialId = new URL(partialURL).searchParams.get("id");
+  expect(
+    (
+      await (
+        await page.request.get(`/api/conversations?id=${partialId}`)
+      ).json()
+    ).live,
+  ).toBe(false);
   await expect(page.getByLabel("Message", { exact: true })).toBeEnabled();
   await send(page, "unknown");
   await page
