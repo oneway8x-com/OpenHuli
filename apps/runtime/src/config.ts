@@ -67,6 +67,38 @@ const ConfigSchema = z
         .max(256)
         .regex(/^[A-Za-z0-9_-]+$/),
     ),
+    RUNTIME_MQTT_TELEMETRY_ENABLED: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((value) => value === "true"),
+    RUNTIME_MQTT_AUTH_HOST: z
+      .enum(["127.0.0.1", "0.0.0.0"])
+      .default("127.0.0.1"),
+    RUNTIME_MQTT_AUTH_PORT: z.coerce
+      .number()
+      .int()
+      .min(0)
+      .max(65535)
+      .default(3201),
+    RUNTIME_MQTT_AUTH_TOKEN: optionalString(
+      z
+        .string()
+        .min(32)
+        .max(256)
+        .regex(/^[A-Za-z0-9_-]+$/),
+    ),
+    RUNTIME_TELEMETRY_INTERVAL_SECONDS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(3600)
+      .default(30),
+    RUNTIME_TELEMETRY_RETENTION_DAYS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(30)
+      .default(7),
     RUNTIME_MQTT_URL: optionalString(z.string().url()),
     RUNTIME_MQTT_USERNAME: optionalString(z.string().min(1).max(256)),
     RUNTIME_MQTT_PASSWORD: optionalString(z.string().min(1).max(1024)),
@@ -92,6 +124,15 @@ const ConfigSchema = z
         path: [key],
         message: "Invalid runtime setting",
       });
+    if (
+      config.RUNTIME_MQTT_TELEMETRY_ENABLED &&
+      (!config.RUNTIME_MQTT_URL ||
+        !config.RUNTIME_MQTT_USERNAME ||
+        !config.RUNTIME_MQTT_PASSWORD ||
+        !config.RUNTIME_MQTT_AUTH_TOKEN ||
+        config.RUNTIME_MQTT_USERNAME.startsWith("ohm1."))
+    )
+      issue("RUNTIME_MQTT_TELEMETRY_ENABLED");
     if (
       Boolean(config.RUNTIME_MQTT_USERNAME) !==
       Boolean(config.RUNTIME_MQTT_PASSWORD)
@@ -130,7 +171,10 @@ export type RuntimeConfig = z.infer<typeof ConfigSchema>;
 
 export function readRuntimeConfig(env: NodeJS.ProcessEnv): RuntimeConfig {
   const result = ConfigSchema.safeParse(env);
-  if (env.RUNTIME_VOICE_ENABLED === "true") {
+  if (
+    env.RUNTIME_VOICE_ENABLED === "true" ||
+    env.RUNTIME_MQTT_TELEMETRY_ENABLED === "true"
+  ) {
     try {
       const url = new URL(env.DATABASE_URL || "");
       if (

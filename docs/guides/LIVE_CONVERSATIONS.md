@@ -4,7 +4,9 @@ Issue #10 connects device voice and typed turns to one shared conversation use c
 composes PostgreSQL metadata, the registered executor, and a server-to-server Gemini Live WebSocket.
 `device_context` is the first real registered read: it returns the authorized target's configured
 name, room, location and capabilities, explicitly labelled configuration rather than live telemetry.
-Live forecasts/notes POST belong to #11; console owner sessions/UI to #18; speaker playback to #17.
+[MQTT telemetry](MQTT_TELEMETRY.md) provides ingestion and a grounded telemetry-tool factory; those tools
+are not automatically added to this adapter's default registry. Live forecasts/notes POST belong to #11;
+console owner sessions/UI to #18; speaker playback to #17.
 
 ## Provider and configuration
 

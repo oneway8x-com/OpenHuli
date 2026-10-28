@@ -11,7 +11,8 @@ Owner-only [device provisioning APIs](docs/guides/DEVICE_PAIRING.md) issue scope
 The [authenticated voice gateway](docs/guides/VOICE_GATEWAY.md) composes a
 [Gemini conversation adapter](docs/guides/LIVE_CONVERSATIONS.md), shared voice/text turns, and the
 authorized tool executor. Device context is the first registered read. Live-provider validation is
-opt-in; forecasts/notes tools, MQTT telemetry, speaker playback, and the console remain later tickets.
+opt-in. [MQTT telemetry](docs/guides/MQTT_TELEMETRY.md) adds authenticated ingestion and grounded read tools;
+forecasts/notes tools, speaker playback, and the conversation console remain later tickets.
 
 ## Local setup
 

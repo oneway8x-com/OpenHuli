@@ -36,7 +36,7 @@ Implement #10 on `10-conversation-runtime` from merged #9 (`cfb75f5`). Project 3
 ## Remaining work / risks
 
 - Committed and pushed `10-conversation-runtime`; draft PR [#32](https://github.com/oneway8x-com/OpenHuli/pull/32) targets `main`. Live Gemini access, real speech selection, measured provider latency and
-  provider retention behavior have not been verified. No live credential location was supplied; the
+  provider retention behavior have not been verified. Maintainer confirmed no key is configured; the
   opt-in typed/PCM smoke procedure and command are ready for that validation. Keep #10 In progress.
 - Default registered tool is an authorized configuration read. HTTP writes/forecasts are #11; console
   owner UI is #18; incremental audio/playback is #17; broader spend/retention/deployment are #20/#21.
@@ -47,3 +47,17 @@ Implement #10 on `10-conversation-runtime` from merged #9 (`cfb75f5`). Project 3
 - Failed/cancelled provider history is discarded and requires reconnect. Follow-ups after successful
   turns reuse the connection. Missing token usage remains absent/unknown. No raw audio/transcript is stored;
   tool argument/result metadata can include configured location and remains operational data.
+
+## Conflict resolution after MQTT telemetry merged
+
+- Merged `main` (`27c7025`) into the existing PR #32 branch. Preserved both module dependencies,
+  typed-turn and telemetry protocol additions, and both live conversation/MQTT setup guides.
+- Kept the incoming bundle rule for all feature modules and explicit external Prisma client;
+  this includes conversations/voice and telemetry without bundling the generated Prisma client.
+- Frozen offline installation, Prisma generation/validation, full typecheck and production build passed.
+  274 Vitest tests plus 3 script tests, 65 PostgreSQL integration tests and 5 real MQTT broker tests passed.
+- Architecture/prompt guards, formatting/diff checks and lint passed (0 errors, 98 existing warnings).
+  Built runtime readiness/shutdown passed in all three voice/key modes; every built support module imported.
+- Used a disposable local PostgreSQL database and the existing local broker image. No paid Gemini
+  requests, remote migration, deployment or PR merge. Maintainer confirmed no Gemini key is configured;
+  live smoke remains documented and pending, so PR #32 stays draft.

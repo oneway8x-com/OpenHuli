@@ -325,6 +325,12 @@ importers:
       '@corely/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@corely/modules-telemetry':
+        specifier: workspace:*
+        version: link:../../packages/modules/telemetry
+      '@prisma/client':
+        specifier: 'catalog:'
+        version: 7.4.1(prisma@7.4.1(@types/react@18.3.28)(magicast@0.3.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(typescript@5.9.3)
       mqtt:
         specifier: ^5.14.1
         version: 5.16.1
@@ -608,6 +614,40 @@ importers:
       '@corely/modules-conversations':
         specifier: workspace:*
         version: link:../conversations
+      '@corely/data':
+        specifier: workspace:*
+        version: link:../../data
+      '@corely/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.11
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  packages/modules/telemetry:
+    dependencies:
+      '@corely/contracts':
+        specifier: workspace:*
+        version: link:../../contracts
+      '@corely/modules-devices':
+        specifier: workspace:*
+        version: link:../devices
+      '@corely/modules-tool-execution':
+        specifier: workspace:*
+        version: link:../tool-execution
+      '@prisma/client':
+        specifier: 'catalog:'
+        version: 7.4.1(prisma@7.4.1(@types/react@18.3.28)(magicast@0.3.5)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3))(typescript@5.9.3)
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
+    devDependencies:
+      '@corely/modules-identity':
+        specifier: workspace:*
+        version: link:../identity
       '@corely/data':
         specifier: workspace:*
         version: link:../../data

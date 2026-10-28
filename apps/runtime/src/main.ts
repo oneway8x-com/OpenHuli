@@ -36,9 +36,17 @@ async function main(): Promise<void> {
         ...(conversation ? { provider: conversation } : {}),
       }
     : undefined;
+  const mqtt = config.RUNTIME_MQTT_TELEMETRY_ENABLED
+    ? (await import("./mqtt-telemetry")).createTelemetryMqttDependency(
+        config,
+        (await import("./telemetry-services")).createTelemetryServices(config),
+      )
+    : config.RUNTIME_MQTT_URL
+      ? createMqttDependency(config)
+      : undefined;
   const runtime = createRuntime(config, {
     ...(voice ? { voice } : {}),
-    dependencies: config.RUNTIME_MQTT_URL ? [createMqttDependency(config)] : [],
+    dependencies: mqtt ? [mqtt] : [],
   });
   let stopping = false;
   const shutdown = () => {

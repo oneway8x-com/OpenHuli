@@ -819,6 +819,7 @@ model Device {
   targetedExecutions      ToolExecution[]        @relation("ToolExecutionTarget")
   sourcePreauthorizations ToolPreauthorization[] @relation("PreauthorizationSource")
   targetPreauthorizations ToolPreauthorization[] @relation("PreauthorizationTarget")
+  presence                DevicePresence?
 
   @@unique([tenantId, id])
   @@index([tenantId, status])
@@ -853,20 +854,22 @@ model DeviceToolGrant {
 }
 
 model DeviceTelemetry {
-  id           String   @id @default(cuid())
-  tenantId     String
-  deviceId     String
-  messageId    String
-  bootId       String
-  sequence     BigInt
-  sampledAt    DateTime @db.Timestamptz(6)
-  receivedAt   DateTime @default(now()) @db.Timestamptz(6)
-  readingsJson String
-  device       Device   @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Cascade)
+  id               String   @id @default(cuid())
+  tenantId         String
+  deviceId         String
+  messageId        String
+  bootId           String
+  sequence         BigInt
+  sampledAt        DateTime @db.Timestamptz(6)
+  receivedAt       DateTime @default(now()) @db.Timestamptz(6)
+  sensorErrorsJson String   @default("[]")
+  readingsJson     String
+  device           Device   @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Cascade)
 
   @@unique([tenantId, deviceId, bootId, sequence])
   @@unique([tenantId, deviceId, messageId])
   @@index([tenantId, deviceId, sampledAt])
+  @@index([sampledAt])
 }
 
 model DeviceCommand {
@@ -962,4 +965,19 @@ model ToolPreauthorization {
 
   @@unique([tenantId, ownerUserId, toolId, policyHash, scopeKey])
   @@index([tenantId, expiresAt])
+}
+
+model DevicePresence {
+  tenantId          String
+  deviceId          String
+  bootId            String
+  backendEpoch      String
+  status            String
+  lastSeenAt        DateTime @db.Timestamptz(6)
+  sampledAt         DateTime @db.Timestamptz(6)
+  telemetrySequence BigInt?
+  presenceSequence  BigInt?
+  device            Device   @relation(fields: [tenantId, deviceId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([tenantId, deviceId])
 }

@@ -112,6 +112,7 @@ export class DeviceRepository {
           sequence: BigInt(input.sequence),
           sampledAt: new Date(input.sampledAt),
           readingsJson: JSON.stringify(input.readings),
+          sensorErrorsJson: JSON.stringify(input.sensorErrors ?? []),
         },
       ],
       skipDuplicates: true,
