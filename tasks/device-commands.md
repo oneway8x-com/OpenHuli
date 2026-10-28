@@ -42,7 +42,7 @@ Implement #14 on `14-device-commands` from merged #10/#13 (`14b3787`). Project 3
 
 ## Remaining work / risks
 
-- Implementation and required checks complete; commit/push and open PR against main. Keep #14 In progress until merge.
+- Implementation committed and pushed on `14-device-commands`; PR [#34](https://github.com/oneway8x-com/OpenHuli/pull/34) targets `main`. Required checks complete. Keep #14 In progress until merge.
 - Actual ESP32 firmware and display hardware remain #15/#16 and later hardware acceptance. The shared receiver
   is a tested simulator/reference algorithm, not a promise of exactly-once physical effects across power loss.
 - Manual UI and interactive approval/resume remain #18/#19. Both owner and AI use the same executor; current AI
