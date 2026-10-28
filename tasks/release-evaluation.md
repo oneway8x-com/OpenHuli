@@ -50,3 +50,5 @@ Verification:
 - This standalone offline script changes no application behavior, schema or environment variables;
   application build, database and browser suites were not rerun.
 - Hardware/live acceptance remains pending; test fixtures are synthetic timing evidence only.
+
+Follow-up PR: [#46](https://github.com/oneway8x-com/OpenHuli/pull/46). #22 remains In progress.
