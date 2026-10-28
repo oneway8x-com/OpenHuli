@@ -5,7 +5,7 @@ The current application is a Next.js modular monolith backed by PostgreSQL/Prism
 AI orchestration. The host foundation is implemented in `apps/runtime`: health/readiness, a protected lifecycle probe,
 optional MQTT connection management, and cancellation/cleanup ports. The [voice gateway](../guides/VOICE_GATEWAY.md)
 adds scoped device authentication and bounded PCM forwarding through the shared voice session use
-cases. Live provider/conversation execution and telemetry processing remain in their feature tickets. See the
+cases. [Live conversation execution](../guides/LIVE_CONVERSATIONS.md) connects Gemini and the authorized executor; telemetry processing remains in its feature ticket. See the
 [runtime guide](../guides/PERSISTENT_RUNTIME.md).
 
 ## Request flow

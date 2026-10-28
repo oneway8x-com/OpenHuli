@@ -35,7 +35,8 @@ settings, `.env` loading, MQTT TLS, lifecycle checks, and cross-process trust bo
 and verified external deployment remain separate work; this is not a Vercel-only deployment.
 
 Voice transport is opt-in through `RUNTIME_VOICE_ENABLED`. When enabled, `DATABASE_URL` must be a
-valid PostgreSQL connection and a streaming provider must be composed into the runtime. No live
-provider is supplied before #10: the CLI reports unavailable voice readiness rather than accepting
-and discarding audio. See [voice gateway setup and limits](VOICE_GATEWAY.md). Defaults and bounded
+valid PostgreSQL connection. `GEMINI_API_KEY` selects the server-only Gemini adapter; without it,
+voice remains unconfigured/503. `AI_MAX_TOOL_CALLS` (default 6, range 1–16) and `AI_TURN_TIMEOUT_MS`
+(default 25000, range 100–30000 ms) bound the committed model/tool loop. See
+[live conversations and opt-in provider validation](LIVE_CONVERSATIONS.md). See [voice gateway setup and limits](VOICE_GATEWAY.md). Defaults and bounded
 queue/operation/turn/session limits are in `.env.example`; provider keys remain server-only.

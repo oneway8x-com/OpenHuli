@@ -8,9 +8,11 @@ and [backlog](https://github.com/orgs/oneway8x-com/projects/3).
 plus a persistent Node host with health checks, optional MQTT connection management, and an internal
 socket probe. Owner access uses email OTP, server-verified sessions, and active Tenant membership.
 Owner-only [device provisioning APIs](docs/guides/DEVICE_PAIRING.md) issue scoped credentials.
-The [authenticated voice gateway](docs/guides/VOICE_GATEWAY.md) is ready for a composed streaming
-provider; the live AI adapter remains #10. MQTT device transport, telemetry ingestion, and AI
-execution remain planned.
+The [authenticated voice gateway](docs/guides/VOICE_GATEWAY.md) composes a
+[Gemini conversation adapter](docs/guides/LIVE_CONVERSATIONS.md), shared voice/text turns, and the
+authorized tool executor. Device context is the first registered read. Live-provider validation is
+opt-in. [MQTT telemetry](docs/guides/MQTT_TELEMETRY.md) adds authenticated ingestion and grounded read tools;
+forecasts/notes tools, speaker playback, and the conversation console remain later tickets.
 
 ## Local setup
 

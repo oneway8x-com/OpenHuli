@@ -8,7 +8,8 @@ Next app on Vercel does not host persistent connections.
 This foundation implements process/socket lifecycle, MQTT connection management, typed configuration,
 and health/readiness. The devices feature now provides owner-only [pairing and scoped credential
 policy](DEVICE_PAIRING.md). The [voice gateway](VOICE_GATEWAY.md) now adds authenticated, bounded device audio transport.
-[MQTT telemetry](MQTT_TELEMETRY.md) adds opt-in broker device access and ingestion. Live provider execution remains #10. The shared identity feature verifies owner sessions and
+[MQTT telemetry](MQTT_TELEMETRY.md) adds opt-in broker device access and ingestion.
+[Live conversations](LIVE_CONVERSATIONS.md) compose the provider and executor. The shared identity feature verifies owner sessions and
 active Tenant membership for the console. This host does not import Next-specific auth helpers or
 treat console cookies as device credentials.
 

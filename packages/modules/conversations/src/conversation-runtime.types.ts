@@ -1,0 +1,68 @@
+import type { z } from "zod";
+import type { OpenHuliJsonObjectSchema } from "@corely/contracts";
+type JsonObject = z.infer<typeof OpenHuliJsonObjectSchema>;
+import type {
+  VoiceSessionContext,
+  VoiceTurnContext,
+} from "@corely/modules-voice";
+
+export interface ConversationTool {
+  id: string;
+  description: string;
+  parameters: JsonObject;
+}
+export type ProviderEvent =
+  | { type: "text"; text: string }
+  | { type: "tool"; id: string; name: string; arguments: JsonObject }
+  | { type: "usage"; inputTokens: number; outputTokens: number }
+  | { type: "complete" };
+/** One live connection retains history. All methods honor the connection's AbortSignal. */
+export interface ConversationProvider {
+  begin(source: "voice" | "text"): Promise<void>;
+  audio(pcm16le: Uint8Array): Promise<void>;
+  commit(text?: string): Promise<void>;
+  next(): Promise<ProviderEvent>;
+  result(id: string, name: string, result: JsonObject): Promise<void>;
+  close(): Promise<void>;
+}
+export interface ConversationProviderFactory {
+  open(input: {
+    context: VoiceSessionContext;
+    instructions: string;
+    promptMetadata?: {
+      promptId: string;
+      promptVersion: string;
+      promptHash: string;
+    };
+    tools: readonly ConversationTool[];
+  }): Promise<ConversationProvider>;
+}
+export interface ConversationJournal {
+  start(context: VoiceSessionContext): Promise<void>;
+  turn(context: VoiceTurnContext): Promise<void>;
+  transition(
+    context: VoiceTurnContext,
+    status: "committed" | "responding" | "completed" | "cancelled" | "failed",
+  ): Promise<void>;
+  message(
+    context: VoiceTurnContext,
+    role: "user" | "assistant",
+    text?: string,
+  ): Promise<void>;
+  usage(
+    context: VoiceTurnContext,
+    metric: "input_tokens" | "output_tokens" | "tool_calls",
+    quantity: number,
+  ): Promise<void>;
+}
+export interface ConversationRuntimeDependencies {
+  provider: ConversationProviderFactory;
+  journal: ConversationJournal;
+  tools: readonly ConversationTool[];
+  execute(
+    context: VoiceTurnContext,
+    call: { id: string; name: string; arguments: JsonObject },
+  ): Promise<JsonObject>;
+  maxToolCalls: number;
+  turnTimeoutMs: number;
+}

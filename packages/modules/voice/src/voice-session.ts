@@ -68,6 +68,7 @@ export class VoiceSession {
   }
   private context(): VoiceSessionContext {
     return {
+      credentialId: this.device.identity.credentialId,
       sessionId: this.sessionId,
       conversationId: this.conversationId,
       tenantId: this.device.identity.tenantId,
@@ -241,7 +242,8 @@ export class VoiceSession {
           });
           break;
         }
-        case "turn.start": {
+        case "turn.start":
+        case "turn.text": {
           const turn: Turn = {
             id: message.turnId,
             sequence: message.turnSequence,
@@ -269,6 +271,7 @@ export class VoiceSession {
               this.provider.startTurn(
                 {
                   ...this.context(),
+                  source: message.type === "turn.text" ? "text" : "voice",
                   turnId: turn.id,
                   turnSequence: turn.sequence,
                   signal: turn.abort.signal,
@@ -286,6 +289,24 @@ export class VoiceSession {
             const handle = await opening;
             if (turn.abort.signal.aborted || this.closed) return;
             turn.handle = handle;
+            if (message.type === "turn.text") {
+              if (!handle.appendText) throw new Error("Text input unsupported");
+              await this.track(handle.appendText(message.text));
+              await this.assertActive();
+              if (turn.abort.signal.aborted || this.closed) return;
+              turn.committed = true;
+              await this.track(
+                handle.commit({
+                  ...this.context(),
+                  source: "text",
+                  turnId: turn.id,
+                  turnSequence: turn.sequence,
+                  signal: turn.abort.signal,
+                  lastSequence: 0,
+                  committedAt: new Date(),
+                }),
+              );
+            }
           });
           break;
         }

@@ -24,7 +24,6 @@ import { defineTool, ToolRegistry } from "../tool.registry";
 import * as tools from "../tool.use-cases";
 import type {
   RegisteredTool,
-  ToolAuthentication,
   ToolContext,
   ToolDependencies,
   ToolOutcome,
@@ -42,9 +41,9 @@ const authConfig = readAuthConfig({
   OWNER_EMAIL: `tools-${randomUUID()}@example.test`,
 });
 let owner: OwnerSession,
-  ownerAuth: ToolAuthentication,
-  otherAuth: ToolAuthentication;
-let deviceId: string, deviceAuth: ToolAuthentication;
+  ownerAuth: { kind: "owner"; token: string },
+  otherAuth: { kind: "owner"; token: string };
+let deviceId: string, deviceAuth: { kind: "device"; token: string };
 const activeSessions: string[] = [];
 async function ownerToken(tenant = tenantId) {
   const session = await identity.createSession(

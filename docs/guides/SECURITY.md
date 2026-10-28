@@ -27,3 +27,12 @@ exact topic/target authorization, and a revocation watchdog. Device WSS and brok
 wire those shared guards before enabling device connections. The [voice gateway](VOICE_GATEWAY.md)
 now composes them for scoped audio sessions; broker device access remains separate.
 Do not include secrets or personal data when reporting a vulnerability.
+
+## Live conversation boundary
+
+The [conversation runtime](LIVE_CONVERSATIONS.md) keeps the Gemini key in the server process.
+Device wire input cannot select Tenant/source identity, provider endpoint/model, tools or credentials.
+Manual commit gates provider execution; the registered executor rechecks current grants and credentials.
+Transcript retention remains off, while tool outcomes remain operational records. Production does not
+select the deterministic test provider. Live model behavior still requires opt-in validation; default
+readiness is not evidence of provider access, hardware support or hosted TLS.

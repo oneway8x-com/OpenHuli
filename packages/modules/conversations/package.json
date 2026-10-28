@@ -11,7 +11,9 @@
   "dependencies": {
     "@corely/contracts": "workspace:*",
     "zod": "catalog:",
-    "@prisma/client": "catalog:"
+    "@prisma/client": "catalog:",
+    "@corely/modules-voice": "workspace:*",
+    "@corely/prompts": "workspace:*"
   },
   "devDependencies": {
     "@corely/data": "workspace:*",

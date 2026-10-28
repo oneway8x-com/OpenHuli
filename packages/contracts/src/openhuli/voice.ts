@@ -35,6 +35,14 @@ export const OpenHuliVoiceClientMessageSchema = z.discriminatedUnion("type", [
       lastSequence: OpenHuliSequenceSchema,
     })
     .strict(),
+  z
+    .object({
+      ...turn,
+      type: z.literal("turn.text"),
+      turnSequence: OpenHuliSequenceSchema.refine((sequence) => sequence > 0),
+      text: z.string().trim().min(1).max(4096),
+    })
+    .strict(),
   z.object({ ...turn, type: z.literal("turn.cancel") }).strict(),
   z
     .object({

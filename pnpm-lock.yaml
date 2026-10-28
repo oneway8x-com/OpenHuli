@@ -304,6 +304,15 @@ importers:
 
   apps/runtime:
     dependencies:
+      '@corely/modules-tool-execution':
+        specifier: workspace:*
+        version: link:../../packages/modules/tool-execution
+      '@corely/modules-identity':
+        specifier: workspace:*
+        version: link:../../packages/modules/identity
+      '@corely/modules-conversations':
+        specifier: workspace:*
+        version: link:../../packages/modules/conversations
       '@corely/data':
         specifier: workspace:*
         version: link:../../packages/data
@@ -505,6 +514,12 @@ importers:
 
   packages/modules/conversations:
     dependencies:
+      '@corely/prompts':
+        specifier: workspace:*
+        version: link:../../prompts
+      '@corely/modules-voice':
+        specifier: workspace:*
+        version: link:../voice
       '@corely/contracts':
         specifier: workspace:*
         version: link:../../contracts

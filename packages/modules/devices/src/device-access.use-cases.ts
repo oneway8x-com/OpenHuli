@@ -407,3 +407,26 @@ export async function resolveVoiceDevice(
   );
   return { session, manifest, expiresAt: credential.expiresAt };
 }
+
+/** Registered read-tool use case; the executor must authorize the exact target before invocation. */
+export async function readConfiguredDeviceContext(
+  deviceId: string,
+  context: { tenantId: string },
+  store: DeviceAccessStore,
+) {
+  const device = await requireActive(
+    context.tenantId,
+    OpenHuliIdSchema.parse(deviceId),
+    store,
+  );
+  const config = configuration(device);
+  return {
+    deviceId: device.id,
+    name: config.name,
+    room: config.room ?? null,
+    location: config.location ?? null,
+    capabilities: config.capabilities.map((capability) => capability.kind),
+    evidence: "owner_configuration",
+    liveReading: false,
+  };
+}

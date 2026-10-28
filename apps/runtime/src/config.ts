@@ -9,6 +9,15 @@ const timeout = (fallback: number) =>
   z.coerce.number().int().min(100).max(30_000).default(fallback);
 const ConfigSchema = z
   .object({
+    GEMINI_API_KEY: optionalString(
+      z
+        .string()
+        .min(16)
+        .max(256)
+        .regex(/^[A-Za-z0-9_-]+$/),
+    ),
+    AI_MAX_TOOL_CALLS: z.coerce.number().int().min(1).max(16).default(6),
+    AI_TURN_TIMEOUT_MS: timeout(25000),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),

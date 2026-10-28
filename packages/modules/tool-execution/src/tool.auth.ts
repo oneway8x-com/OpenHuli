@@ -41,6 +41,16 @@ export async function authenticate(
   auth: ToolAuthentication,
   deps: ToolDependencies,
 ): Promise<Actor> {
+  if (auth.kind === "verified-device") {
+    const session = ActorSchema.options[1].parse({
+      kind: "device",
+      ...auth.session,
+    });
+    if (session.purpose !== "voice")
+      throw new Error("Voice device session required");
+    await revalidateDeviceSession(session, deps.devices);
+    return session;
+  }
   if (auth.kind === "owner") {
     const claims = verifyAccessToken(auth.token, deps.auth.secret);
     if (!claims) throw new Error("Owner authentication required");

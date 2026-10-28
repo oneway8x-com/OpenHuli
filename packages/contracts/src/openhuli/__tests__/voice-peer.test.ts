@@ -380,3 +380,36 @@ describe("shared server and simulator voice peers", () => {
     expect(() => other.commit()).toThrow(/closed/);
   });
 });
+
+it("accepts an atomic typed turn and blocks mixed audio or a second commit", () => {
+  const p = peers();
+  p.ready(false);
+  p.c("turn.text", { turnId: "typed", turnSequence: 1, text: "Which device?" });
+  expect(() => p.audio("input")).toThrow();
+  expect(() =>
+    p.c("turn.commit", { turnId: "typed", lastSequence: 0 }),
+  ).toThrow();
+  p.s("response.text", { turnId: "typed", text: "Please clarify the target" });
+  p.s("turn.completed", { turnId: "typed" });
+  p.c("turn.text", { turnId: "followup", turnSequence: 2, text: "Kitchen" });
+  expect(() =>
+    p.c("turn.text", { turnId: "concurrent", turnSequence: 3, text: "Hello" }),
+  ).toThrow();
+});
+it("rejects empty/oversized typed input and duplicate turn sequence", () => {
+  const p = peers();
+  p.ready(false);
+  expect(() =>
+    p.c("turn.text", { turnId: "typed", turnSequence: 1, text: " " }),
+  ).toThrow();
+  expect(() =>
+    p.c("turn.text", {
+      turnId: "typed",
+      turnSequence: 1,
+      text: "a".repeat(4097),
+    }),
+  ).toThrow();
+  expect(() =>
+    p.c("turn.text", { turnId: "typed", turnSequence: 2, text: "Hello" }),
+  ).toThrow();
+});
