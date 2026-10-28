@@ -158,3 +158,8 @@ apps/.DS_Store
 firmware/**/.pio/
 firmware/**/include/config.local.h
 firmware/**/.venv/
+
+# Private device configuration and Arduino/PlatformIO outputs
+**/config.local.h
+**/.pio/
+/libraries/OpenHuli/*.zip

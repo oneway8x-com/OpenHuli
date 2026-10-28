@@ -1,9 +1,9 @@
-#include "command_json.h"
+#include <OpenHuliProtocol.h>
 #include <cassert>
 #include <cstring>
 #include <iostream>
 #include <string>
-using namespace openhuli::weather;
+using namespace openhuli::device;
 static const std::string ping =
     R"({"version":1,"messageId":"msg","type":"device.command","deviceId":"device-1","commandId":"command-1","executionId":"execution-1","issuedAt":"2026-01-01T00:00:00.000Z","expiresAt":"2026-01-01T00:00:15.000Z","action":{"kind":"ping"}})";
 static bool parse(std::string json, Command& command) {
@@ -28,6 +28,9 @@ int main() {
   assert(!parse(replace(ping, "00:15.000Z", "00:60.000Z"), c));
   assert(!parse(replace(ping, "\"kind\":\"ping\"", "\"kind\":\"ping\",\"extra\":true"), c));
   assert(!parse(replace(ping, "\"action\":", "\"unexpected\":true,\"action\":"), c));
+  assert(!parse(ping + "garbage", c));
+  assert(!parse(ping + "{}", c));
+  assert(parse(" \t" + ping + " \r\n", c));
   assert(!parse(ping.substr(0, ping.size() - 1), c));
   assert(!parse(std::string(command_bytes + 1, 'a'), c));
   assert(!parse(ping + std::string(1, '\0'), c));

@@ -4,6 +4,9 @@ The opt-in runtime ingests measured temperature/humidity from paired devices int
 It uses the existing Tenant/device credentials and exact topics; no broker password database is
 maintained. The console remains a separate process. Apply migrations before enabling ingestion.
 
+For Arduino/PlatformIO sketches, use the [OpenHuli client library](../../libraries/OpenHuli/README.md).
+It shares the reference firmware's MQTT protocol implementation and requires verified device TLS.
+
 ## Local setup
 
 Use the declared Node/pnpm versions and the root `.env`. Start PostgreSQL and apply development

@@ -1,0 +1,29 @@
+{
+  "name": "OpenHuli",
+  "version": "0.1.0",
+  "description": "ESP32 telemetry, presence and acknowledged commands for OpenHuli protocol v1",
+  "keywords": ["openhuli", "mqtt", "telemetry", "esp32"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oneway8x-com/OpenHuli.git"
+  },
+  "license": "MIT",
+  "frameworks": ["arduino"],
+  "platforms": ["espressif32"],
+  "dependencies": {
+    "bblanchon/ArduinoJson": "6.21.5"
+  },
+  "export": {
+    "include": [
+      "src/*.h",
+      "src/*.cpp",
+      "examples/Telemetry/Telemetry.ino",
+      "examples/Telemetry/config.example.h",
+      "examples/Telemetry/platformio.ini",
+      "library.json",
+      "library.properties",
+      "README.md",
+      "LICENSE"
+    ]
+  }
+}
