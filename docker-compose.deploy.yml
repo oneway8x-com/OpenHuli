@@ -1,0 +1,199 @@
+name: ${COMPOSE_PROJECT_NAME:-openhuli-deploy}
+# Single-host deployment. Supply --env-file deployment.local/stack.env explicitly.
+# Only the HTTPS/WSS proxy and authenticated MQTT TLS listener publish host ports.
+x-application: &application
+  image: ${OPENHULI_IMAGE:-openhuli:local}
+  build:
+    context: .
+    dockerfile: docker/deploy/Dockerfile
+  init: true
+  restart: unless-stopped
+  stop_grace_period: 30s
+  security_opt: [no-new-privileges:true]
+  networks: [private, outbound]
+  secrets:
+    [
+      postgres_password,
+      jwt_secret,
+      email_api_key,
+      gemini_api_key,
+      mqtt_password,
+      mqtt_auth_token,
+      notes_api_token,
+      tls_ca,
+    ]
+  environment: &application-environment
+    NODE_ENV: production
+    NODE_EXTRA_CA_CERTS: /run/secrets/tls_ca
+    POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    JWT_SECRET_FILE: /run/secrets/jwt_secret
+    RESEND_API_KEY_FILE: /run/secrets/email_api_key
+    GEMINI_API_KEY_FILE: /run/secrets/gemini_api_key
+    RUNTIME_MQTT_PASSWORD_FILE: /run/secrets/mqtt_password
+    RUNTIME_MQTT_AUTH_TOKEN_FILE: /run/secrets/mqtt_auth_token
+    NOTES_API_TOKEN_FILE: /run/secrets/notes_api_token
+    OWNER_EMAIL: ${OWNER_EMAIL:?Set OWNER_EMAIL}
+    EMAIL_FROM: ${EMAIL_FROM:?Set EMAIL_FROM}
+    APP_URL: https://${OPENHULI_APP_HOST:?Set OPENHULI_APP_HOST}:${OPENHULI_HTTPS_PORT:-8443}
+    OPENHULI_RUNTIME_HTTP_URL: https://${OPENHULI_RUNTIME_HOST:?Set OPENHULI_RUNTIME_HOST}
+    RUNTIME_HOST: 0.0.0.0
+    RUNTIME_PORT: "3200"
+    RUNTIME_VOICE_ENABLED: ${RUNTIME_VOICE_ENABLED:-false}
+    RUNTIME_MQTT_TELEMETRY_ENABLED: "true"
+    RUNTIME_MQTT_URL: mqtts://${OPENHULI_MQTT_HOST:?Set OPENHULI_MQTT_HOST}:8883
+    RUNTIME_MQTT_USERNAME: openhuli-runtime
+    RUNTIME_MQTT_AUTH_HOST: 0.0.0.0
+    RUNTIME_MQTT_AUTH_PORT: "3201"
+    HTTP_WEATHER_LATITUDE: ${HTTP_WEATHER_LATITUDE:-}
+    HTTP_WEATHER_LONGITUDE: ${HTTP_WEATHER_LONGITUDE:-}
+    HTTP_WEATHER_TIMEZONE: ${HTTP_WEATHER_TIMEZONE:-}
+    HTTP_NOTES_URL: ${HTTP_NOTES_URL:-}
+    HTTP_NOTES_PRIVATE_DEMO: "false"
+    HTTP_NOTES_SECRET_REF: ${HTTP_NOTES_SECRET_REF:-notes-demo}
+    AI_MAX_TOOL_CALLS: ${AI_MAX_TOOL_CALLS:-6}
+    AI_TURN_TIMEOUT_MS: ${AI_TURN_TIMEOUT_MS:-25000}
+    AI_DEVICE_SESSIONS_PER_DAY: ${AI_DEVICE_SESSIONS_PER_DAY:-100}
+    AI_DEVICE_CONCURRENT_SESSIONS: ${AI_DEVICE_CONCURRENT_SESSIONS:-2}
+    AI_DEVICE_AUDIO_SECONDS_PER_DAY: ${AI_DEVICE_AUDIO_SECONDS_PER_DAY:-1800}
+    AI_SESSION_AUDIO_SECONDS: ${AI_SESSION_AUDIO_SECONDS:-120}
+    AI_DAILY_BUDGET_MICROS: ${AI_DAILY_BUDGET_MICROS:-1000000}
+    AI_SESSION_RESERVATION_MICROS: ${AI_SESSION_RESERVATION_MICROS:-10000}
+    AI_INPUT_MICROS_PER_MILLION_TOKENS: ${AI_INPUT_MICROS_PER_MILLION_TOKENS:-}
+    AI_OUTPUT_MICROS_PER_MILLION_TOKENS: ${AI_OUTPUT_MICROS_PER_MILLION_TOKENS:-}
+    AI_OPERATIONAL_RETENTION_DAYS: ${AI_OPERATIONAL_RETENTION_DAYS:-7}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    networks: [private]
+    environment:
+      POSTGRES_DB: openhuli
+      POSTGRES_USER: openhuli
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets: [postgres_password]
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U openhuli -d openhuli"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  migrate:
+    <<: *application
+    command: [migrate]
+    restart: "no"
+    depends_on:
+      postgres: { condition: service_healthy }
+  bootstrap:
+    <<: *application
+    profiles: [operator]
+    command: [bootstrap]
+    restart: "no"
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+  mqtt:
+    build: ./docker/mosquitto
+    restart: unless-stopped
+    stop_grace_period: 15s
+    entrypoint: [/bin/sh, /deployment/broker-start.sh]
+    environment:
+      OPENHULI_MQTT_AUTH_URL: http://runtime:3201
+      OPENHULI_MQTT_HOST: ${OPENHULI_MQTT_HOST}
+    secrets:
+      [mqtt_auth_token, mqtt_password, tls_certificate, tls_private_key, tls_ca]
+    ports:
+      - "${OPENHULI_BIND_IP:-127.0.0.1}:${OPENHULI_MQTT_PORT:-8884}:8883"
+    volumes:
+      - mqtt_data:/mosquitto/data
+      - ./docker/deploy/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./docker/deploy/broker-start.sh:/deployment/broker-start.sh:ro
+      - ./docker/deploy/broker-health.sh:/deployment/broker-health.sh:ro
+    networks:
+      private:
+        aliases: ["${OPENHULI_MQTT_HOST}"]
+      outbound: {}
+    healthcheck:
+      test: [CMD, /bin/sh, /deployment/broker-health.sh]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+  runtime:
+    <<: *application
+    command: [runtime]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      mqtt: { condition: service_started }
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3200/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 10s
+  app:
+    <<: *application
+    command: [app]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 10s
+  proxy:
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:8080/health/live]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    environment:
+      OPENHULI_APP_HOST: ${OPENHULI_APP_HOST}
+      OPENHULI_RUNTIME_HOST: ${OPENHULI_RUNTIME_HOST}
+    secrets: [tls_certificate, tls_private_key]
+    volumes:
+      - ./docker/deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - "${OPENHULI_BIND_IP:-127.0.0.1}:${OPENHULI_HTTPS_PORT:-8443}:443"
+    networks:
+      private:
+        aliases: ["${OPENHULI_RUNTIME_HOST}"]
+      outbound: {}
+    depends_on:
+      app: { condition: service_healthy }
+      runtime: { condition: service_started }
+
+secrets:
+  postgres_password:
+    {
+      file: "${OPENHULI_SECRET_DIR:?Set OPENHULI_SECRET_DIR}/postgres_password",
+    }
+  jwt_secret: { file: "${OPENHULI_SECRET_DIR}/jwt_secret" }
+  email_api_key: { file: "${OPENHULI_SECRET_DIR}/email_api_key" }
+  gemini_api_key: { file: "${OPENHULI_SECRET_DIR}/gemini_api_key" }
+  mqtt_password: { file: "${OPENHULI_SECRET_DIR}/mqtt_password" }
+  mqtt_auth_token: { file: "${OPENHULI_SECRET_DIR}/mqtt_auth_token" }
+  notes_api_token: { file: "${OPENHULI_SECRET_DIR}/notes_api_token" }
+  tls_ca: { file: "${OPENHULI_TLS_DIR:?Set OPENHULI_TLS_DIR}/ca.crt" }
+  tls_certificate: { file: "${OPENHULI_TLS_DIR}/server.crt" }
+  tls_private_key: { file: "${OPENHULI_TLS_DIR}/server.key" }
+networks:
+  private: { internal: true }
+  outbound: {}
+volumes:
+  postgres_data:
+  mqtt_data:

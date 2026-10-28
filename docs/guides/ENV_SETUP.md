@@ -52,3 +52,7 @@ server-only secret references, exact private-demo opt-in, SQLite file location a
 Conversation quotas, spend allocations, optional price estimates and retention settings are documented
 in [session operations](SESSION_OPERATIONS.md). Update runtime configuration and apply migrations
 before enabling the updated runtime.
+
+For the container deployment profile and its mounted-secret configuration, see
+[Docker deployment and recovery](DOCKER_DEPLOYMENT.md). The host-development `.env` is not
+a production Compose environment.
