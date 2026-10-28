@@ -34,6 +34,13 @@ const executor = await readFile(
   ),
   "utf8",
 );
+const telemetry = await readFile(
+  new URL(
+    "../packages/data/prisma/migrations/20261028090000_mqtt_telemetry_presence/migration.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 await db.connect();
 try {
   for (const seeded of [false, true]) {
@@ -61,6 +68,20 @@ try {
       }
       await db.query(deviceAccess);
       await db.query(executor);
+      if (seeded)
+        await db.query(
+          `INSERT INTO "DeviceTelemetry" (id,"tenantId","deviceId","messageId","bootId",sequence,"sampledAt","readingsJson") VALUES ('legacy-sample','tenant','legacy-device','sample','boot',0,now(),'[]');`,
+        );
+      await db.query(telemetry);
+      if (seeded) {
+        const sample = await db.query(
+          'SELECT "sensorErrorsJson", "readingsJson" FROM "DeviceTelemetry" WHERE id=$1',
+          ["legacy-sample"],
+        );
+        assert.deepEqual(sample.rows, [
+          { sensorErrorsJson: "[]", readingsJson: "[]" },
+        ]);
+      }
       if (seeded) {
         const legacy = await db.query(
           'SELECT "configurationJson",purpose,"secretHash","targetDeviceIdsJson" FROM "Device" d JOIN "DeviceCredential" c ON c."deviceId"=d.id JOIN "DeviceToolGrant" g ON g."deviceId"=d.id WHERE d.id=$1',

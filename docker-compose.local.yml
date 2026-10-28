@@ -18,5 +18,20 @@ services:
       retries: 5
       start_period: 10s
 
+  mqtt:
+    profiles: [mqtt]
+    build: ./docker/mosquitto
+    restart: unless-stopped
+    environment:
+      OPENHULI_MQTT_AUTH_URL: http://host.docker.internal:3201
+      OPENHULI_MQTT_AUTH_TOKEN: ${RUNTIME_MQTT_AUTH_TOKEN:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:1884:1883"
+    volumes:
+      - mqtt_data:/mosquitto/data
+
 volumes:
+  mqtt_data:
   postgres_data:

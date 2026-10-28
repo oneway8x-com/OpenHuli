@@ -43,7 +43,8 @@
     "test:db:setup": "tsx scripts/setup-test-database.ts",
     "test:e2e": "pnpm --filter @corely/e2e e2e",
     "owner:bootstrap": "node --env-file-if-exists=.env --import tsx scripts/bootstrap-owner.ts",
-    "test:migrations": "tsx scripts/check-persistence-migrations.ts"
+    "test:migrations": "tsx scripts/check-persistence-migrations.ts",
+    "test:broker": "vitest run --workspace ./vitest.workspace.broker.ts"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",

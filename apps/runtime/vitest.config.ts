@@ -20,7 +20,7 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/__tests__/**/*.test.ts"],
     restoreMocks: true,
-    exclude: ["**/*.integration.test.ts"],
+    exclude: ["**/*.integration.test.ts", "**/*.broker.test.ts"],
     testTimeout: 10_000,
   },
 });

@@ -11,7 +11,9 @@
 - `apps/e2e`: Playwright configuration, isolated data fixtures, and browser journeys.
 - `scripts`: check/setup utilities; `.github/workflows`: CI; `tasks`: short implementation diaries.
 
-`apps/runtime` contains the persistent Node host and MQTT lifecycle adapter. Device voice/telemetry
-use cases and firmware remain planned MVP work.
+`apps/runtime` contains the persistent Node host, authenticated voice transport, and opt-in MQTT
+telemetry adapter. `packages/modules/telemetry` owns measured context/history and presence use cases,
+repositories, and registered read tools. See [MQTT telemetry](../guides/MQTT_TELEMETRY.md) for its broker
+boundary and setup. Live provider execution and firmware remain separate MVP work.
 The pnpm workspace and package scopes retain their scaffold names. See [architecture](architect.md)
 and [the MVP specification](../mvp-spec.md) for current versus intended runtime behavior.

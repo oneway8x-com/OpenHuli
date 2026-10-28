@@ -47,6 +47,10 @@ jobs:
       - run: pnpm test:db:setup
       - run: pnpm test:migrations
       - run: pnpm test:int
+      - run: docker build -t openhuli-test-mosquitto docker/mosquitto
+      - run: pnpm test:broker
+        env:
+          TEST_MQTT_BROKER_IMAGE: openhuli-test-mosquitto
       - run: pnpm build
       - run: pnpm --filter @corely/e2e exec playwright install --with-deps chromium
       - run: pnpm test:e2e

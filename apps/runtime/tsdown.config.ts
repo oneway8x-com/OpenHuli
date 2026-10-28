@@ -5,5 +5,6 @@ export default defineConfig({
   format: ["esm"],
   outDir: "dist",
   clean: true,
-  noExternal: ["@corely/modules-voice", "@corely/modules-devices"],
+  external: ["@prisma/client"],
+  noExternal: [/^@corely\/modules-/],
 });

@@ -1,0 +1,29 @@
+{
+  "name": "@corely/modules-telemetry",
+  "private": true,
+  "version": "0.0.0",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@corely/contracts": "workspace:*",
+    "zod": "catalog:",
+    "@prisma/client": "catalog:",
+    "@corely/modules-devices": "workspace:*",
+    "@corely/modules-tool-execution": "workspace:*"
+  },
+  "devDependencies": {
+    "@corely/data": "workspace:*",
+    "@corely/tsconfig": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "@corely/modules-identity": "workspace:*"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "author": "Ha Doan <ha@oneway8x.com>"
+}

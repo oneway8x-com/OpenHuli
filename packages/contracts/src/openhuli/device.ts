@@ -64,6 +64,24 @@ export const DeviceReadingSchema = z.discriminatedUnion("metric", [
     })
     .strict(),
 ]);
+export const DeviceSensorErrorSchema = z
+  .object({
+    metric: z.enum(["temperature", "humidity"]),
+    code: z.enum(["read_failed", "unavailable"]),
+  })
+  .strict();
+export const DevicePresenceSchema = z
+  .object({
+    ...openHuliEnvelope,
+    type: z.literal("device.presence"),
+    deviceId: OpenHuliIdSchema,
+    bootId: OpenHuliIdSchema,
+    sequence: OpenHuliSequenceSchema,
+    status: z.enum(["online", "offline"]),
+    sentAt: OpenHuliTimestampSchema,
+  })
+  .strict();
+export type DevicePresence = z.infer<typeof DevicePresenceSchema>;
 export const DeviceTelemetrySchema = z
   .object({
     ...openHuliEnvelope,
@@ -74,15 +92,22 @@ export const DeviceTelemetrySchema = z
     sampledAt: OpenHuliTimestampSchema,
     readings: z
       .array(DeviceReadingSchema)
-      .min(1)
+      .min(0)
       .max(2)
       .refine(
         (items) =>
           new Set(items.map((item) => item.metric)).size === items.length,
         "Duplicate metric",
       ),
+    sensorErrors: z.array(DeviceSensorErrorSchema).max(2).optional(),
   })
-  .strict();
+  .strict()
+  .refine((data) => {
+    const metrics = [...data.readings, ...(data.sensorErrors ?? [])].map(
+      (item) => item.metric,
+    );
+    return metrics.length > 0 && new Set(metrics).size === metrics.length;
+  }, "Each metric must have one reading or sensor error");
 export type DeviceTelemetry = z.infer<typeof DeviceTelemetrySchema>;
 
 export const DeviceCommandActionSchema = z.discriminatedUnion("kind", [
@@ -147,7 +172,10 @@ export function parseDeviceTelemetry(
 ): DeviceTelemetry {
   const telemetry = parseOpenHuliJson(text, DeviceTelemetrySchema);
   requireDevice(telemetry.deviceId, manifest);
-  for (const reading of telemetry.readings) {
+  for (const reading of [
+    ...telemetry.readings,
+    ...(telemetry.sensorErrors ?? []),
+  ]) {
     if (
       !manifest.capabilities.some(
         (capability) => capability.kind === reading.metric,
