@@ -7,6 +7,7 @@ TLS MQTT presence and bounded acknowledged commands, composable with push-to-tal
 
 ## Notes
 
+- Draft PR: [#47](https://github.com/oneway8x-com/OpenHuli/pull/47), stacked on #45. Hosted CI pending.
 - Project 3 status changed to In progress and verified before edits.
 - Branch `16-esp32-weather-firmware` starts at `ddced06`, the current #45 microphone firmware head.
   Keep the PR stacked on #45; do not merge the dependency or claim its pending hardware acceptance.
@@ -31,9 +32,11 @@ TLS MQTT presence and bounded acknowledged commands, composable with push-to-tal
   native recipe as firmware CI. Tests reject malformed/wrong-target/type/timestamp/NUL/oversized commands.
 - Passed: both ESP32-S2 cross-builds. Default image: 65,976 bytes static RAM / 624,138 bytes flash.
   All-adapter link check: 102,580 bytes RAM / 943,154 bytes flash; verified weather worker, MQTT and LCD
-  symbols remain linked. This is not measured runtime headroom. No board was flashed or private config created.
+  symbols remain linked. This is not measured runtime headroom. No board was flashed and no credentials or GPIO assignments were provisioned.
 - One initial test run raced shared-package generation and could not resolve `@corely/prompts`;
   it passed after package generation finished. An initial link-check linkage issue was fixed before final builds.
+- Passed: link-check ignores a temporary compile-failing local provisioning header and retains disabled
+  defaults. The test header was removed; CI link-check always uses the example configuration.
 - Run local validate PR: false (no unified `validate:pr` script exists; individual checks above ran).
 - Not run: database/broker/browser integration or paid provider calls; no application flow/schema changed.
   No physical audio/sensor/display, TLS-on-board, USB power, outage or one-hour mixed-run result is claimed.
