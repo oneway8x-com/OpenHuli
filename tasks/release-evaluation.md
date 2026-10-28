@@ -26,3 +26,5 @@ plan and report. Branch: `22-release-evaluation`, based on main at `2906eee`.
 
 Run and publish actual deterministic/live/hardware reports; verified wiring, 20 physical turns,
 one-hour endurance, measured latency and independent maker reproduction remain pending.
+
+Draft PR: [#44](https://github.com/oneway8x-com/OpenHuli/pull/44). Issue remains In progress.
