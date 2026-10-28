@@ -149,6 +149,8 @@ async function main() {
       }).catch((error: unknown) => {
         if (!controller.signal.aborted) throw error;
       });
+      if (!controller.signal.aborted && !mqtt.isConnected())
+        throw new Error("Simulator broker connection lost");
       return;
     }
     const pcm = values.pcm

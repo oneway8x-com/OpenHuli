@@ -263,7 +263,12 @@ export async function startMqttSimulator(input: {
         void stop().catch(() => {});
       });
     }, interval * 1000);
-    return { bootId, publishSample, stop };
+    return {
+      bootId,
+      publishSample,
+      stop,
+      isConnected: () => !stopped && client.connected,
+    };
   } catch {
     await stop();
     throw new Error("MQTT simulator startup failed");

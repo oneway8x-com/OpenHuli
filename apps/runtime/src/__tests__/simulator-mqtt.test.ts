@@ -27,6 +27,7 @@ async function fixture() {
     stall = false;
   const server = createServer((socket) => {
     sockets.push(socket);
+    socket.on("error", () => {});
     const decoder = parser({ protocolVersion: 5 });
     socket.on("data", (data) => decoder.parse(data));
     decoder.on("packet", (packet) => {
@@ -152,6 +153,7 @@ it("publishes scoped manifest, separate presence, stale duplicated readings, and
     duplicate: true,
   });
   cleanup.push(client.stop);
+  expect(client.isConnected()).toBe(true);
   expect(f.connection()?.username).toBe(f.device.mqtt?.username);
   expect(JSON.parse(String(f.connection()?.will?.payload))).toMatchObject({
     status: "offline",
@@ -167,6 +169,7 @@ it("publishes scoped manifest, separate presence, stale duplicated readings, and
       Date.parse(JSON.parse(String(samples[0]?.packet.payload)).sampledAt),
   ).toBeGreaterThanOrEqual(120000);
   await client.stop();
+  expect(client.isConnected()).toBe(false);
   expect(
     JSON.parse(String(f.rows("/presence").at(-1)?.packet.payload)).status,
   ).toBe("offline");
