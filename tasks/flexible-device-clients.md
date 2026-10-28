@@ -64,6 +64,7 @@ USB computer bridge or standalone ESP-01 Wi-Fi gateway, preserving existing ESP3
 
 ## Remaining work / risks
 
-Push implementation and open a draft PR. Keep #50 In progress: its physical ESP-01 qualification,
-confirmed module/flash/UART/power setup, runtime memory and endurance gates remain outstanding.
+Implementation committed and pushed in [draft PR #51](https://github.com/oneway8x-com/OpenHuli/pull/51).
+Keep #50 In progress: its physical ESP-01 qualification, confirmed module/flash/UART/power setup,
+runtime memory and endurance gates remain outstanding. The disposable PostgreSQL server was stopped.
 Do not mark the hardware support acceptance criteria complete from synthetic fixtures or builds.
