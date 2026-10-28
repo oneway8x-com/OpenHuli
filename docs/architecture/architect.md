@@ -57,3 +57,10 @@ See [structure](overall-structure.md), [boundaries](BOUNDARIES.md), and [AGENTS.
 The [shared tool executor](authorized-tool-execution.md) owns registered policy, live authorization,
 exact approvals, durable dispatch identity, cancellation, and query-only outcome reconciliation.
 Transport and console adapters must call those use cases rather than dispatch callbacks directly.
+
+## Device commands
+
+The [device command feature](../guides/DEVICE_COMMANDS.md) owns durable dispatch reservations,
+capability/presence checks, MQTT publisher boundaries, authenticated execution receipts and honest
+uncertainty. AI and manual callers use the shared executor. Command callbacks do not bypass use cases;
+MQTT transport and Prisma stay in adapters/repositories.

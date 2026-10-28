@@ -60,3 +60,41 @@ describe("server-owned tool registry", () => {
     );
   });
 });
+
+it("validates explicit failed output while retaining output-free failure compatibility", async () => {
+  const tool = defineTool({
+    ...definition(),
+    execute: async () => ({
+      kind: "failed" as const,
+      output: { value: "unsupported" },
+    }),
+  });
+  expect(
+    await tool.execute(
+      { text: "test" },
+      {
+        tenantId: "tenant",
+        executionId: "execution",
+        targetDeviceId: null,
+        idempotencyKey: "key",
+        signal: new AbortController().signal,
+      },
+    ),
+  ).toEqual({ kind: "failed", output: { value: "unsupported" } });
+  const legacy = defineTool({
+    ...definition(),
+    execute: async () => ({ kind: "failed" as const }),
+  });
+  expect(
+    await legacy.execute(
+      { text: "test" },
+      {
+        tenantId: "tenant",
+        executionId: "execution",
+        targetDeviceId: null,
+        idempotencyKey: "key",
+        signal: new AbortController().signal,
+      },
+    ),
+  ).toEqual({ kind: "failed" });
+});

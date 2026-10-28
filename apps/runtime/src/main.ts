@@ -15,11 +15,24 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     return;
   }
+  const services = config.RUNTIME_MQTT_TELEMETRY_ENABLED
+    ? (await import("./telemetry-services")).createTelemetryServices(config)
+    : undefined;
+  const telemetryMqtt = services
+    ? (await import("./mqtt-telemetry")).createTelemetryMqttDependency(
+        config,
+        services,
+      )
+    : undefined;
+  if (services && telemetryMqtt) services.commands.publisher = telemetryMqtt;
+  const mqtt =
+    telemetryMqtt ??
+    (config.RUNTIME_MQTT_URL ? createMqttDependency(config) : undefined);
   const conversation =
     config.RUNTIME_VOICE_ENABLED && config.GEMINI_API_KEY
       ? (
           await import("./conversation-composition")
-        ).createLiveConversationRuntime(config)
+        ).createLiveConversationRuntime(config, undefined, services?.commands)
       : undefined;
   const authorization = config.RUNTIME_VOICE_ENABLED
     ? (await import("./device-authorization")).createVoiceAuthorization()
@@ -36,14 +49,6 @@ async function main(): Promise<void> {
         ...(conversation ? { provider: conversation } : {}),
       }
     : undefined;
-  const mqtt = config.RUNTIME_MQTT_TELEMETRY_ENABLED
-    ? (await import("./mqtt-telemetry")).createTelemetryMqttDependency(
-        config,
-        (await import("./telemetry-services")).createTelemetryServices(config),
-      )
-    : config.RUNTIME_MQTT_URL
-      ? createMqttDependency(config)
-      : undefined;
   const runtime = createRuntime(config, {
     ...(voice ? { voice } : {}),
     dependencies: mqtt ? [mqtt] : [],

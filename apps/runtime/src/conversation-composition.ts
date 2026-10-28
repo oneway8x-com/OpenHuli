@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  createDeviceCommandTools,
+  type DeviceCommandDependencies,
+} from "@corely/modules-device-commands";
 import { PrismaService } from "@corely/data";
 import { OpenHuliIdSchema, OpenHuliJsonObjectSchema } from "@corely/contracts";
 import {
@@ -27,11 +31,13 @@ import { createGeminiLiveProvider } from "./gemini-live";
 export function createLiveConversationRuntime(
   config: RuntimeConfig,
   provider?: ConversationProviderFactory,
+  commands?: DeviceCommandDependencies,
 ) {
   const auth = readAuthConfig();
   const persistence = new PrismaService();
   const devices = new DeviceAccessRepository(persistence);
   const registry = new ToolRegistry([
+    ...(commands ? createDeviceCommandTools(commands) : []),
     defineTool({
       id: "device_context",
       revision: "1",
@@ -61,10 +67,38 @@ export function createLiveConversationRuntime(
     auth,
     registry,
   };
+  const inflight = new Set<Promise<unknown>>();
   const factory = createConversationRuntime({
     provider: provider ?? createGeminiLiveProvider(config.GEMINI_API_KEY ?? ""),
     journal: createConversationJournal(new ConversationRepository(persistence)),
     tools: [
+      ...(commands
+        ? [
+            {
+              id: "device.ping",
+              description:
+                "Ask one exact authorized online device to acknowledge a ping. Success requires a device receipt. Clarify ambiguous targets.",
+              parameters: {
+                type: "OBJECT",
+                properties: { deviceId: { type: "STRING" } },
+                required: ["deviceId"],
+              },
+            },
+            {
+              id: "display.message",
+              description:
+                "Display text on one exact authorized device with a configured display. Requires owner consent and a device acknowledgement. Never guess a target.",
+              parameters: {
+                type: "OBJECT",
+                properties: {
+                  deviceId: { type: "STRING" },
+                  text: { type: "STRING" },
+                },
+                required: ["deviceId", "text"],
+              },
+            },
+          ]
+        : []),
       {
         id: "device_context",
         description:
@@ -78,50 +112,59 @@ export function createLiveConversationRuntime(
     ],
     maxToolCalls: config.AI_MAX_TOOL_CALLS,
     turnTimeoutMs: config.AI_TURN_TIMEOUT_MS,
-    async execute(context, call) {
-      const auth: ToolAuthentication = {
-        kind: "verified-device",
-        session: {
-          tenantId: context.tenantId,
-          deviceId: context.deviceId,
-          credentialId: context.credentialId,
-          purpose: "voice",
-        },
-      };
-      const queued = await submitToolCall(
-        {
-          toolCall: {
-            version: 1,
-            conversationId: context.conversationId,
-            turnId: context.turnId,
-            toolCallId: call.id,
-            toolId: call.name,
-            arguments: call.arguments,
+    execute(context, call) {
+      const task = (async () => {
+        const auth: ToolAuthentication = {
+          kind: "verified-device",
+          session: {
+            tenantId: context.tenantId,
+            deviceId: context.deviceId,
+            credentialId: context.credentialId,
+            purpose: "voice",
           },
-          correlationId: context.turnId,
-        },
-        auth,
-        deps,
+        };
+        const queued = await submitToolCall(
+          {
+            toolCall: {
+              version: 1,
+              conversationId: context.conversationId,
+              turnId: context.turnId,
+              toolCallId: call.id,
+              toolId: call.name,
+              arguments: call.arguments,
+            },
+            correlationId: context.turnId,
+          },
+          auth,
+          deps,
+        );
+        const result = await dispatchToolExecution(
+          queued.executionId,
+          auth,
+          deps,
+          context.signal,
+        );
+        return {
+          executionId: result.executionId,
+          status: result.status,
+          outcome: result.outcome,
+          output: result.output,
+          error: result.error,
+          approvalId: result.approvalId,
+        };
+      })();
+      inflight.add(task);
+      void task.then(
+        () => inflight.delete(task),
+        () => inflight.delete(task),
       );
-      const result = await dispatchToolExecution(
-        queued.executionId,
-        auth,
-        deps,
-        context.signal,
-      );
-      return {
-        executionId: result.executionId,
-        status: result.status,
-        outcome: result.outcome,
-        output: result.output,
-        error: result.error,
-        approvalId: result.approvalId,
-      };
+      return task;
     },
   });
   return {
     ...factory,
     async close() {
+      await Promise.allSettled([...inflight]);
       await persistence.disconnect();
     },
   };

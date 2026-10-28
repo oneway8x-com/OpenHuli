@@ -1,6 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { connect, type MqttClient } from "mqtt";
-import { OPENHULI_MAX_JSON_BYTES } from "@corely/contracts";
+import {
+  ingestDeviceCommandResult,
+  type DeviceCommandDependencies,
+  type DeviceCommandPublisher,
+} from "@corely/modules-device-commands";
+import { OPENHULI_MAX_JSON_BYTES, type DeviceCommand } from "@corely/contracts";
 import {
   cleanupAllTelemetry,
   ingestBrokerMessage,
@@ -12,8 +17,12 @@ import type { RuntimeDependency } from "./ports";
 
 export function createTelemetryMqttDependency(
   config: RuntimeConfig,
-  services: { telemetry: TelemetryDependencies; close(): Promise<void> },
-): RuntimeDependency {
+  services: {
+    telemetry: TelemetryDependencies;
+    commands?: DeviceCommandDependencies;
+    close(): Promise<void>;
+  },
+): RuntimeDependency & DeviceCommandPublisher {
   const url = config.RUNTIME_MQTT_URL,
     username = config.RUNTIME_MQTT_USERNAME,
     password = config.RUNTIME_MQTT_PASSWORD;
@@ -48,10 +57,13 @@ export function createTelemetryMqttDependency(
         const message = queue.shift();
         if (!message) break;
         try {
-          await ingestBrokerMessage(message, {
-            ...services.telemetry,
-            epoch: message.epoch,
-          });
+          if (message.topic.endsWith("/results") && services.commands)
+            await ingestDeviceCommandResult(message, services.commands);
+          else
+            await ingestBrokerMessage(message, {
+              ...services.telemetry,
+              epoch: message.epoch,
+            });
         } catch {
           console.warn(JSON.stringify({ event: "mqtt.message.rejected" }));
         }
@@ -93,6 +105,55 @@ export function createTelemetryMqttDependency(
     isReady: () =>
       ready && maintenanceHealthy && !stopped && Boolean(client?.connected),
     stop,
+    async publishCommand(command: DeviceCommand, signal: AbortSignal) {
+      const current = client;
+      if (
+        !ready ||
+        !maintenanceHealthy ||
+        stopped ||
+        !current?.connected ||
+        signal.aborted ||
+        Date.parse(command.expiresAt) <= Date.now()
+      )
+        return "not_sent";
+      await new Promise<void>((resolve, reject) => {
+        const fail = () => {
+          clearTimeout(timer);
+          signal.removeEventListener("abort", fail);
+          reject(new Error("Command publish outcome unknown"));
+        };
+        const timer = setTimeout(
+          fail,
+          Math.max(1, Date.parse(command.expiresAt) - Date.now()),
+        );
+        signal.addEventListener("abort", fail, { once: true });
+        if (signal.aborted) {
+          fail();
+          return;
+        }
+        current.publish(
+          `openhuli/v1/devices/${command.deviceId}/commands`,
+          JSON.stringify(command),
+          {
+            qos: 0,
+            retain: false,
+            properties: {
+              messageExpiryInterval: Math.max(
+                1,
+                Math.ceil((Date.parse(command.expiresAt) - Date.now()) / 1000),
+              ),
+            },
+          },
+          (error) => {
+            clearTimeout(timer);
+            signal.removeEventListener("abort", fail);
+            if (error) reject(new Error("Command publish outcome unknown"));
+            else resolve();
+          },
+        );
+      });
+      return "accepted";
+    },
     async start(signal) {
       if (stopped || started || signal.aborted)
         throw new Error("Telemetry startup cancelled or repeated");
@@ -110,6 +171,7 @@ export function createTelemetryMqttDependency(
           password,
           protocolVersion: 5,
           clean: true,
+          queueQoSZero: false,
           reconnectPeriod: 1000,
           rejectUnauthorized: true,
           connectTimeout: config.RUNTIME_STARTUP_TIMEOUT_MS,
@@ -119,9 +181,11 @@ export function createTelemetryMqttDependency(
           if (stopped) return;
           void client
             ?.subscribeAsync(
-              ["telemetry", "manifest"].map(
-                (kind) => `openhuli/v1/devices/+/${kind}`,
-              ),
+              [
+                "telemetry",
+                "manifest",
+                ...(services.commands ? ["results"] : []),
+              ].map((kind) => `openhuli/v1/devices/+/${kind}`),
               { qos: 1 },
             )
             .then((grants) => {

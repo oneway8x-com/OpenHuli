@@ -5,3 +5,4 @@ export * from "./conversation";
 export * from "./audio";
 export * from "./voice";
 export * from "./voice-peer";
+export { OpenHuliCommandReceiver } from "./command-receiver";

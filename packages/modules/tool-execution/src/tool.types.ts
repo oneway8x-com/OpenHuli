@@ -34,7 +34,7 @@ export interface ToolContext {
 }
 export type ToolOutcome<T extends JsonObject = JsonObject> =
   | { kind: "succeeded" | "partial"; output: T }
-  | { kind: "failed" };
+  | { kind: "failed"; output?: T };
 export type ReconciliationOutcome = ToolOutcome | { kind: "unknown" };
 export interface RegisteredTool {
   readonly id: string;

@@ -63,7 +63,8 @@ checked when consuming consent. `ToolPreauthorization` is permission data, not a
 ## Outcomes, cancellation, restart
 
 - Successful callbacks return `succeeded` with schema-validated output. Definitive failure returns
-  `failed`. Partial completion returns `partial` and the confirmed output: the persisted execution
+  `failed`. A failed callback may also return schema-validated bounded output explaining a confirmed
+  offline/unsupported rejection; its execution remains failed. Partial completion returns `partial` and the confirmed output: the persisted execution
   status is `failed` with `outcome: "partial"`, so a client cannot mistake partial work for full success.
 - A thrown exception, rejected output, or timeout after invoking a write leaves `unknown`; it does
   not prove that the provider rejected the action. Error views use fixed safe messages, not raw
