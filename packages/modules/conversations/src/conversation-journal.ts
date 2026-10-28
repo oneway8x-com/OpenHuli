@@ -1,3 +1,4 @@
+import type { ConversationOperationsRepository } from "./conversation-operations.repository";
 import { randomUUID } from "node:crypto";
 import type { ConversationJournal } from "./conversation-runtime.types";
 import type { ConversationRepository } from "./conversation.repository";
@@ -13,8 +14,22 @@ import {
 /** Durable metadata only; transcript retention stays off. */
 export function createConversationJournal(
   repository: ConversationRepository,
+  operations?: ConversationOperationsRepository,
 ): ConversationJournal {
   return {
+    ...(operations
+      ? ({
+          phase: operations.phase.bind(operations),
+          finalUsage: (context, status, cost) =>
+            operations.usage(
+              context.tenantId,
+              context.conversationId,
+              context.turnId,
+              status,
+              cost,
+            ),
+        } satisfies Partial<ConversationJournal>)
+      : {}),
     async start(context) {
       await startConversation(
         {

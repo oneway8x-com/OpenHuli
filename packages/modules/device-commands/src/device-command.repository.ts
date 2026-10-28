@@ -106,6 +106,7 @@ export class DeviceCommandRepository {
         deviceId: result.deviceId,
         executionId: result.executionId,
         status: "pending",
+        payloadJson: { not: "{}" },
         expiresAt: { gt: now },
         issuedAt: { lte: new Date(result.completedAt) },
       },
@@ -124,6 +125,7 @@ export class DeviceCommandRepository {
     const record = await this.get(tenantId, result.commandId);
     if (
       record &&
+      record.payloadJson !== "{}" &&
       ["pending", "unknown", "expired", "cancelled"].includes(record.status)
     ) {
       const prior: unknown = record.resultJson
@@ -136,6 +138,7 @@ export class DeviceCommandRepository {
           tenantId,
           id: result.commandId,
           status: record.status,
+          payloadJson: { not: "{}" },
           resultJson: record.resultJson,
         },
         data: {

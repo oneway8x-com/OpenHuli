@@ -41,6 +41,13 @@ const telemetry = await readFile(
   ),
   "utf8",
 );
+const budgets = await readFile(
+  new URL(
+    "../packages/data/prisma/migrations/20261028180000_conversation_budgets_privacy/migration.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 await db.connect();
 try {
   for (const seeded of [false, true]) {
@@ -73,6 +80,7 @@ try {
           `INSERT INTO "DeviceTelemetry" (id,"tenantId","deviceId","messageId","bootId",sequence,"sampledAt","readingsJson") VALUES ('legacy-sample','tenant','legacy-device','sample','boot',0,now(),'[]');`,
         );
       await db.query(telemetry);
+      await db.query(budgets);
       if (seeded) {
         const sample = await db.query(
           'SELECT "sensorErrorsJson", "readingsJson" FROM "DeviceTelemetry" WHERE id=$1',

@@ -60,7 +60,8 @@ Explicit server-authorized retention stores bounded text in those existing messa
 is no raw audio field or raw audio persistence use case. Generation/playback timestamps store metadata.
 Tool arguments and approval snapshots are intentionally retained for execution integrity and can contain
 user data; callers must apply registered schemas and redaction policy before persistence. Transcript
-retention is not a promise to remove all operational data. Cleanup scheduling is a separate runtime task.
+retention is not a promise to remove all operational data. Bounded cleanup and deletion controls are implemented by [session operations](../guides/SESSION_OPERATIONS.md);
+minimal execution identities remain to prevent replay.
 
 Credential persistence accepts only SHA-256 hex digests of server-generated high-entropy secrets.
 Pairing/transport code must hash secrets before calling it, keep plaintext out of logs, and authenticate

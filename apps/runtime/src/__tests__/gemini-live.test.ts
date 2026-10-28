@@ -237,3 +237,28 @@ it.each(["audio/pcm;rate=16000", "audio/wav", "audio/pcm;rate=48000"])(
     await expect(f.provider.next()).rejects.toThrow("AI provider unavailable");
   },
 );
+it("leaves incomplete usage unknown and delivers same-packet usage before tool dispatch", async () => {
+  const f = await fixture();
+  await f.provider.begin("text");
+  await f.provider.commit("Hi");
+  f.send({
+    usageMetadata: { promptTokenCount: 10 },
+    serverContent: { turnComplete: true },
+  });
+  expect(await f.provider.next()).toEqual({ type: "complete" });
+  await f.provider.begin("text");
+  await f.provider.commit("Next");
+  f.send({
+    usageMetadata: { promptTokenCount: 20, responseTokenCount: 5 },
+    toolCall: {
+      functionCalls: [{ id: "provider-id", name: "read", args: {} }],
+    },
+  });
+  expect(await f.provider.next()).toEqual({
+    type: "usage",
+    final: false,
+    inputTokens: 20,
+    outputTokens: 5,
+  });
+  expect(await f.provider.next()).toMatchObject({ type: "tool", name: "read" });
+});

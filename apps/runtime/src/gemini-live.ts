@@ -69,13 +69,13 @@ const EventSchema = z
           .int()
           .nonnegative()
           .max(2147483647)
-          .default(0),
+          .optional(),
         responseTokenCount: z
           .number()
           .int()
           .nonnegative()
           .max(2147483647)
-          .default(0),
+          .optional(),
       })
       .passthrough()
       .optional(),
@@ -244,6 +244,18 @@ export function createGeminiLiveProvider(
           }
           if (content?.outputTranscription?.text)
             push({ type: "text", text: content.outputTranscription.text });
+          // Usage precedes actions from the same provider packet so limits can stop dispatch.
+          if (
+            message.usageMetadata?.promptTokenCount !== undefined &&
+            message.usageMetadata.responseTokenCount !== undefined &&
+            committed
+          )
+            push({
+              type: "usage",
+              final: content?.turnComplete === true,
+              inputTokens: message.usageMetadata.promptTokenCount,
+              outputTokens: message.usageMetadata.responseTokenCount,
+            });
           for (const call of message.toolCall?.functionCalls ?? []) {
             if (seen.has(call.id)) throw failure();
             const id = `call-${randomUUID()}`;
@@ -251,12 +263,6 @@ export function createGeminiLiveProvider(
             pending.set(id, { providerId: call.id, name: call.name });
             push({ type: "tool", id, name: call.name, arguments: call.args });
           }
-          if (message.usageMetadata && committed)
-            push({
-              type: "usage",
-              inputTokens: message.usageMetadata.promptTokenCount,
-              outputTokens: message.usageMetadata.responseTokenCount,
-            });
           if (content?.turnComplete) {
             if (pending.size) throw failure();
             committed = false;

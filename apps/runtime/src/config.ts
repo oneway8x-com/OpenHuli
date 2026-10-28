@@ -22,6 +22,56 @@ const ConfigSchema = z
       .min(100)
       .max(15000)
       .default(5000),
+    AI_DEVICE_SESSIONS_PER_DAY: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(10000)
+      .default(100),
+    AI_DEVICE_CONCURRENT_SESSIONS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(32)
+      .default(2),
+    AI_DEVICE_AUDIO_SECONDS_PER_DAY: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(36000)
+      .default(1800),
+    AI_SESSION_AUDIO_SECONDS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(3600)
+      .default(120),
+    AI_DAILY_BUDGET_MICROS: z.coerce
+      .number()
+      .int()
+      .min(0)
+      .max(1000000000)
+      .default(1000000),
+    AI_SESSION_RESERVATION_MICROS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(1000000000)
+      .default(10000),
+    AI_INPUT_MICROS_PER_MILLION_TOKENS: z.preprocess(
+      (v) => (v === "" ? undefined : v),
+      z.coerce.number().int().min(1).max(1000000000).optional(),
+    ),
+    AI_OUTPUT_MICROS_PER_MILLION_TOKENS: z.preprocess(
+      (v) => (v === "" ? undefined : v),
+      z.coerce.number().int().min(1).max(1000000000).optional(),
+    ),
+    AI_OPERATIONAL_RETENTION_DAYS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(30)
+      .default(7),
     AI_MAX_TOOL_CALLS: z.coerce.number().int().min(1).max(16).default(6),
     AI_TURN_TIMEOUT_MS: timeout(25000),
     NODE_ENV: z
@@ -130,6 +180,11 @@ const ConfigSchema = z
         path: [key],
         message: "Invalid runtime setting",
       });
+    if (
+      Boolean(config.AI_INPUT_MICROS_PER_MILLION_TOKENS) !==
+      Boolean(config.AI_OUTPUT_MICROS_PER_MILLION_TOKENS)
+    )
+      issue("AI_INPUT_MICROS_PER_MILLION_TOKENS");
     if (
       config.RUNTIME_MQTT_TELEMETRY_ENABLED &&
       (!config.RUNTIME_MQTT_URL ||

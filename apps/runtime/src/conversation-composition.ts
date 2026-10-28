@@ -35,6 +35,11 @@ import {
   type ToolAuthentication,
 } from "@corely/modules-tool-execution";
 import {
+  ConversationOperationsRepository,
+  createConversationBudgets,
+  clearConversationPrivateData,
+  readConversationDiagnostics,
+  type ConversationPolicy,
   ConversationRepository,
   createConversationJournal,
   createConversationRuntime,
@@ -57,6 +62,30 @@ export function createLiveConversationRuntime(
   const auth = readAuthConfig();
   const persistence = new PrismaService();
   const devices = new DeviceAccessRepository(persistence);
+  const operations = new ConversationOperationsRepository(persistence);
+  const policy: ConversationPolicy = {
+    sessionsPerDay: config.AI_DEVICE_SESSIONS_PER_DAY,
+    concurrentSessions: config.AI_DEVICE_CONCURRENT_SESSIONS,
+    audioSecondsPerDay: config.AI_DEVICE_AUDIO_SECONDS_PER_DAY,
+    audioSecondsPerSession: config.AI_SESSION_AUDIO_SECONDS,
+    sessionTimeoutMs: config.RUNTIME_VOICE_SESSION_TIMEOUT_MS,
+    dailyBudgetMicros: config.AI_DAILY_BUDGET_MICROS,
+    sessionReservationMicros: config.AI_SESSION_RESERVATION_MICROS,
+    ...(config.AI_INPUT_MICROS_PER_MILLION_TOKENS
+      ? {
+          inputMicrosPerMillionTokens:
+            config.AI_INPUT_MICROS_PER_MILLION_TOKENS,
+        }
+      : {}),
+    ...(config.AI_OUTPUT_MICROS_PER_MILLION_TOKENS
+      ? {
+          outputMicrosPerMillionTokens:
+            config.AI_OUTPUT_MICROS_PER_MILLION_TOKENS,
+        }
+      : {}),
+    retentionDays: config.AI_OPERATIONAL_RETENTION_DAYS,
+  };
+  const budgets = createConversationBudgets(operations, policy);
   const httpConfig = http?.config ?? readHttpToolsConfig(process.env);
   const integrations = new HttpIntegrationRepository(persistence);
   const secrets = http?.secrets ?? {
@@ -119,10 +148,12 @@ export function createLiveConversationRuntime(
   const inflight = new Set<Promise<unknown>>();
   const factory = (ownerToken?: string) =>
     createConversationRuntime({
+      budgets,
       provider:
         provider ?? createGeminiLiveProvider(config.GEMINI_API_KEY ?? ""),
       journal: createConversationJournal(
         new ConversationRepository(persistence),
+        operations,
       ),
       tools: [
         {
@@ -304,10 +335,39 @@ export function createLiveConversationRuntime(
         return task;
       },
     });
+  let cleanupTask: Promise<void> | undefined;
+  const cleanup = () => {
+    if (!cleanupTask)
+      cleanupTask = (async () => {
+        for (const { tenantId } of await operations.tenantsForCleanup())
+          await clearConversationPrivateData(
+            { action: "cleanup" },
+            { tenantId },
+            operations,
+            policy,
+          );
+      })().finally(() => {
+        cleanupTask = undefined;
+      });
+    return cleanupTask;
+  };
+  const retentionTimer = setInterval(() => {
+    void cleanup().catch(() => {
+      console.error("Conversation retention cleanup unavailable");
+    });
+  }, 60000);
+  retentionTimer.unref();
   return {
     ...factory(),
     isReady: () => Boolean(provider || config.GEMINI_API_KEY),
     tools: deps,
+    operations: {
+      diagnostics: (tenantId: string, runId: unknown) =>
+        readConversationDiagnostics(runId, { tenantId }, operations),
+      privacy: (tenantId: string, input: unknown) =>
+        clearConversationPrivateData(input, { tenantId }, operations, policy),
+      policy,
+    },
     registryForTenant,
     integrations: {
       read: (tenantId: string) =>
@@ -335,7 +395,11 @@ export function createLiveConversationRuntime(
       return factory(token).open(context);
     },
     async close() {
-      await Promise.allSettled([...inflight]);
+      clearInterval(retentionTimer);
+      await Promise.allSettled([
+        ...inflight,
+        ...(cleanupTask ? [cleanupTask] : []),
+      ]);
       await persistence.disconnect();
     },
   };

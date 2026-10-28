@@ -122,10 +122,14 @@ async function snapshot(id: string) {
   });
   return ConsoleSnapshotSchema.parse(await response.json());
 }
+const openedSessions: string[] = [];
 async function start(mode = "success") {
+  for (const id of openedSessions.splice(0))
+    await post({ action: "cancel", conversationId: id });
   const created = await post({ action: "create", deviceId });
   expect(created.status).toBe(201);
   const body = (await created.json()) as { id: string };
+  openedSessions.push(body.id);
   const turnId = randomUUID(),
     command = { action: "text", conversationId: body.id, turnId, text: mode };
   expect((await post(command)).status).toBe(202);
@@ -243,12 +247,43 @@ it("closes a timed-out approval session without dispatch or a false Ready state"
     async () => {
       const view = await snapshot(f.id);
       expect(view.live).toBe(false);
-      expect(view.turns[0]?.status).toBe("cancelled");
+      expect(view.turns[0]?.status).toBe("failed");
       expect(view.executions[0]?.status).toBe("cancelled");
     },
     { timeout: 7000 },
   );
   expect(fixture.effects()).toBe(before);
+});
+it("exposes owner-only redacted diagnostics and scoped private-data deletion", async () => {
+  const f = await start();
+  await post({ ...f.approval, decision: "reject" });
+  await vi.waitFor(async () =>
+    expect((await snapshot(f.id)).executions[0]?.status).toBe("cancelled"),
+  );
+  await vi.waitFor(async () =>
+    expect((await snapshot(f.id)).turns[0]?.status).toBe("completed"),
+  );
+  const diagnostics = `${endpoint}/diagnostics?id=${f.id}`;
+  expect((await fetch(diagnostics)).status).toBe(401);
+  const result = await fetch(diagnostics, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  expect(result.status).toBe(200);
+  const trace = await result.text();
+  expect(trace).toContain('"costStatus":"unknown"');
+  expect(trace).toContain('"tool_finished"');
+  expect(trace).not.toContain("must-not-appear-in-console");
+  expect(trace).not.toContain('"arguments"');
+  await post({ action: "cancel", conversationId: f.id });
+  const cleared = await fetch(`${endpoint}/privacy`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ action: "delete", conversationId: f.id }),
+  });
+  expect(await cleared.json()).toEqual({ cleared: 1 });
 });
 it("expires approval without dispatch and restores read-only metadata after runtime replacement", async () => {
   const f = await start(),

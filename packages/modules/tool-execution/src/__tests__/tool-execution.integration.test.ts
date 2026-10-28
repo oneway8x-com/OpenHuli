@@ -15,6 +15,8 @@ import {
 } from "@corely/modules-identity";
 import {
   ConversationRepository,
+  ConversationOperationsRepository,
+  clearConversationPrivateData,
   transitionToolExecution,
   decideExecutionApproval,
 } from "@corely/modules-conversations";
@@ -966,5 +968,71 @@ describe("authorized durable execution", () => {
       data: { revokedAt: new Date() },
     });
     await expect(approve(pending, deps)).rejects.toThrow("session");
+  });
+  it("keeps a cleared unknown write as a tombstone and rejects late reconciliation payloads", async () => {
+    const effect = vi.fn(async () => {
+      throw new Error("Lost outcome");
+    });
+    const tool = registered("write", effect),
+      deps = dependencies(tool);
+    const input = await request(tool);
+    const pending = await tools.submitToolCall(input, ownerAuth, deps);
+    await approve(pending, deps);
+    expect(
+      (await tools.dispatchToolExecution(pending.executionId, ownerAuth, deps))
+        .status,
+    ).toBe("unknown");
+    const record = await store.get(tenantId, pending.executionId);
+    if (!record) throw new Error("Missing execution");
+    await db.agentRun.update({
+      where: { id: input.toolCall.conversationId },
+      data: { leaseExpiresAt: new Date(0) },
+    });
+    await db.toolExecution.update({
+      where: { id: record.id },
+      data: { reconcileToken: "old-query", reconcileUntil: new Date(0) },
+    });
+    await clearConversationPrivateData(
+      { action: "delete", conversationId: input.toolCall.conversationId },
+      { tenantId },
+      new ConversationOperationsRepository(db),
+      {
+        retentionDays: 7,
+        sessionsPerDay: 10,
+        concurrentSessions: 1,
+        audioSecondsPerDay: 10,
+        audioSecondsPerSession: 10,
+        sessionTimeoutMs: 1000,
+        dailyBudgetMicros: 10,
+        sessionReservationMicros: 1,
+      },
+    );
+    expect(
+      await store.claimReconciliation(
+        record,
+        "new-query",
+        new Date(Date.now() + 1000),
+      ),
+    ).toBe(false);
+    await store.finishReconciliation(record, "old-query", {
+      kind: "succeeded",
+      output: { value: "PRIVATE_LATE_DATA" },
+    });
+    expect(await store.get(tenantId, record.id)).toMatchObject({
+      status: "unknown",
+      inputJson: "{}",
+      outputJson: null,
+      requestHash: record.requestHash,
+    });
+    expect(await tools.submitToolCall(input, ownerAuth, deps)).toMatchObject({
+      executionId: record.id,
+      status: "unknown",
+      arguments: {},
+      output: null,
+    });
+    await expect(
+      tools.dispatchToolExecution(record.id, ownerAuth, deps),
+    ).rejects.toThrow();
+    expect(effect).toHaveBeenCalledOnce();
   });
 });
