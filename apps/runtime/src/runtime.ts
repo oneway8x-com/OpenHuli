@@ -51,6 +51,13 @@ export function createRuntime(
     dependencies?: RuntimeDependency[];
     connections?: RuntimeConnectionHooks;
     voice?: VoiceGatewayOptions;
+    management?: {
+      handle(
+        request: import("node:http").IncomingMessage,
+        response: import("node:http").ServerResponse,
+      ): Promise<void>;
+      stop(): Promise<void>;
+    };
     console?: {
       handle(
         request: import("node:http").IncomingMessage,
@@ -134,7 +141,17 @@ export function createRuntime(
     const status = health();
     response.setHeader("Content-Type", "application/json");
     response.setHeader("Cache-Control", "no-store");
-    if (
+    if (request.url?.split("?")[0] === "/management") {
+      if (options.management && phase === "running")
+        void options.management.handle(request, response).catch(() => {
+          if (!response.headersSent) response.writeHead(500);
+          response.end();
+        });
+      else
+        response
+          .writeHead(503)
+          .end(JSON.stringify({ error: "Device management unavailable" }));
+    } else if (
       request.url?.split("?")[0] === "/console" ||
       request.url?.split("?")[0] === "/console/events"
     ) {
@@ -274,6 +291,7 @@ export function createRuntime(
               await Promise.all([...cleanups]);
             })(),
             ...(options.console ? [options.console.stop()] : []),
+            ...(options.management ? [options.management.stop()] : []),
             ...(gateway ? [gateway.stop()] : []),
             ...dependencies.map((item) =>
               Promise.resolve().then(() => item.stop()),

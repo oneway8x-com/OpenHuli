@@ -256,7 +256,10 @@ export function createConsoleRuntime(
               decision: command.decision,
             },
             auth,
-            deps,
+            {
+              ...deps,
+              registry: await composition.registryForTenant(owner.tenantId),
+            },
           );
         else await cancelToolExecution(command.executionId, auth, deps);
         response.end(JSON.stringify({ accepted: true }));

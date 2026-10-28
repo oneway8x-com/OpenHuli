@@ -1,10 +1,16 @@
 import {
   createHttpTools,
+  HttpIntegrationRepository,
+  tenantHttpConfig,
+  readIntegrationSettings,
+  saveIntegrationSettings,
+  testHttpIntegration,
   readHttpToolsConfig,
   type HttpToolsConfig,
   type SecretStore,
   type JsonHttpClient,
 } from "@corely/modules-http-tools";
+import { createTelemetryTools } from "@corely/modules-telemetry";
 import { setTimeout as pause } from "node:timers/promises";
 import { z } from "zod";
 import {
@@ -52,23 +58,25 @@ export function createLiveConversationRuntime(
   const persistence = new PrismaService();
   const devices = new DeviceAccessRepository(persistence);
   const httpConfig = http?.config ?? readHttpToolsConfig(process.env);
-  const httpTools = createHttpTools(
-    httpConfig,
-    http?.secrets ?? {
-      async get(reference) {
-        if (
-          reference !== httpConfig.notes?.secretReference ||
-          !process.env.NOTES_API_TOKEN
-        )
-          throw new Error("Notes credential unavailable");
-        return process.env.NOTES_API_TOKEN;
-      },
+  const integrations = new HttpIntegrationRepository(persistence);
+  const secrets = http?.secrets ?? {
+    async get(reference: string) {
+      if (
+        reference !== httpConfig.notes?.secretReference ||
+        !process.env.NOTES_API_TOKEN
+      )
+        throw new Error("Notes credential unavailable");
+      return process.env.NOTES_API_TOKEN;
     },
-    http?.client,
-  );
-  const registry = new ToolRegistry([
-    ...httpTools,
-    ...(commands ? createDeviceCommandTools(commands) : []),
+  };
+  const httpTools = createHttpTools(httpConfig, secrets, http?.client);
+  const localTools = [
+    ...(commands
+      ? [
+          ...createDeviceCommandTools(commands),
+          ...createTelemetryTools(commands.telemetry),
+        ]
+      : []),
     defineTool({
       id: "device_context",
       revision: "1",
@@ -90,7 +98,17 @@ export function createLiveConversationRuntime(
         ),
       }),
     }),
-  ]);
+  ];
+  const registry = new ToolRegistry([...httpTools, ...localTools]);
+  const registryForTenant = async (tenantId: string) =>
+    new ToolRegistry([
+      ...localTools.map((tool) => deps.registry.get(tool.id)),
+      ...createHttpTools(
+        await tenantHttpConfig({ tenantId }, integrations, httpConfig),
+        secrets,
+        http?.client,
+      ),
+    ]);
   const deps = {
     store: new ToolExecutionRepository(persistence),
     devices,
@@ -107,21 +125,17 @@ export function createLiveConversationRuntime(
         new ConversationRepository(persistence),
       ),
       tools: [
-        ...(httpTools.some((tool) => tool.id === "weather.forecast")
-          ? [
-              {
-                id: "weather.forecast",
-                description:
-                  "Read an attributed Open-Meteo forecast for the owner-configured location. This is a forecast, not a device sensor measurement. Include source and fetch time.",
-                parameters: {
-                  type: "OBJECT",
-                  properties: {
-                    days: { type: "INTEGER", minimum: 1, maximum: 3 },
-                  },
-                },
-              },
-            ]
-          : []),
+        {
+          id: "weather.forecast",
+          description:
+            "Read an attributed Open-Meteo forecast for the owner-configured location. This is a forecast, not a device sensor measurement. Include source and fetch time.",
+          parameters: {
+            type: "OBJECT",
+            properties: {
+              days: { type: "INTEGER", minimum: 1, maximum: 3 },
+            },
+          },
+        },
         ...(httpTools.some((tool) => tool.id === "notes.create")
           ? [
               {
@@ -132,6 +146,39 @@ export function createLiveConversationRuntime(
                   type: "OBJECT",
                   properties: { text: { type: "STRING" } },
                   required: ["text"],
+                },
+              },
+            ]
+          : []),
+        ...(commands
+          ? [
+              {
+                id: "device.list",
+                description:
+                  "List up to ten owner-paired devices and their measured freshness. Clarify ambiguous names before acting.",
+                parameters: { type: "OBJECT", properties: {} },
+              },
+              {
+                id: "telemetry.latest",
+                description:
+                  "Read measured device sensor readings with freshness and source timestamps. Never describe stale data as current.",
+                parameters: {
+                  type: "OBJECT",
+                  properties: { deviceId: { type: "STRING" } },
+                  required: ["deviceId"],
+                },
+              },
+              {
+                id: "telemetry.history",
+                description:
+                  "Read up to ten measured sensor samples for one exact authorized device.",
+                parameters: {
+                  type: "OBJECT",
+                  properties: {
+                    deviceId: { type: "STRING" },
+                    take: { type: "INTEGER", minimum: 1, maximum: 10 },
+                  },
+                  required: ["deviceId"],
                 },
               },
             ]
@@ -178,6 +225,10 @@ export function createLiveConversationRuntime(
       turnTimeoutMs: config.AI_TURN_TIMEOUT_MS,
       execute(context, call, pending) {
         const task = (async () => {
+          const scopedDeps = {
+            ...deps,
+            registry: await registryForTenant(context.tenantId),
+          };
           const auth: ToolAuthentication = ownerToken
             ? { kind: "owner", token: ownerToken }
             : {
@@ -202,12 +253,13 @@ export function createLiveConversationRuntime(
               correlationId: context.turnId,
             },
             auth,
-            deps,
+            scopedDeps,
           );
+          scopedDeps.registry = await registryForTenant(context.tenantId);
           let result = await dispatchToolExecution(
             queued.executionId,
             auth,
-            deps,
+            scopedDeps,
             context.signal,
           );
           if (result.status === "awaiting_approval") {
@@ -215,17 +267,23 @@ export function createLiveConversationRuntime(
             try {
               while (result.status === "awaiting_approval") {
                 await pause(200, undefined, { signal: context.signal });
-                result = await getToolExecution(result.executionId, auth, deps);
+                result = await getToolExecution(
+                  result.executionId,
+                  auth,
+                  scopedDeps,
+                );
               }
-              if (result.status === "queued")
+              if (result.status === "queued") {
+                scopedDeps.registry = await registryForTenant(context.tenantId);
                 result = await dispatchToolExecution(
                   result.executionId,
                   auth,
-                  deps,
+                  scopedDeps,
                   context.signal,
                 );
+              }
             } catch {
-              await cancelToolExecution(result.executionId, auth, deps);
+              await cancelToolExecution(result.executionId, auth, scopedDeps);
               throw new Error("Approval wait stopped");
             }
           }
@@ -250,6 +308,25 @@ export function createLiveConversationRuntime(
     ...factory(),
     isReady: () => Boolean(provider || config.GEMINI_API_KEY),
     tools: deps,
+    registryForTenant,
+    integrations: {
+      read: (tenantId: string) =>
+        readIntegrationSettings({ tenantId }, integrations, httpConfig),
+      save: (tenantId: string, input: unknown) =>
+        saveIntegrationSettings(input, { tenantId }, integrations),
+      notesConfigured: Boolean(httpConfig.notes),
+      test: async (
+        tenantId: string,
+        toolId: "weather.forecast" | "notes.create",
+      ) =>
+        testHttpIntegration(
+          toolId,
+          { tenantId },
+          await tenantHttpConfig({ tenantId }, integrations, httpConfig),
+          secrets,
+          http?.client,
+        ),
+    },
     repository: new ConversationRepository(persistence),
     openOwner(
       context: Parameters<ReturnType<typeof factory>["open"]>[0],

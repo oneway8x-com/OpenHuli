@@ -14,7 +14,8 @@ authorized tool executor. Device context is the first registered read. Live-prov
 opt-in. [MQTT telemetry](docs/guides/MQTT_TELEMETRY.md) adds authenticated ingestion and grounded read tools;
 [Acknowledged device commands](docs/guides/DEVICE_COMMANDS.md) support ping and optional display through
 the authorized executor. [Streaming responses and playback](docs/guides/RESPONSE_PLAYBACK.md) include
-audio conversion, cancellation and a reference simulator. The [conversation console](docs/guides/CONVERSATION_CONSOLE.md) provides typed turns, activity and
+audio conversion, cancellation and a reference simulator. The [device console](docs/guides/DEVICE_CONSOLE.md) provides pairing, credentials, measured telemetry,
+manual commands, grants and Tenant integration settings. The [conversation console](docs/guides/CONVERSATION_CONSOLE.md) provides typed turns, activity and
 exact approvals. [Forecast and notes tools](docs/guides/HTTP_TOOLS.md) can be enabled through server configuration.
 
 ## Local setup

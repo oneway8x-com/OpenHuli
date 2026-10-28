@@ -13,7 +13,10 @@ import type {
 } from "@corely/modules-conversations";
 import { createLiveConversationRuntime } from "../conversation-composition";
 import type { RuntimeConfig } from "../config";
-export async function createConsoleHttpFixture(config: RuntimeConfig) {
+export async function createConsoleHttpFixture(
+  config: RuntimeConfig,
+  commands?: import("@corely/modules-device-commands").DeviceCommandDependencies,
+) {
   const directory = mkdtempSync(join(tmpdir(), "openhuli-console-http-"));
   const notes = new NotesRepository(join(directory, "notes.sqlite"));
   const token = "synthetic-console-notes-token-at-least-32-chars";
@@ -96,7 +99,7 @@ export async function createConsoleHttpFixture(config: RuntimeConfig) {
   const composition = createLiveConversationRuntime(
     config,
     provider,
-    undefined,
+    commands,
     {
       config: {
         weather: {

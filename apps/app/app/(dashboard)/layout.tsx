@@ -37,6 +37,7 @@ export default async function DashboardLayout({
             </Badge>
           </div>
           <nav className="flex items-center gap-4 text-sm text-muted-foreground">
+            <Link href="/devices">Devices</Link>
             <Link href="/conversations">Conversations</Link>
             <Link href="/todos">Todos</Link>
             <OwnerMenu />

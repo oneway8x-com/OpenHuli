@@ -35,3 +35,9 @@ conversation persistence and executor policy, using a synthetic provider/effect 
 free as well. No production testing switch or provider credential is added. The console journeys
 cover approval/denial, uncertain and partial outcomes, reload without replay, source timestamps,
 safe rendering and mobile layout. Both servers use the guarded disposable test database.
+
+Device-console journeys exercise pairing, one-time credential handling, rotation/revocation, grants,
+fresh/stale measurements, manual command approval/denial, unknown acknowledgements, reload without
+replay and integration settings. They use the same private test runtime, actual executor and local
+notes API with a synthetic device publisher. No hardware, public broker or live provider is involved.
+Owned command rows are removed before their execution records during fixture cleanup.
