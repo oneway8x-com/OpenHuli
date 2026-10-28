@@ -170,15 +170,19 @@ try {
     );
   // Broker's own healthcheck verifies a successful authenticated TLS SUBACK.
   compose(["exec", "-T", "mqtt", "/bin/sh", "/deployment/broker-health.sh"]);
-  assert.throws(() =>
-    compose([
-      "exec",
-      "-T",
-      "mqtt",
-      "/bin/sh",
-      "-c",
-      'exec mosquitto_sub -h "$OPENHULI_MQTT_HOST" -p 8883 --cafile /run/secrets/tls_ca -V mqttv5 -E -W 3 -i openhuli-denied -u openhuli-runtime -P "$(cat /run/secrets/mqtt_password)" -t "#"',
-    ]),
+  const denied = compose([
+    "exec",
+    "-T",
+    "mqtt",
+    "/bin/sh",
+    "-c",
+    'exec mosquitto_sub -h "$OPENHULI_MQTT_HOST" -p 8883 --cafile /run/secrets/tls_ca -V mqttv5 -d -E -W 3 -i openhuli-denied -u openhuli-runtime -P "$(cat /run/secrets/mqtt_password)" -t "#"',
+  ]);
+  const suback = /^Subscribed \(mid: \d+\): (\d+)$/m.exec(denied);
+  assert.ok(suback, "Denied subscription must receive a SUBACK");
+  assert.ok(
+    Number(suback[1]) >= 128 && Number(suback[1]) <= 255,
+    "Wildcard SUBACK must deny access",
   );
   compose(["run", "--rm", "--no-deps", "bootstrap"]);
   sql(`INSERT INTO "AgentRun" (id,"tenantId",status,"updatedAt") SELECT 'smoke-run',id,'closed',now() FROM "Tenant" LIMIT 1;
@@ -264,6 +268,7 @@ try {
     }
     return safe.slice(-16000);
   };
+  if (error instanceof Error) console.error(redact(error.message));
   if (error && typeof error === "object") {
     for (const key of ["stderr", "stdout"]) {
       const value: unknown = Object.getOwnPropertyDescriptor(error, key)?.value;

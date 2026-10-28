@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   mkdtempSync,
+  mkdirSync,
   readFileSync,
   writeFileSync,
   rmSync,
@@ -204,5 +205,40 @@ test("container secret failures return fixed diagnostics without secret values o
     }
   } finally {
     rmSync(parent, { recursive: true, force: true });
+  }
+});
+
+test("broker health requires an allowed SUBACK even when a denied client exits zero", () => {
+  const directory = mkdtempSync(join(tmpdir(), "openhuli-suback-test-"));
+  try {
+    mkdirSync(join(directory, "bin"));
+    writeFileSync(
+      join(directory, "bin", "cat"),
+      "#!/bin/sh\nprintf synthetic-password\n",
+      { mode: 0o755 },
+    );
+    writeFileSync(
+      join(directory, "bin", "mosquitto_sub"),
+      '#!/bin/sh\nprintf "%s\\n" "$SUBACK_TEST_OUTPUT"\nexit "${SUBACK_TEST_STATUS:-0}"\n',
+      { mode: 0o755 },
+    );
+    const check = (output: string, status = "0") =>
+      execFileSync("sh", ["docker/deploy/broker-health.sh"], {
+        env: {
+          ...process.env,
+          PATH: `${join(directory, "bin")}:${process.env.PATH}`,
+          OPENHULI_MQTT_HOST: "synthetic.invalid",
+          SUBACK_TEST_OUTPUT: output,
+          SUBACK_TEST_STATUS: status,
+        },
+        stdio: "pipe",
+      });
+    check("Subscribed (mid: 1): 0");
+    for (const code of [128, 135])
+      assert.throws(() => check(`Subscribed (mid: 1): ${code}`));
+    assert.throws(() => check("No acknowledgement"));
+    assert.throws(() => check("Subscribed (mid: 1): 0", "1"));
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
   }
 });
