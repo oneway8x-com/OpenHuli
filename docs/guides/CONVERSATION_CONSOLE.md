@@ -77,3 +77,7 @@ unknown outcomes, safe text rendering, source timestamps, reload without replay,
 and authentication/CSRF/Tenant boundaries. The browser host lives only under `apps/e2e/support`;
 production startup never loads its synthetic adapter. The notes journey performs a real local HTTP POST into a separate SQLite store; forecast payloads
 and AI are deterministic fixtures. No live Gemini/Open-Meteo or physical hardware result is implied.
+
+Choosing **New conversation** closes the selected live provider session before opening its replacement.
+Its existing activity remains readable; daily budget allocations are not refunded. This prevents
+sequential conversations in one tab from consuming all concurrent-session slots.

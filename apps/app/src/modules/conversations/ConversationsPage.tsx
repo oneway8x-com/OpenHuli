@@ -18,6 +18,7 @@ import {
 } from "@corely/ui";
 import {
   consoleFetch,
+  closeConversation,
   fetchConversation,
   ConversationListSchema,
   DeviceListSchema,
@@ -94,10 +95,17 @@ export function ConversationsPage() {
     );
   }
   const create = useMutation({
-    mutationFn: async () =>
-      z
+    mutationFn: async () => {
+      if (selected && snapshot?.live) {
+        await closeConversation(selected);
+        await client.invalidateQueries({
+          queryKey: ["conversation", selected],
+        });
+      }
+      return z
         .object({ id: z.string() })
-        .parse(await consoleFetch("", { action: "create", deviceId: device })),
+        .parse(await consoleFetch("", { action: "create", deviceId: device }));
+    },
     onSuccess: (result) => {
       select(result.id);
       void client.invalidateQueries({ queryKey: ["conversations"] });
@@ -304,6 +312,7 @@ export function ConversationsPage() {
               <Button
                 className="w-full"
                 disabled={!device || create.isPending || active}
+                title="Ends the selected live session before starting another"
                 onClick={() => create.mutate()}
               >
                 {create.isPending ? "Connecting…" : "New conversation"}

@@ -89,14 +89,27 @@ export class DeviceCommandRepository {
     reason: string,
     now: Date,
   ) {
-    await this.db.deviceCommand.updateMany({
-      where: { tenantId, id: commandId, status: from },
+    const finished = await this.db.deviceCommand.updateMany({
+      where: {
+        tenantId,
+        id: commandId,
+        status: from,
+        payloadJson: { not: "{}" },
+      },
       data: {
         status,
         resultJson: JSON.stringify({ source: "backend", reason }),
         completedAt: now,
       },
     });
+    if (!finished.count) {
+      // Privacy cleanup can win after the executor stops but before its device publisher settles.
+      // Keep the conservative lifecycle outcome without rebuilding an erased result payload.
+      await this.db.deviceCommand.updateMany({
+        where: { tenantId, id: commandId, status: from, payloadJson: "{}" },
+        data: { status, completedAt: now },
+      });
+    }
   }
   async acknowledge(tenantId: string, result: DeviceCommandResult, now: Date) {
     const changed = await this.db.deviceCommand.updateMany({

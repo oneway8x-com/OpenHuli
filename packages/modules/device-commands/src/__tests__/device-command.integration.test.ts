@@ -394,7 +394,10 @@ it("ack timeout and cancellation after dispatch remain unknown; late receipts ca
       controller.signal,
     );
     await vi.waitFor(() => expect(f.published).toHaveLength(1));
-    const receipt = f.receipt(f.published[0]);
+    const command = f.published[0];
+    if (!command) throw new Error("Command missing");
+    // Complete within the command window, then deliver the receipt after settlement.
+    const receipt = { ...f.receipt(command), completedAt: command.issuedAt };
     if (cancelled) controller.abort();
     expect((await pending).status).toBe("unknown");
     await vi.waitFor(async () =>
@@ -672,4 +675,48 @@ it("does not restore a late device receipt after privacy cleanup cleared the com
   expect(
     (await f.commands.store.get(tenantId, command.commandId))?.resultJson,
   ).toBeNull();
+});
+it("keeps a cleared payload erased when a delayed backend dispatch settles after privacy cleanup", async () => {
+  const f = await fixture(),
+    { queued } = await f.request(),
+    controller = new AbortController();
+  const inflight = new Set<Promise<unknown>>();
+  f.commands.inflight = inflight;
+  let release = () => {};
+  const published = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  f.commands.publisher.publishCommand = async (command) => {
+    f.published.push(command);
+    await published;
+    return "accepted";
+  };
+  const pending = dispatchToolExecution(
+    queued.executionId,
+    f.authentication,
+    f.deps,
+    controller.signal,
+  );
+  try {
+    await vi.waitFor(() => expect(f.published).toHaveLength(1));
+    const command = f.published[0];
+    if (!command) throw new Error("Command missing");
+    controller.abort();
+    expect((await pending).status).toBe("unknown");
+    // The executor has settled conservatively while the device publisher is still returning.
+    await db.deviceCommand.update({
+      where: { id: command.commandId },
+      data: { payloadJson: "{}", resultJson: null },
+    });
+    release();
+    await Promise.allSettled([...inflight]);
+    const stored = await f.commands.store.get(tenantId, command.commandId);
+    expect(stored?.status).toBe("unknown");
+    expect(stored?.resultJson).toBeNull();
+  } finally {
+    release();
+    controller.abort();
+    await pending;
+    await Promise.allSettled([...inflight]);
+  }
 });
