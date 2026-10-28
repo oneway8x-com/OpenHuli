@@ -35,7 +35,7 @@ Implement #10 on `10-conversation-runtime` from merged #9 (`cfb75f5`). Project 3
 
 ## Remaining work / risks
 
-- Open a draft PR against main. Live Gemini access, real speech selection, measured provider latency and
+- Committed and pushed `10-conversation-runtime`; draft PR [#32](https://github.com/oneway8x-com/OpenHuli/pull/32) targets `main`. Live Gemini access, real speech selection, measured provider latency and
   provider retention behavior have not been verified. No live credential location was supplied; the
   opt-in typed/PCM smoke procedure and command are ready for that validation. Keep #10 In progress.
 - Default registered tool is an authorized configuration read. HTTP writes/forecasts are #11; console
