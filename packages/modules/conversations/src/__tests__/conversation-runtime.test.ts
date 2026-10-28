@@ -447,3 +447,35 @@ it("does not speak model success after an uncertain tool result and still suppli
   );
   await session.close();
 });
+it("does not claim complete success or speak after a partial executor outcome", async () => {
+  const f = fixture(
+    [
+      [
+        call,
+        { type: "text", text: "Everything succeeded!" },
+        { type: "audio", pcm24: new Uint8Array(960) },
+        done,
+      ],
+    ],
+    vi.fn(async () => ({
+      status: "succeeded",
+      outcome: "partial",
+      output: { value: "actual" },
+    })),
+  );
+  const session = await f.factory.open({ ...context, outputAudio: true }),
+    t = turn();
+  await (
+    await session.startTurn(t.current, f.output)
+  ).commit(commit(t.current));
+  await vi.waitFor(() =>
+    expect(f.output.control).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "turn.completed" }),
+    ),
+  );
+  expect(f.output.audio).not.toHaveBeenCalled();
+  const wire = JSON.stringify(vi.mocked(f.output.control).mock.calls);
+  expect(wire).toContain("partial");
+  expect(wire).not.toContain("Everything succeeded!");
+  await session.close();
+});

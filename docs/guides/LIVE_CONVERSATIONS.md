@@ -6,7 +6,7 @@ composes PostgreSQL metadata, the registered executor, and a server-to-server Ge
 name, room, location and capabilities, explicitly labelled configuration rather than live telemetry.
 [MQTT telemetry](MQTT_TELEMETRY.md) provides ingestion and a grounded telemetry-tool factory; those tools
 are not automatically added to this adapter's default registry. Live forecasts/notes POST belong to #11;
-console owner sessions/UI to #18. [Response playback](RESPONSE_PLAYBACK.md) adds bounded output and a reference simulator.
+[the owner console](CONVERSATION_CONSOLE.md) supplies typed turns and exact approvals. [Response playback](RESPONSE_PLAYBACK.md) adds bounded output and a reference simulator.
 
 ## Provider and configuration
 
@@ -68,7 +68,7 @@ Text is 1–4096 nonblank characters, envelope size remains 16 KiB, and IDs/turn
 The peer rejects mixed audio/commit on typed turns and concurrent turns. Audio and text may alternate
 on one socket; the same live provider connection retains their transient history. A reconnect always
 creates a new server conversation. Client-supplied conversation IDs never select another stored run.
-Browser cookies/origins are not accepted by this device endpoint; #18 owns console transport.
+Browser cookies/origins are not accepted by this device endpoint; use the [owner console](CONVERSATION_CONSOLE.md) for browser transport.
 
 ## Execution, cancellation, retention
 
@@ -85,8 +85,10 @@ truthful outcomes. Prompts alone are not authorization. Unlisted/invalid/denied 
 non-success results replace model success language with a fixed unconfirmed response and actual
 execution/call IDs and statuses. Provisional language before tool requests is discarded. Unknown,
 queued, running, expired, cancelled or approval-waiting outcomes block further automatic calls in
-that session, including follow-ups. Approval UI/resume is not implemented here: a completed turn
-cannot later dispatch pending work. Do not treat an approval notice as an executed write.
+that session, including follow-ups. The [owner console](CONVERSATION_CONSOLE.md) can decide exact
+approvals while the originating turn is still active. Approval waiting shares the existing turn
+time budget; a completed/stopped turn cannot later dispatch pending work. Do not treat an approval
+notice as an executed write.
 
 Cancellation/disconnect aborts provider and executor work, discards partial provider history, and
 records a cancelled turn. The socket must reconnect to use a cancelled/failed provider session.

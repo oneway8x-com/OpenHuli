@@ -26,21 +26,38 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: {
-    command:
-      "pnpm --dir ../.. --filter @corely/app dev --hostname 127.0.0.1 --port 3100",
-    url: `${baseURL}/login`,
-    reuseExistingServer: false,
-    timeout: 120_000,
-    env: {
-      DATABASE_URL: databaseUrl,
-      DIRECT_DATABASE_URL: databaseUrl,
-      NEXT_PUBLIC_API_BASE_URL: "",
-      JWT_SECRET: process.env.JWT_SECRET,
-      OWNER_EMAIL: process.env.OWNER_EMAIL,
-      APP_URL: baseURL,
-      NEXT_TELEMETRY_DISABLED: "1",
+  webServer: [
+    {
+      command: "pnpm --dir ../.. exec tsx apps/e2e/support/console-runtime.ts",
+      url: "http://127.0.0.1:3218/health/live",
+      reuseExistingServer: false,
+      timeout: 30000,
+      env: {
+        DATABASE_URL: databaseUrl,
+        DIRECT_DATABASE_URL: databaseUrl,
+        TEST_DATABASE_URL: databaseUrl,
+        JWT_SECRET: process.env.JWT_SECRET,
+        OWNER_EMAIL: process.env.OWNER_EMAIL,
+        APP_URL: baseURL,
+      },
     },
-  },
+    {
+      command:
+        "pnpm --dir ../.. --filter @corely/app dev --hostname 127.0.0.1 --port 3100",
+      url: `${baseURL}/login`,
+      reuseExistingServer: false,
+      timeout: 120_000,
+      env: {
+        DATABASE_URL: databaseUrl,
+        DIRECT_DATABASE_URL: databaseUrl,
+        OPENHULI_RUNTIME_HTTP_URL: "http://127.0.0.1:3218",
+        NEXT_PUBLIC_API_BASE_URL: "",
+        JWT_SECRET: process.env.JWT_SECRET,
+        OWNER_EMAIL: process.env.OWNER_EMAIL,
+        APP_URL: baseURL,
+        NEXT_TELEMETRY_DISABLED: "1",
+      },
+    },
+  ],
   timeout: 60_000,
 });

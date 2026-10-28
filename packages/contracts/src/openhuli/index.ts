@@ -8,3 +8,4 @@ export * from "./voice-peer";
 export { OpenHuliCommandReceiver } from "./command-receiver";
 export * from "./pcm-output";
 export * from "./playback";
+export * from "./console";

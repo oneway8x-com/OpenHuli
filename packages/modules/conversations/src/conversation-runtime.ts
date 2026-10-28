@@ -291,13 +291,27 @@ export function createConversationRuntime(
                   else {
                     try {
                       result = await untilAbort(
-                        deps.execute(current, {
-                          ...event,
-                          id,
-                          arguments: OpenHuliJsonObjectSchema.parse(
-                            event.arguments,
-                          ),
-                        }),
+                        deps.execute(
+                          current,
+                          {
+                            ...event,
+                            id,
+                            arguments: OpenHuliJsonObjectSchema.parse(
+                              event.arguments,
+                            ),
+                          },
+                          (executionId) => {
+                            if (
+                              context.streamingResponses &&
+                              !controller.signal.aborted
+                            )
+                              control({
+                                type: "tool.result",
+                                executionId,
+                                status: "awaiting_approval",
+                              });
+                          },
+                        ),
                         controller.signal,
                       );
                     } catch {
@@ -325,7 +339,11 @@ export function createConversationRuntime(
                         ? safe.executionId
                         : id,
                     status:
-                      typeof safe.status === "string" ? safe.status : "unknown",
+                      safe.outcome === "partial"
+                        ? "partial"
+                        : typeof safe.status === "string"
+                          ? safe.status
+                          : "unknown",
                   });
                   await deps.journal.usage(current, "tool_calls", 1);
                   if (controller.signal.aborted) throw new Error("Cancelled");
@@ -335,7 +353,10 @@ export function createConversationRuntime(
                     !control({
                       type: "tool.result",
                       executionId: status.id,
-                      status: status.status,
+                      status:
+                        status.status === "partial"
+                          ? "succeeded"
+                          : status.status,
                     })
                   )
                     throw new Error("Output closed");

@@ -1,0 +1,32 @@
+// Private browser-test host: real auth, runtime, executor and database; synthetic provider/effect only.
+import { readRuntimeConfig } from "../../runtime/src/config";
+import { createRuntime } from "../../runtime/src/runtime";
+import { createConsoleRuntime } from "../../runtime/src/console";
+import { createConsoleFixture } from "../../runtime/src/__tests__/console-fixture";
+import { getTestDatabaseUrl } from "../../../scripts/test-database";
+const database = getTestDatabaseUrl();
+if (
+  process.env.DATABASE_URL !== database ||
+  process.env.DIRECT_DATABASE_URL !== database
+)
+  throw new Error("Unsafe console test database");
+const config = readRuntimeConfig({
+  ...process.env,
+  NODE_ENV: "test",
+  RUNTIME_PORT: "3218",
+  RUNTIME_HOST: "127.0.0.1",
+  AI_TURN_TIMEOUT_MS: "30000",
+});
+const fixture = createConsoleFixture(config);
+const host = createRuntime(config, {
+  console: createConsoleRuntime(fixture.composition, true),
+});
+await host.start();
+const stop = () => {
+  void host
+    .stop()
+    .then(() => fixture.composition.close())
+    .then(() => process.exit(0));
+};
+process.once("SIGINT", stop);
+process.once("SIGTERM", stop);

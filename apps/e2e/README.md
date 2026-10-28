@@ -29,3 +29,9 @@ API assertions for the resulting state. `pnpm --filter @corely/e2e exec playwrig
 checks collection only. A skipped or merely collected test is not a passing run.
 Failure traces/screenshots are generated under ignored `test-results/` and `playwright-report/`.
 Use synthetic data and inspect artifacts before sharing them.
+
+Conversation tests also start a private runtime on `127.0.0.1:3218` with real authentication,
+conversation persistence and executor policy, using a synthetic provider/effect port. Keep that port
+free as well. No production testing switch or provider credential is added. The console journeys
+cover approval/denial, uncertain and partial outcomes, reload without replay, source timestamps,
+safe rendering and mobile layout. Both servers use the guarded disposable test database.
