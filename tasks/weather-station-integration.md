@@ -51,7 +51,8 @@ its actual indoor measurements and display to the existing device system.
 
 ## Remaining work / risks
 
-Commit, push and create PR after final review. Broad tests need a supported Unix checkout/toolchain
-or hosted CI. Physical module voltage compatibility, real broker/display effects, power-cut recovery
-and endurance require separate hardware acceptance. Enclosure scripts were syntax-checked only;
-CAD/render/PDF exports were not regenerated, and V2 manual slicer edits were not imported.
+Committed and pushed in [draft PR #53](https://github.com/oneway8x-com/OpenHuli/pull/53), targeting
+`main`. Broad tests need a supported Unix checkout/toolchain or hosted CI. Physical module voltage
+compatibility, real broker/display effects, power-cut recovery and endurance require separate hardware
+acceptance. Enclosure scripts were syntax-checked only; CAD/render/PDF exports were not regenerated,
+and V2 manual slicer edits were not imported. No merge, release or deployment performed.
