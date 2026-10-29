@@ -143,6 +143,8 @@ apps/.DS_Store
 # Generated browser-test artifacts
 **/playwright-report/
 **/test-results/
+/.playwright-mcp/
+/output/playwright/
 
 # Local sample API persistence
 .local/

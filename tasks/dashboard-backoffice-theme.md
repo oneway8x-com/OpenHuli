@@ -14,6 +14,7 @@ Apply the requested Backoffice theme and layout patterns to the OpenHuli dashboa
 
 ## Verification
 
+- Follow-up: ignored root Playwright MCP snapshots and `output/playwright/` screenshots and preview artifacts; verified all current generated artifacts are ignored.
 - `pnpm typecheck`: passed.
 - `pnpm test`: passed (22 script tests and 380 unit tests across 39 files).
 - `pnpm --filter @corely/data exec prisma validate`: passed.
