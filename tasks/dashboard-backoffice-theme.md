@@ -26,4 +26,4 @@ Apply the requested Backoffice theme and layout patterns to the OpenHuli dashboa
 
 ## Remaining work / risks
 
-Complete self-review found no further issue in the theme, responsive navigation, authentication boundary, or affected feature flows. PR publication is pending. The unrelated Uno/Nano test locator remains to be corrected separately. Screenshots establish frontend appearance with synthetic data; live hardware and providers are outside this styling change.
+Complete self-review found no further issue in the theme, responsive navigation, authentication boundary, or affected feature flows. Published [PR #52](https://github.com/oneway8x-com/OpenHuli/pull/52). The unrelated Uno/Nano test locator remains to be corrected separately. Screenshots establish frontend appearance with synthetic data; live hardware and providers are outside this styling change.
