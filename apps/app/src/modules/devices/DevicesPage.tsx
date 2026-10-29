@@ -26,6 +26,7 @@ import { PairForm } from "./PairDeviceForm";
 import { GrantForm } from "./DeviceGrants";
 import { HistoryChart } from "./TelemetryHistory";
 import { IntegrationSettingsForm } from "./IntegrationSettingsForm";
+import { PageHeader } from "@/components/dashboard/page-header";
 
 const field =
   "w-full rounded-md border border-input bg-background px-3 py-2 text-sm";
@@ -171,18 +172,11 @@ export function DevicesPage() {
   );
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-sm text-muted-foreground">
-          Your home · Devices and integrations
-        </p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">
-          Connect your devices
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          Pair hardware, check measured readings, and control the tools it can
-          use.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Your home · Devices and integrations"
+        title="Connect your devices"
+        description="Pair hardware, check measured readings, and control the tools it can use."
+      />
       {error && (
         <p role="alert" className="rounded-md border border-destructive p-3">
           {error}
@@ -336,10 +330,10 @@ export function DevicesPage() {
                     telemetry.data?.available && (
                       <>
                         <div className="flex flex-wrap gap-2">
-                          <Badge variant="secondary">
+                          <Badge variant="outline">
                             Presence: {telemetry.data.latest.connectivity}
                           </Badge>
-                          <Badge variant="secondary">
+                          <Badge variant="outline">
                             Readings: {telemetry.data.latest.freshness}
                           </Badge>
                         </div>

@@ -23,11 +23,12 @@ import {
 import { CheckCircle2, Circle, Plus, Search, Trash2 } from "lucide-react";
 import type { TodoDto } from "@corely/contracts";
 import { completeTodo, deleteTodo, fetchTodos, reopenTodo } from "../todos-api";
+import { PageHeader } from "@/components/dashboard/page-header";
 
 const priorityStyles = {
-  low: "bg-blue-100 text-blue-800 border-blue-200",
-  medium: "bg-amber-100 text-amber-800 border-amber-200",
-  high: "bg-rose-100 text-rose-800 border-rose-200",
+  low: "bg-accent-muted text-accent border-transparent",
+  medium: "bg-warning-muted text-amber-800 border-transparent",
+  high: "bg-danger-muted text-danger border-transparent",
 } as const;
 
 type StatusFilter = "all" | "open" | "done";
@@ -40,7 +41,7 @@ export function TodosListPage() {
   const [status, setStatus] = useState<StatusFilter>("all");
   const deferredSearch = useDeferredValue(search);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["todos", deferredSearch, status],
     queryFn: () =>
       fetchTodos({
@@ -98,56 +99,73 @@ export function TodosListPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[2rem] border border-border/70 bg-background/80 p-6 shadow-sm backdrop-blur">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3">
-            <Badge variant="secondary" className="rounded-full px-3 py-1">
-              Reference feature
-            </Badge>
-            <div>
-              <h2 className="text-3xl font-semibold tracking-tight">Tasks</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                A simple task list for trying the OpenHuli development setup.
-              </p>
-            </div>
-          </div>
+      <PageHeader
+        title="Tasks"
+        eyebrow="Your home · Task management"
+        description="Keep track of what needs to be done, from setup to your next project."
+        actions={
+          <Button onClick={() => router.push("/todos/new")}>
+            <Plus aria-hidden="true" className="h-4 w-4" /> Create task
+          </Button>
+        }
+      />
 
-          <Button size="lg" onClick={() => router.push("/todos/new")}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create task
+      {isError ? (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-danger-muted p-4"
+        >
+          <p className="text-sm">Could not load tasks. Please try again.</p>
+          <Button variant="outline" size="sm" onClick={() => void refetch()}>
+            Retry
           </Button>
         </div>
-      </section>
+      ) : null}
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <Card className="rounded-[1.75rem] border-border/70 bg-background/80">
+      <section aria-label="Task summary" className="grid grid-cols-2 gap-4">
+        <Card className="rounded-lg shadow-surface">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Open
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{openCount}</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-3xl font-semibold">
+                {isLoading || isError ? "—" : openCount}
+              </p>
+              <span className="rounded-lg bg-accent-muted p-2.5 text-primary">
+                <Circle aria-hidden="true" className="h-5 w-5" />
+              </span>
+            </div>
           </CardContent>
         </Card>
-        <Card className="rounded-[1.75rem] border-border/70 bg-background/80">
+        <Card className="rounded-lg shadow-surface">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Done
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{doneCount}</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-3xl font-semibold">
+                {isLoading || isError ? "—" : doneCount}
+              </p>
+              <span className="rounded-lg bg-success-muted p-2.5 text-emerald-700">
+                <CheckCircle2 aria-hidden="true" className="h-5 w-5" />
+              </span>
+            </div>
           </CardContent>
         </Card>
       </section>
 
-      <Card className="rounded-[2rem] border-border/70 bg-background/85 shadow-sm">
+      <Card className="rounded-lg shadow-surface">
         <CardHeader className="gap-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="relative w-full max-w-md">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
+                aria-label="Search tasks"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search tasks"
@@ -160,6 +178,7 @@ export function TodosListPage() {
                 <Button
                   key={option}
                   type="button"
+                  aria-pressed={status === option}
                   variant={status === option ? "default" : "outline"}
                   onClick={() => setStatus(option)}
                   className="capitalize"
@@ -172,7 +191,7 @@ export function TodosListPage() {
         </CardHeader>
 
         <CardContent>
-          <Table>
+          <Table className="min-w-[640px]">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12"></TableHead>
@@ -210,7 +229,7 @@ export function TodosListPage() {
                     <div className="space-y-1">
                       <Link
                         href={`/todos/${todo.id}`}
-                        className="font-medium hover:underline"
+                        className="font-medium hover:text-primary hover:underline"
                       >
                         {todo.title}
                       </Link>
@@ -252,7 +271,17 @@ export function TodosListPage() {
                 </TableRow>
               ))}
 
-              {!items.length && !isLoading ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="py-12 text-center text-muted-foreground"
+                  >
+                    <span role="status">Loading tasks…</span>
+                  </TableCell>
+                </TableRow>
+              ) : null}
+              {!items.length && !isLoading && !isError ? (
                 <TableRow>
                   <TableCell
                     colSpan={5}

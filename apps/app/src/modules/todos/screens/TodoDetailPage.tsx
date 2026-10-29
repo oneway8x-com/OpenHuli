@@ -2,8 +2,23 @@
 
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Badge, Button, Card, CardContent, CardHeader, CardTitle, useToast } from "@corely/ui";
-import { Calendar, CheckCircle2, ChevronLeft, Circle, Loader2, Trash2 } from "lucide-react";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  useToast,
+} from "@corely/ui";
+import {
+  Calendar,
+  CheckCircle2,
+  ChevronLeft,
+  Circle,
+  Loader2,
+  Trash2,
+} from "lucide-react";
 import { completeTodo, deleteTodo, fetchTodo, reopenTodo } from "../todos-api";
 
 export function TodoDetailPage({ id }: { id: string }) {
@@ -52,19 +67,30 @@ export function TodoDetailPage({ id }: { id: string }) {
   }
 
   if (!todo) {
-    return <div className="p-8 text-center text-muted-foreground">Task not found.</div>;
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        Task not found.
+      </div>
+    );
   }
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button variant="ghost" onClick={() => router.push("/todos")} className="-ml-4">
+        <Button
+          variant="ghost"
+          onClick={() => router.push("/todos")}
+          className="-ml-4"
+        >
           <ChevronLeft className="mr-1 h-4 w-4" />
           Back to tasks
         </Button>
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push(`/todos/${todo.id}/edit`)}>
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/todos/${todo.id}/edit`)}
+          >
             Edit
           </Button>
           <Button
@@ -82,7 +108,7 @@ export function TodoDetailPage({ id }: { id: string }) {
         </div>
       </div>
 
-      <Card className="rounded-[2rem] border-border/70 bg-background/85 shadow-sm">
+      <Card className="rounded-lg shadow-surface">
         <CardHeader className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -93,7 +119,9 @@ export function TodoDetailPage({ id }: { id: string }) {
                 {todo.priority}
               </Badge>
             </div>
-            <CardTitle className="text-3xl tracking-tight">{todo.title}</CardTitle>
+            <CardTitle className="text-3xl tracking-tight">
+              {todo.title}
+            </CardTitle>
           </div>
 
           <Button
@@ -121,7 +149,7 @@ export function TodoDetailPage({ id }: { id: string }) {
         </CardHeader>
 
         <CardContent className="space-y-8">
-          <div className="rounded-[1.5rem] border border-border/70 bg-muted/40 p-5">
+          <div className="rounded-lg border border-border bg-muted/40 p-5">
             <p className="whitespace-pre-wrap text-sm leading-7 text-foreground/85">
               {todo.description || "No additional description."}
             </p>
@@ -131,7 +159,10 @@ export function TodoDetailPage({ id }: { id: string }) {
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
               <span>
-                Due {todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : "whenever"}
+                Due{" "}
+                {todo.dueDate
+                  ? new Date(todo.dueDate).toLocaleDateString()
+                  : "whenever"}
               </span>
             </div>
             <div className="text-sm text-muted-foreground md:text-right">

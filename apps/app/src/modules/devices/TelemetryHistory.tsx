@@ -45,7 +45,7 @@ export function HistoryChart({
               viewBox="0 0 600 100"
               role="img"
               aria-label={`${metric} measurements over the last 24 hours`}
-              className="w-full rounded border bg-muted/30"
+              className="w-full rounded-md border bg-muted/30 text-primary"
             >
               <path d="M10 90H590" stroke="currentColor" opacity=".2" />
               <polyline

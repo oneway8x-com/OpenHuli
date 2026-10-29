@@ -1,0 +1,82 @@
+/* Backoffice palette adapted to the existing shared semantic UI tokens. */
+
+:root {
+  /* Background layers */
+  --background: 220 14.3% 95.9%;
+  --background-subtle: 220 13% 91%;
+  --panel: 0 0% 100%;
+  --panel-hover: 220 14.3% 97.5%;
+
+  /* Text */
+  --foreground: 220.9 39.3% 11%;
+  --foreground-muted: 220 8.9% 46.1%;
+  --foreground-subtle: 217.9 10.6% 64.9%;
+
+  /* Borders */
+  --border: 220 13% 91%;
+  --border-strong: 216 12.2% 83.9%;
+  --input: 220 13% 91%;
+  --ring: 219.5 100% 50%;
+
+  /* Primary - brand blue */
+  --primary: 219.5 100% 50%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 219.5 100% 43%;
+
+  /* Secondary - neutral surface */
+  --secondary: 220 14.3% 95.9%;
+  --secondary-foreground: 220.9 39.3% 11%;
+  --secondary-hover: 220 13% 91%;
+
+  /* Accent - same brand blue, used for links and highlights */
+  --accent: 219.5 100% 50%;
+  --accent-foreground: 0 0% 100%;
+  --accent-muted: 219.5 100% 96%;
+  --accent-hover: 219.5 100% 43%;
+
+  /* Muted */
+  --muted: 220 14.3% 95.9%;
+  --muted-foreground: 220 8.9% 46.1%;
+
+  /* States */
+  --success: 153.9 73% 45.1%;
+  --success-foreground: 0 0% 100%;
+  --success-muted: 153.9 73% 95%;
+
+  --warning: 43 100% 62%;
+  --warning-foreground: 220.9 39.3% 11%;
+  --warning-muted: 43 100% 95%;
+
+  --danger: 0 72.2% 50.6%;
+  --danger-foreground: 0 0% 100%;
+  --danger-muted: 0 85.7% 96.3%;
+
+  --destructive: 0 72.2% 50.6%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* UI elements */
+  --card: 0 0% 100%;
+  --card-foreground: 220.9 39.3% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220.9 39.3% 11%;
+
+  /* Sidebar - deep navy rail with a brand blue active pill */
+  --sidebar-background: 217.3 100% 30%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 219.5 100% 50%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 218.9 100% 25%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 219 100% 38%;
+  --sidebar-ring: 0 0% 100%;
+
+  /* Charts */
+  --chart-1: 219.5 100% 50%;
+  --chart-2: 153.9 73% 45.1%;
+  --chart-3: 43 100% 62%;
+  --chart-4: 262.1 83.3% 57.8%;
+  --chart-5: 330.4 81.2% 60.4%;
+
+  /* Cards are 8px in the Admin Portal design; small controls derive from it */
+  --radius: 0.5rem;
+}
