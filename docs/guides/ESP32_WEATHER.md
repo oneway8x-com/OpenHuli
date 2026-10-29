@@ -1,5 +1,9 @@
 # ESP32 DHT11 and LCD1602 reference
 
+For the imported standalone station with the existing outer-row pin map, Berlin weather pages
+and OpenHuli library integration, use [Weather Station V1](../../firmware/weather-station/README.md).
+The combined voice/weather reference below remains a separate firmware application.
+
 Issue [#16](https://github.com/oneway8x-com/OpenHuli/issues/16) extends the
 [microphone reference](ESP32_VOICE.md) with DHT11 sampling, verified MQTT TLS, ping receipts and an
 optional LCD1602. **Physical acceptance is pending.** The user selected an LCD1602 with a 16-pin

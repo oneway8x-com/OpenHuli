@@ -28,6 +28,11 @@ require recorded evidence before the MVP release gate can pass.
 
 ## Arduino and PlatformIO devices
 
+The [weather station project](firmware/weather-station/README.md) includes the imported ESP32-S2
+room sensor, LCD/clock/Berlin forecast pages, diagnostics and optional OpenHuli integration through
+the shared client. [Hardware projects](hardware/README.md) keep wiring and enclosure sources separate
+from firmware and shared libraries.
+
 The [OpenHuli C++ client](libraries/OpenHuli/README.md) provides ESP32 MQTT telemetry, presence,
 ping and acknowledged display commands. It includes an Arduino/PlatformIO example and shares its
 protocol implementation with the reference weather firmware. Voice support remains in the reference

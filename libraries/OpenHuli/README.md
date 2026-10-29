@@ -4,6 +4,9 @@ An ESP32-first C++ library for OpenHuli v1 MQTT telemetry, presence, ping and op
 commands. The reference weather firmware consumes this same library. Voice/WSS is a follow-up;
 this package does not expose AI/provider credentials or owner provisioning APIs.
 
+The [standalone weather station](../../firmware/weather-station/README.md) also consumes this
+library for room telemetry, presence and commands while retaining its local LCD and forecast pages.
+
 ## Supported environment
 
 - Arduino ESP32 core **2.0.17** / ESP-IDF 4.4; PlatformIO Core 6.2.0 and the pinned example platform.

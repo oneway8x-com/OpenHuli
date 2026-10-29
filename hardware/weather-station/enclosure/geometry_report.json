@@ -1,0 +1,33 @@
+{
+  "01_LCD_Fit_Test": {
+    "bounds_mm": [90.0, 46.0, 9.4],
+    "volume_cm3": 6.113,
+    "valid_solid": true
+  },
+  "02_Fastener_Fit_Test": {
+    "bounds_mm": [62.0, 22.0, 14.4],
+    "volume_cm3": 5.633,
+    "valid_solid": true
+  },
+  "03_Main_Shell_With_Sensor_Pod": {
+    "bounds_mm": [200.0, 110.0, 72.6],
+    "volume_cm3": 150.48,
+    "valid_solid": true
+  },
+  "04_Main_Rear_Cover": {
+    "bounds_mm": [150.0, 110.0, 8.4],
+    "volume_cm3": 33.42,
+    "valid_solid": true
+  },
+  "05_Sensor_Pod_Rear_Cover": {
+    "bounds_mm": [42.0, 80.0, 6.4],
+    "volume_cm3": 8.399,
+    "valid_solid": true
+  },
+  "material_comparison": {
+    "honeycomb_geometry_cm3": 192.299,
+    "same_enclosure_without_extra_honeycomb_cm3": 223.614,
+    "geometry_reduction_percent": 14.0,
+    "note": "Geometric solid volume, not slicer filament usage; excludes fit coupons."
+  }
+}
