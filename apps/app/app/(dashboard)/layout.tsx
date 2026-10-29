@@ -1,10 +1,8 @@
-import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getTenantContext } from "@/server/tenant-context";
 import { IdentityError, readAuthConfig } from "@corely/modules-identity";
-import { OwnerMenu } from "@/components/auth/owner-menu";
-import { Badge } from "@corely/ui";
+import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 
 export default async function DashboardLayout({
   children,
@@ -21,30 +19,5 @@ export default async function DashboardLayout({
       redirect("/login");
     throw error;
   }
-  return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-10 border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="container flex flex-wrap items-center justify-between gap-3 py-4">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/todos"
-              className="text-lg font-semibold tracking-tight"
-            >
-              OpenHuli
-            </Link>
-            <Badge variant="secondary" className="rounded-full px-3 py-1">
-              Development preview
-            </Badge>
-          </div>
-          <nav className="flex items-center gap-4 text-sm text-muted-foreground">
-            <Link href="/devices">Devices</Link>
-            <Link href="/conversations">Conversations</Link>
-            <Link href="/todos">Todos</Link>
-            <OwnerMenu />
-          </nav>
-        </div>
-      </header>
-      <main className="container py-8">{children}</main>
-    </div>
-  );
+  return <DashboardShell>{children}</DashboardShell>;
 }

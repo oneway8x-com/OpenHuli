@@ -35,7 +35,10 @@ test("owner signs in with an OTP and signs out with server-side revocation", asy
     path: testInfo.outputPath("owner-mobile.png"),
     fullPage: true,
   });
-  await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await page.getByRole("button", { name: "Open navigation" }).click();
+  const drawer = page.getByRole("dialog", { name: "OpenHuli navigation" });
+  await expect(drawer).toBeVisible();
+  await drawer.getByRole("button", { name: "Sign out", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
   // The original API context still holds the fixture session: revoke it explicitly and verify cookie replay is rejected.
   const staleAccess = session.storageState.cookies.find(

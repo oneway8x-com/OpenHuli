@@ -23,6 +23,7 @@ import {
   ConversationListSchema,
   DeviceListSchema,
 } from "./conversations-api";
+import { PageHeader } from "@/components/dashboard/page-header";
 
 const toolNames: Record<string, string> = {
   device_context: "Read device context",
@@ -246,14 +247,11 @@ export function ConversationsPage() {
     devices.error;
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Talk to your devices
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          Ask a question, review an action, and see what was actually confirmed.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Your home · Conversations"
+        title="Talk to your devices"
+        description="Ask a question, review an action, and see what was actually confirmed."
+      />
       {error ? (
         <div role="alert" className="rounded-lg border border-destructive p-4">
           <p>

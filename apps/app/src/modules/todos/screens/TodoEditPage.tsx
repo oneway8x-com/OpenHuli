@@ -111,7 +111,7 @@ export function TodoEditPage({ id }: { id?: string }) {
         Back to tasks
       </Button>
 
-      <Card className="rounded-[2rem] border-border/70 bg-background/85 shadow-sm">
+      <Card className="rounded-lg shadow-surface">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl">
             {isNew ? "Create a new task" : "Edit task"}
