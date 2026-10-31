@@ -91,9 +91,21 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.platformio
-          key: firmware-${{ runner.os }}-${{ hashFiles('firmware/esp32-voice/platformio.ini', 'libraries/OpenHuli/library.json', 'libraries/OpenHuli/examples/Telemetry/platformio.ini') }}
+          key: firmware-${{ runner.os }}-${{ hashFiles('firmware/esp32-voice/platformio.ini', 'firmware/weather-station/**/platformio.ini', 'libraries/OpenHuli/library.json', 'libraries/OpenHuli/examples/Telemetry/platformio.ini') }}
       - run: pio run --project-dir firmware/esp32-voice --environment s2_mini --environment s2_mini_check
       - run: pio run --project-dir libraries/OpenHuli/examples/Telemetry --environment s2_mini_check
+      - run: pio run --project-dir firmware/weather-station/weather_station_online --environment lolin_s2_mini --environment lolin_s2_mini_check
+      - run: pio run --project-dir firmware/weather-station/weather_station_test
+      - run: pio run --project-dir firmware/weather-station/weather_station_lcd_test
+      - run: pio run --project-dir firmware/weather-station/clock
+      - name: Test imported weather parser and cache
+        run: |
+          binary="$(mktemp)"
+          trap 'rm -f "$binary"' EXIT
+          c++ -std=c++17 -Wall -Wextra -Werror -pedantic \
+            -Ifirmware/weather-station/weather_station_online/.pio/libdeps/lolin_s2_mini/ArduinoJson/src \
+            firmware/weather-station/tests/weather_online_test.cpp -o "$binary"
+          "$binary" firmware/weather-station/tests/fixtures/berlin_weather.json
       - run: pio pkg pack libraries/OpenHuli --output /tmp/OpenHuli.tar.gz
       - run: python scripts/package-arduino-client.py --output /tmp/OpenHuli.zip
       - name: Test firmware command JSON boundary

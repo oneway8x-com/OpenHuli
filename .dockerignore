@@ -27,3 +27,6 @@ deployment.local
 # Device credentials and embedded build outputs never enter server images.
 **/config.local.h
 **/.pio
+**/wifi_config.h
+/hardware
+/firmware/weather-station

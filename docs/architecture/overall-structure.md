@@ -10,12 +10,15 @@
 - `packages/ui`: reusable UI; `packages/kernel`: shared ports/primitives.
 - `apps/e2e`: Playwright configuration, isolated data fixtures, and browser journeys.
 - `scripts`: check/setup utilities; `.github/workflows`: CI; `tasks`: short implementation diaries.
+- `firmware/<device>`: device applications, diagnostics and hardware adapter tests; `libraries/`:
+  reusable embedded clients and protocols; `hardware/<device>`: wiring and enclosure sources.
 
 `apps/runtime` contains the persistent Node host, authenticated voice transport, and opt-in MQTT
 telemetry adapter. `packages/modules/telemetry` owns measured context/history and presence use cases,
 repositories, and registered read tools. See [MQTT telemetry](../guides/MQTT_TELEMETRY.md) for its broker
 boundary and setup. The [device simulator](../guides/DEVICE_SIMULATOR.md) exercises the shared
-voice/HTTP path without hardware; mock and live-provider modes are explicit. Firmware remains separate
-MVP work.
+voice/HTTP path without hardware; mock and live-provider modes are explicit. Device firmware consumes
+the existing scoped transport contracts; the [weather station](../../firmware/weather-station/README.md)
+uses the shared OpenHuli library. Hardware qualification remains separate from cross-builds.
 The pnpm workspace and package scopes retain their scaffold names. See [architecture](architect.md)
 and [the MVP specification](../mvp-spec.md) for current versus intended runtime behavior.

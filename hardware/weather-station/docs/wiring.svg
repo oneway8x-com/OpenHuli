@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1220" viewBox="0 0 1440 1220" role="img" aria-labelledby="title desc">
+  <title id="title">Weather Station USB-only wiring</title>
+  <desc id="desc">Logical connections for outer-row ESP32-S2 Mini GPIO3, 5, 7, 12, 33 and 35 to the parallel LCD, and GPIO37 to DHT11 DATA. USB 5V, 3V3 and GND are separate. The battery is disconnected. Sensor contact order must be inspected.</desc>
+  <rect width="1440" height="1220" fill="#f3f6fa" />
+  <text x="42" y="48" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="30px" font-weight="700">Weather Station · USB-only hardware test</text>
+  <text x="42" y="80" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="17px">Logical connection map — GPIO labels matter; connector positions here are not physical pin order.</text>
+  <rect x="40" y="120" width="340" height="640" rx="14" fill="#fff" stroke="#a9bacd" stroke-width="2" />
+  <rect x="960" y="120" width="440" height="640" rx="14" fill="#fff" stroke="#a9bacd" stroke-width="2" />
+  <text x="66" y="157" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="23px" font-weight="700">ESP32-S2 Mini V1.0.0</text>
+  <text x="66" y="184" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="17px">USB-C power · outer J2 / J3 only</text>
+  <text x="986" y="157" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="23px" font-weight="700">LCD1602A · 16-pin parallel</text>
+  <text x="986" y="184" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="17px">4-bit mode · no I²C backpack</text>
+
+  <g font-size="20px">
+    <text x="78" y="229" font-family="Arial,Helvetica,sans-serif" fill="#18283c">GPIO3 · J2.2</text><text x="987" y="229" font-family="Arial,Helvetica,sans-serif" fill="#18283c">4  RS</text>
+    <text x="78" y="277" font-family="Arial,Helvetica,sans-serif" fill="#18283c">GPIO5 · J2.3</text><text x="987" y="277" font-family="Arial,Helvetica,sans-serif" fill="#18283c">6  E / Enable</text>
+    <text x="78" y="325" font-family="Arial,Helvetica,sans-serif" fill="#18283c">GPIO7 · J2.4</text><text x="987" y="325" font-family="Arial,Helvetica,sans-serif" fill="#18283c">11  D4</text>
+    <text x="78" y="373" font-family="Arial,Helvetica,sans-serif" fill="#18283c">GPIO12 · J2.7</text><text x="987" y="373" font-family="Arial,Helvetica,sans-serif" fill="#18283c">12  D5</text>
+    <text x="78" y="421" font-family="Arial,Helvetica,sans-serif" fill="#18283c">GPIO33 · J3.4</text><text x="987" y="421" font-family="Arial,Helvetica,sans-serif" fill="#18283c">13  D6</text>
+    <text x="78" y="469" font-family="Arial,Helvetica,sans-serif" fill="#18283c">GPIO35 · J3.3</text><text x="987" y="469" font-family="Arial,Helvetica,sans-serif" fill="#18283c">14  D7</text>
+  </g>
+  <g fill="none" stroke-width="4">
+    <path d="M380 222H960" stroke="#087854" />
+    <path d="M380 270H960" stroke="#2369bb" />
+    <path d="M380 318H960" stroke="#7449b8" />
+    <path d="M380 366H960" stroke="#00808d" />
+    <path d="M380 414H960" stroke="#a23d83" />
+    <path d="M380 462H960" stroke="#426933" />
+  </g>
+  <rect x="447" y="488" width="450" height="38" rx="8" fill="#e5edf8" />
+  <text x="466" y="513" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="16px">6 signals: 3.3V GPIO outputs → LCD inputs *</text>
+
+  <text x="78" y="562" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="20px">VBUS · USB 5V · J3.8</text>
+  <path d="M380 555H960" fill="none" stroke="#d42f3f" stroke-width="5" />
+  <text x="986" y="562" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="20px">2  VDD</text>
+  <path d="M713 555V604H765M884 604H960" fill="none" stroke="#d42f3f" stroke-width="5" />
+  <circle cx="713" cy="555" r="6" fill="#d42f3f" />
+  <rect x="765" y="590" width="119" height="28" fill="#fff4f3" stroke="#d42f3f" stroke-width="3" />
+  <text x="789" y="610" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="17px">220Ω **</text>
+  <text x="986" y="611" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="20px">15  A / LED+</text>
+
+  <text x="78" y="667" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="20px">GND · J3.7</text>
+  <path d="M380 660H960" fill="none" stroke="#465568" stroke-width="5" />
+  <text x="986" y="651" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="20px">1 VSS · 3 VO · 5 RW</text>
+  <text x="986" y="680" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="20px">16 K / LED− → common GND</text>
+  <text x="986" y="720" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="17px">7 D0 · 8 D1 · 9 D2 · 10 D3: unused</text>
+  <text x="66" y="715" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="17px">Inner rows J5 / J4: no wires</text>
+
+  <text x="42" y="803" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="17px">* Verify 3.3V HIGH compatibility at 5V LCD supply; otherwise insert a suitable six-channel level buffer.</text>
+  <text x="42" y="831" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="17px">** Keep the series resistor unless suitable onboard LED current limiting is confirmed. VO → GND gives high contrast.</text>
+
+  <rect x="40" y="864" width="340" height="230" rx="14" fill="#fff" stroke="#a9bacd" stroke-width="2" />
+  <rect x="960" y="864" width="440" height="230" rx="14" fill="#fff" stroke="#a9bacd" stroke-width="2" />
+  <text x="66" y="902" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="23px" font-weight="700">Same ESP32 · outer rows</text>
+  <text x="986" y="902" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="23px" font-weight="700">DHT11 · use printed labels</text>
+  <text x="78" y="948" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="20px">3V3 · J2.8</text>
+  <text x="986" y="948" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="20px">VCC / +</text>
+  <path d="M380 941H960" fill="none" stroke="#bc6200" stroke-width="5" />
+  <text x="78" y="1000" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="20px">GPIO37 · J3.2</text>
+  <text x="986" y="1000" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="20px">S / DATA / OUT</text>
+  <path d="M380 993H960" stroke="#7449b8" fill="none" stroke-width="4" />
+  <path d="M725 941V950M725 981V993" fill="none" stroke="#bc6200" stroke-width="5" />
+  <rect x="715" y="950" width="20" height="31" fill="#fff6e8" stroke="#bc6200" stroke-width="3" />
+  <circle cx="725" cy="941" r="5" fill="#bc6200" />
+  <circle cx="725" cy="993" r="5" fill="#7449b8" />
+  <text x="454" y="1018" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="16px">4.7kΩ–10kΩ pull-up only if absent</text>
+  <text x="78" y="1052" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="20px">GND · J3.7</text>
+  <text x="986" y="1052" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="20px">GND / −</text>
+  <path d="M380 1045H960" fill="none" stroke="#465568" stroke-width="5" />
+  <text x="986" y="1080" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="16px">Physical sensor pin order: NOT confirmed</text>
+
+  <rect x="40" y="1123" width="1360" height="64" rx="10" fill="#fff0e9" stroke="#d48b6a" />
+  <text x="60" y="1149" font-weight="700" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="20px">Battery, charger and rocker switch: DISCONNECTED. USB-C is the only power source.</text>
+  <text x="60" y="1176" font-family="Arial,Helvetica,sans-serif" fill="#18283c" font-size="17px">No GPIO receives 5V. Sensor DATA pull-up goes to 3V3, never VBUS. Inspect wiring before applying power.</text>
+</svg>

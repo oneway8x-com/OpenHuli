@@ -1,0 +1,19 @@
+{
+  "timezone": "Europe/Berlin",
+  "current_units": {
+    "time": "unixtime", "temperature_2m": "°C", "relative_humidity_2m": "%",
+    "weather_code": "wmo code", "wind_speed_10m": "km/h", "is_day": ""
+  },
+  "current": {
+    "time": 1792926000, "interval": 900, "temperature_2m": 12.3,
+    "relative_humidity_2m": 76, "weather_code": 3, "wind_speed_10m": 15.2, "is_day": 1
+  },
+  "daily_units": {
+    "time": "unixtime", "temperature_2m_max": "°C", "temperature_2m_min": "°C",
+    "precipitation_probability_max": "%"
+  },
+  "daily": {
+    "time": [1792879200], "temperature_2m_max": [14.1], "temperature_2m_min": [7.2],
+    "precipitation_probability_max": [35]
+  }
+}
