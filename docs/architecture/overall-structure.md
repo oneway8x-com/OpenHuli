@@ -22,3 +22,8 @@ the existing scoped transport contracts; the [weather station](../../firmware/we
 uses the shared OpenHuli library. Hardware qualification remains separate from cross-builds.
 The pnpm workspace and package scopes retain their scaffold names. See [architecture](architect.md)
 and [the MVP specification](../mvp-spec.md) for current versus intended runtime behavior.
+
+[MicroHuli](../../firmware/MicroHuli/README.md) is the Nano quadruped firmware,
+including its standalone diagnostics and printable hardware sources. Its optional
+OpenHuliSerial connection uses the existing gateway and ping/display contracts;
+robot motion stays local to USB console or infrared control.
