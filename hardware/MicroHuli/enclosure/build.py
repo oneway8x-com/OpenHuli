@@ -134,7 +134,7 @@ def main():
     package(meshes, output / "MicroHuli_cover_plate.3mf")
     if args.previews:
         for name in ("assembly", "inside", "plate"):
-            subprocess.run([openscad, "-o", str(output / f"{name}.png"), "--imgsize=1400,1200", "--colorscheme=Tomorrow", "--camera=160,-190,135,0,0,40", "--viewall", "--autocenter", "--projection=o", "-D", f'part="{name}"', str(ROOT / "cover.scad")], check=True, capture_output=True, timeout=120)
+            subprocess.run([openscad, "--render", "-o", str(output / f"{name}.png"), "--imgsize=1400,1200", "--colorscheme=Tomorrow", "--camera=160,-190,135,0,0,40", "--viewall", "--autocenter", "--projection=o", "-D", f'part="{name}"', str(ROOT / "cover.scad")], check=True, capture_output=True, timeout=120)
     print(f"Exports: {output}")
 
 

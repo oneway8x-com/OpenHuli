@@ -4,13 +4,13 @@ part = "assembly"; // adapter, tub, tray, lid, plate, assembly, inside
 battery = [60, 50, 16];
 shield = [60, 50, 20];
 component_clearance = 1; // Per side around battery holder.
-wall = 2.4;
+wall = 1.6; // Lightweight fit prototype; load-bearing plates remain 2.4 mm.
 outer = [72, 92];
 collar_h = 18;
 flange = 2.4;
 floor_t = 2.4;
 roof_z = 80;
-lid_t = 2.4;
+lid_t = 1.6;
 tray_t = 2.4;
 tray_z = 44.8; // Underside, measured from original cover rim.
 board_gap = 3; // Insulating support pads below board, not connector allowance.
@@ -25,6 +25,9 @@ oled_slot_x = [12, 19];
 oled_slot_z = [47, 72];
 ir_size = [16, 12];
 ir_z = 33;
+honeycomb = true;
+hex_af = 7; // Clear opening across flats.
+hex_web = 1.6; // Nominal material between adjacent hex openings.
 $fn = 48;
 
 tub_z = collar_h + flange;
@@ -40,13 +43,39 @@ assert(battery_z+battery[2]+4 <= tray_z, "Battery removal/wiring gap too small")
 assert(board_z+shield[2]+8 <= roof_z, "Board/header wire clearance too small");
 assert(component_y+max(battery[1], shield[1])/2+6 <= 25, "Rear bay obstructed");
 assert(tray_size[0] < inside_size[0] && tray_size[1] < inside_size[1]);
-assert(wall >= 2 && collar_h == 18, "Preserve original collar cut plane");
+assert(wall >= 1.6 && lid_t >= 1.6 && hex_web >= 1.6, "Prototype walls, lid and webs must be at least 1.6 mm");
+assert(collar_h == 18, "Preserve original collar cut plane");
 
 module rounded(size, r=4) {
     linear_extrude(size[2]) offset(r=r)
         square([size[0]-2*r, size[1]-2*r], center=true);
 }
 module four(xy) { for(x=[-xy[0],xy[0]], y=[-xy[1],xy[1]]) translate([x,y,0]) children(); }
+// Finite hex field clipped to a rectangular panel; its surrounding frame stays solid.
+module hex_panel(size, depth) {
+    intersection() {
+        cube([size[0],size[1],depth],center=true);
+        for(col=[-12:12],row=[-14:14])
+            translate([col*sqrt(3)/2*(hex_af+hex_web),
+                       (row+(col%2==0 ? 0 : 0.5))*(hex_af+hex_web),0])
+                cylinder(r=hex_af/sqrt(3),h=depth+1,center=true,$fn=6);
+    }
+}
+module wall_lightening() {
+    // Side frames and continuous rails/shelf band carry the component mounts.
+    for(side=[-1,1]) translate([side*outer[0]/2,0,51]) rotate([90,0,90])
+        difference() {
+            hex_panel([outer[1]-24,42],wall*3);
+            translate([0,-7.5,0]) cube([outer[1],12,wall*4],center=true);
+            translate([service_y,service_z-51,0]) cube([service_size[0]+6,service_size[1]+6,wall*4],center=true);
+        }
+    // Rear ribs protect the ESP shelf/gusset attachments; front stays solid for OLED/IR.
+    translate([0,outer[1]/2,51]) rotate([90,0,0]) difference() {
+        hex_panel([outer[0]-20,42],wall*3);
+        translate([0,-10,0]) cube([outer[0],7,wall*4],center=true);
+        for(x=[-13,13]) translate([x,-11,0]) cube([10,25,wall*4],center=true);
+    }
+}
 module original_cover() {
     // Isolate cover only; legs and servo chassis remain untouched.
     translate([46.5,-19,31.001]) mirror([0,0,1]) intersection() {
@@ -67,6 +96,7 @@ module adapter_assembled() {
         // Align with tub strap slots so the adapter cannot block the straps.
         for(x=[-32,32],y=[component_y-12,component_y+12])
             translate([x,y,collar_h+flange/2]) cube([2.2,12,flange+1],center=true);
+        if(honeycomb) translate([0,-2,collar_h+flange/2]) cube([44,46,flange+1],center=true);
         // Connector passage from servo cavity to upper electronics, outside holder.
         translate([-10,27,collar_h]) cube([20,8,flange+1]);
     }
@@ -151,6 +181,10 @@ module tub_assembled() {
             translate([0,0,roof_z-9]) cylinder(d=3.4,h=10);
             translate([0,0,roof_z-2.8]) rotate([0,0,30]) cylinder(d=5.8/cos(30),h=3.5,$fn=6);
         }
+        if(honeycomb) {
+            wall_lightening();
+            translate([0,component_y,tub_z+floor_t/2]) hex_panel([44,36],floor_t+1);
+        }
         for(side=[-1,1]) side_port(side);
         // Open optical path: receiver lens immediately behind front wall.
         translate([0,-outer[1]/2,ir_z]) cube([ir_size[0],3*wall,ir_size[1]],center=true);
@@ -171,6 +205,7 @@ module tray_assembled() {
         }
         for(x=[-31.5,31.5],y=[-14,14])
             translate([x,y,tray_t/2]) cube([2,10,tray_t+2],center=true);
+        if(honeycomb) translate([0,0,tray_t/2]) hex_panel([44,32],tray_t+1);
         // Finger grip and wire route at front/back.
         for(y=[-tray_size[1]/2,tray_size[1]/2])
             translate([0,y,-eps]) cylinder(d=14,h=tray_t+1);
@@ -188,6 +223,7 @@ module lid_assembled() {
             }
         }
         four(lid_xy) translate([0,0,roof_z-1]) cylinder(d=3.4,h=lid_t+2);
+        if(honeycomb) translate([0,0,roof_z+lid_t/2]) hex_panel([outer[0]-24,outer[1]-24],lid_t+1);
     }
 }
 module mock_components() {

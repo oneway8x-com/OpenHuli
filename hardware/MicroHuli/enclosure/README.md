@@ -8,7 +8,7 @@ positions or circuit behavior.
 
 ![Assembled cover and component layout](preview.png)
 
-The printed assembly is **72 × 92 × 82.4 mm**, excluding the external OLED,
+The printed assembly is **72 × 92 × 81.6 mm**, excluding the external OLED,
 fastener heads and cables. The existing cover was approximately 55 × 68 × 31 mm.
 The lower **18 mm** of its original, unscaled shell is retained in a chassis
 adapter. Above it, the holder sits below a removable controller tray. The IR
@@ -18,6 +18,26 @@ Colored blocks in the preview are component envelopes; only the battery-holder
 and populated-shield dimensions were supplied by the owner. The OLED, receiver
 and future electronics are illustrative, not measured part models.
 
+## Lightweight prototype
+
+The default variant uses **1.6 mm side/front/rear walls and a 1.6 mm lid**.
+The floor, adapter flange and controller tray stay 2.4 mm thick. Honeycomb
+openings are 7 mm across flats with nominal 1.6 mm webs. The side/rear panels,
+lid, central battery floor and tray are perforated; an internal adapter window
+removes the redundant lower plate beneath the battery floor. Solid frames,
+corner pillars, rail/shelf attachments, OLED/IR mounts and strap routes remain.
+The original lower chassis collar is unscaled and unperforated.
+
+Total solid CAD material is **81.33 cm³**, down from **115.11 cm³** for the first
+cover, a **29.3% reduction**. This is geometry volume, not a measured filament
+weight or print-time saving; slicer walls, infill and supports affect actual PLA
+use. This variant is intended for first fit checks, not impact/strength testing.
+
+In `cover.scad`, `honeycomb=false` closes the patterned openings and adapter
+window while keeping the current thin-wall settings. Wall/lid thickness and
+hex opening/web size are separate parameters. Hex webs and walls must remain
+at least 1.6 mm in this prototype. Rebuild after any changes.
+
 ## Parts and assembly
 
 | Part      | Print envelope, mm | Purpose                                                             |
@@ -25,7 +45,7 @@ and future electronics are illustrative, not measured part models.
 | `adapter` | 72 × 92 × 20.4     | Original lower shell profile plus flange; test on the chassis first |
 | `tub`     | 72 × 92 × 59.6     | Battery pocket, controller rails, IR ties and future-module shelf   |
 | `tray`    | 66 × 56 × 5.4      | Removable shield support with 3 mm insulating pads and tie slots    |
-| `lid`     | 72 × 92 × 4.0      | Removable top, including a 1.6 mm locating skirt                    |
+| `lid`     | 72 × 92 × 3.2      | Removable top, including a 1.6 mm locating skirt                    |
 
 1. Print **only the adapter first**, in the supplied orientation, and try it on
    the existing chassis with power disconnected. Keep the existing retention
@@ -112,11 +132,15 @@ edges, parts not on the bed, and overlapping print-plate bounds. Use `--output D
 Edit `cover.scad` for component sizes, wire clearance, service openings and OLED
 slots; re-export and review the plate arrangement after parameter changes.
 
-Start with 0.2 mm layers, four walls and moderate infill in a suitable material.
+Start with 0.2 mm layers and review the 1.6 mm wall/web toolpaths with your
+nozzle and extrusion width. Additional infill has little effect on the open
+honeycomb panels; do not add solid skins that close the openings. Keep
+moderate infill for the remaining thick supports.
 The adapter prints with its flange on the bed; the tub floor, tray bottom and
 lid top face also lie on the bed in the exports. Use the supplied orientation,
 not the assembled orientation. Rails and rear-shelf gussets are sloped; the IR
-tabs and service-port roofs may need local supports or bridge tuning. Inspect
+tabs, service-port roofs and vertical honeycomb tops may need local supports
+or bridge tuning. Inspect
 those areas in the slicer. No slicing or physical print has been performed.
 
 ## Verification and limits
