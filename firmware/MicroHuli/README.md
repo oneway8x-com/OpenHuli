@@ -244,6 +244,15 @@ pulse range remains **1000–2000 microseconds**; the original ESP32 sketch used
 its servo library's defaults, so matching command angles does not establish
 matching physical leg angles. These endpoints have not been physically checked.
 
+## Larger battery cover
+
+The [replacement cover](../../hardware/MicroHuli/enclosure/README.md) accommodates
+the owner's measured 60 × 50 × 16 mm four-AA holder and 60 × 50 × 20 mm
+Nano/Hailege shield assembly, with an internal IR mount and future ESP-01 bay.
+The original chassis interface remains unscaled; printed fit, connector positions,
+leg clearance and loaded walking still require checking. This enclosure does not
+change the power requirements or make the shield's DC input verified.
+
 ## Larger servo-horn mount
 
 For a leg with extra horn clearance and an enlarged access hole, see the
