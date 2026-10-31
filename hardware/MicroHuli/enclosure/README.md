@@ -28,7 +28,7 @@ removes the redundant lower plate beneath the battery floor. Solid frames,
 corner pillars, rail/shelf attachments, OLED/IR mounts and strap routes remain.
 The original lower chassis collar is unscaled and unperforated.
 
-Total solid CAD material is **81.33 cm³**, down from **115.11 cm³** for the first
+Total solid CAD material is **81.34 cm³**, down from **115.11 cm³** for the first
 cover, a **29.3% reduction**. This is geometry volume, not a measured filament
 weight or print-time saving; slicer walls, infill and supports affect actual PLA
 use. This variant is intended for first fit checks, not impact/strength testing.
@@ -48,11 +48,21 @@ at least 1.6 mm in this prototype. Rebuild after any changes.
 | `lid`     | 72 × 92 × 3.2      | Removable top, including a 1.6 mm locating skirt                    |
 
 1. Print **only the adapter first**, in the supplied orientation, and try it on
-   the existing chassis with power disconnected. Keep the existing retention
-   method. The original lower profile is preserved; printed fit is unverified.
+   the existing chassis with power disconnected. The original lower profile
+   is preserved, but **there is no verified adapter-to-chassis screw or clip
+   connection yet**. This is a fit-check part until that retention is resolved;
+   do not rely on friction to secure the loaded robot.
 2. Join the tub floor to the adapter flange with **four M3 × 8 mm bolts and
-   four M3 nuts**. Nuts are accessible outside the original collar. Confirm
-   actual bolt/head clearances before loading the battery holder.
+   four M3 nuts**. **Use the revised tub and adapter together:** their bottom
+   holes are now 42 × 80 mm apart, centered at X=±21, Y=±40 mm, with 3.6 mm
+   clearance bores. Bolt heads go inside the tub and nuts underneath the
+   adapter. Fit these bolts before installing the battery, tray or electronics.
+   The earlier holes at X=±30, Y=±38 were blocked by the tall lid pillars;
+   those versions must not be used with these instructions.
+   The revised model has a checked 8 mm straight tool/insertion path from the
+   open top and 9 mm clearance below the flange for the nut/socket. Use a slim
+   driver with at least 60 mm reach. Printed
+   tolerances and your actual bolt heads/tool still require a physical check.
 3. Install the loaded holder in its **62 × 52 mm** pocket: 1 mm clearance per
    side around the measured holder. Use nonconductive retaining straps through
    the aligned tub/adapter floor slots. Route its leads through the end gaps;
@@ -77,6 +87,9 @@ at least 1.6 mm in this prototype. Rebuild after any changes.
 8. Seat four standard M3 nuts in the top hex recesses and fit the lid with
    **four M3 × 10 mm bolts**. Recesses are 5.8 mm across flats, 2.8 mm deep;
    check your nuts on a test print. Remove lid and tray to change batteries.
+
+See the [revised bottom-bolt access diagram](fastener-access.png) for the new
+positions and the old pillar obstruction.
 
 The two **24 × 16 mm side service openings** have adjustable Y/Z locations in
 `cover.scad`. They provide access space, not a confirmed USB/DC-jack alignment.
@@ -126,6 +139,14 @@ ignored `exports/`:
 - `MicroHuli_cover_plate.3mf`: four separate parts, oriented on Z=0 and arranged
   over **156 × 196 mm**. This is a geometry 3MF, without printer profiles or G-code.
 - `geometry_report.json` and optional raw CAD preview PNGs.
+
+Before export, `check_fasteners.py` checks independent 3.2 mm shank, 8 mm top
+insertion/tool and 9 mm underside nut/socket envelopes against the actual tub
+and adapter solids at all four revised bottom holes. It can also run alone:
+
+```sh
+python3 hardware/MicroHuli/enclosure/check_fasteners.py
+```
 
 The generator rejects degenerate/disconnected/inverted meshes, non-manifold
 edges, parts not on the bed, and overlapping print-plate bounds. Use `--output DIRECTORY` to export elsewhere.

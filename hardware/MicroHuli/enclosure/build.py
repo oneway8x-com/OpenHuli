@@ -13,6 +13,7 @@ import struct
 import subprocess
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile, ZIP_DEFLATED
+from check_fasteners import main as check_fasteners
 
 ROOT = Path(__file__).resolve().parent
 PARTS = ("adapter", "tub", "tray", "lid")
@@ -119,6 +120,7 @@ def main():
     openscad = shutil.which("openscad")
     if not openscad:
         parser.error("Install OpenSCAD and put openscad on PATH")
+    check_fasteners()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     meshes = {}

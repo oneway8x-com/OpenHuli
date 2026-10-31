@@ -31,6 +31,16 @@ Copy the supplied robot project into OpenHuli, rename it MicroHuli, and adapt it
 - Default total solid model volume: 81,325.45 mm³ versus 115,108.17 mm³ before this change, down 29.35%. Actual sliced filament usage is not measured.
 - All four mesh checks and ten independent assembled-part/component collision checks pass; original collar checks still pass at five heights. Preview generation uses full geometry rendering for the more complex perforated model. Final previews visually inspected; QIDI imports four manifold objects. Final 3MF/ZIP integrity, Python compilation, changed Markdown/local links and diff checks pass. No physical print or slicing, and no application/firmware behavior changes.
 
+## Bottom fastener access fix
+
+- User could not insert the tub's M3 bolts. Reproduced: the old bottom axes (±30, ±38 mm) lie beneath lid-pillar solids; an 8 mm insertion/tool envelope overlaps about 7,149 mm³ of printed material across the four paths. Earlier mesh/component checks did not test fastener insertion.
+- Move both tub and adapter bottom axes to (±21, ±40 mm), with 3.6 mm through holes. Four M3×8 bolts/nuts still join them, but the revised tub and adapter are a matched pair. Check insertion from the open top before adding electronics.
+- Add a standard-library/OpenSCAD regression check for four independent 3.2 mm shank, 8 mm top tool/insertion and 9 mm underside nut/socket envelopes. Match the production tessellation ($fn=48) when importing CAD modules. Run this check in the exporter before generating parts.
+- Correct the guide: original lower shape alone does not provide a verified adapter-to-chassis attachment. Chassis retention remains unresolved and must not be described as a complete fastened assembly.
+
+- Regression demonstrated on the previous revision (fails), then all four revised shank/tool/nut paths pass. Final four-part mesh/bed/plate checks pass, as do ten component/part collision checks and the five-height original collar checks. QIDI imports four manifold objects; Python compile, Markdown/local links, archive integrity and diff checks pass. No runtime/firmware changes and no physical print test.
+- Provide a versioned `MicroHuli_cover_bolt_access_v2.zip` to prevent mixing old tub/adapter files with the revised pair. Add a top-view access diagram showing old holes under pillars and the revised 42 × 80 mm pattern. Update the exploded guide to state unresolved chassis retention explicitly.
+
 ## Verification
 
 - `firmware/MicroHuli/tests/run_host_tests.sh`: five simulations pass, including local controls with/without OLED, connected handshake/ping/display with/without OLED, duplicate and motion isolation, unknown I2C timeout without background retries, and corrupt EEPROM fail-closed behavior.

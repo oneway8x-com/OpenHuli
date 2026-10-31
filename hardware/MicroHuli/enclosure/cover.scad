@@ -35,7 +35,7 @@ battery_z = tub_z + floor_t;
 board_z = tray_z + tray_t + board_gap;
 inside_size = outer - [2*wall, 2*wall];
 lid_xy = [outer[0]/2-5, outer[1]/2-5];
-base_xy = [30, 38];
+base_xy = [21, 40]; // Clear lid pillars, tray rails and front IR/rear shelf supports.
 eps = 0.05;
 assert(battery[0]+2*component_clearance+4 <= inside_size[0], "Battery fence exceeds tub");
 assert(shield[0]+2 <= tray_size[0] && shield[1]+2 <= tray_size[1], "Shield exceeds tray");
@@ -92,7 +92,7 @@ module adapter_assembled() {
             }
             translate([0,0,collar_h]) rounded([outer[0],outer[1],flange]);
         }
-        four(base_xy) translate([0,0,collar_h-1]) cylinder(d=3.4,h=flange+2);
+        four(base_xy) translate([0,0,collar_h-1]) cylinder(d=3.6,h=flange+2);
         // Align with tub strap slots so the adapter cannot block the straps.
         for(x=[-32,32],y=[component_y-12,component_y+12])
             translate([x,y,collar_h+flange/2]) cube([2.2,12,flange+1],center=true);
@@ -172,7 +172,7 @@ module tub_assembled() {
             ir_tabs();
             rear_bay();
         }
-        four(base_xy) translate([0,0,tub_z-1]) cylinder(d=3.4,h=floor_t+2);
+        four(base_xy) translate([0,0,tub_z-1]) cylinder(d=3.6,h=floor_t+2);
         translate([-10,27,tub_z-1]) cube([20,8,floor_t+2]);
         // Battery retaining straps thread through floor outside the holder.
         for(x=[-32,32],y=[component_y-12,component_y+12])
