@@ -1,5 +1,8 @@
 # Rounded MicroHuli body with a raised rim
 
+Superseded: this was a misunderstanding of the requested small roof edge.
+Use the [corrected 50 mm closed-roof body](body-cute-50mm.md).
+
 A separate body-only alternative with softer upper corners and an open top.
 The user confirmed a **50 mm raised rim** above the previous 50 mm body:
 **total outside height is 100 mm**, with the original **55 × 68 mm footprint**.

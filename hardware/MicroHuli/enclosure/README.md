@@ -1,9 +1,10 @@
 # Larger MicroHuli battery cover
 
-For the separate **55 × 68 × 50 mm flat-top body** with a rear USB opening,
-see [the rectangular body alternative](body-50mm.md). The newer
-[rounded, open-top body](body-cute-rim.md) adds the requested 50 mm raised rim
-for a total height of 100 mm and restores an original-style OLED cable slot.
+For the corrected **55 × 68 × 50 mm body with a closed roof and small sloped
+edge**, see [the rounded 50 mm cover](body-cute-50mm.md). It retains an
+original-style OLED cable slot and the rear USB opening. The
+[flat-top version](body-50mm.md) remains a separate alternative; the
+[100 mm raised-rim interpretation](body-cute-rim.md) was rejected by the owner.
 
 A four-part replacement cover for the existing MicroHuli servo chassis. The
 owner measured the loaded four-AA holder as **60 × 50 × 16 mm**, and the Nano
