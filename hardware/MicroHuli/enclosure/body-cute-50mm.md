@@ -1,7 +1,7 @@
 # MicroHuli body with a small sloped roof edge
 
 This is the corrected body requested after the raised-rim interpretation was
-rejected. Outside dimensions are **55 × 70 × 50 mm total**, including the roof.
+rejected. Outside dimensions are **60 × 70 × 50 mm total**, including the roof.
 It has a **closed top**, a small **5 mm sloped shoulder** like the original
 cover, softly rounded upper plan corners, and an open bottom for the chassis.
 
@@ -11,10 +11,10 @@ cover, softly rounded upper plan corners, and an open bottom for the chassis.
   the original robot, the OLED board mounts outside the body. The cable slot
   is retained; the old sloping recess and a verified OLED fastening method are
   not reproduced.
-- Rear USB opening: **10 × 10 mm**, centered, 30–40 mm above the bottom. Its
-  upper edge is **10 mm below the top**. Check actual connector alignment.
+- Rear USB opening: **10 × 10 mm**, centered, 25–35 mm above the bottom. Its
+  upper edge is **15 mm below the top**. Check actual connector alignment.
 - Upper walls and flat roof: **1.6 mm**. Lower collar: 1 mm walls with a nominal
-  **53 × 68 mm cavity for the first 16 mm**. A short transition joins the square
+  **58 × 68 mm cavity for the first 16 mm**. A short transition joins the square
   collar to rounded upper corners. The cavity narrows beneath the roof shoulder.
 - No internal mounts. Check shield, battery, plugs and wires together; nominal
   outside dimensions do not establish electronics clearance or chassis retention.
@@ -24,7 +24,7 @@ cover, softly rounded upper plan corners, and an open bottom for the chassis.
 ```sh
 mkdir -p hardware/MicroHuli/enclosure/exports
 openscad --export-format binstl \
-  -o hardware/MicroHuli/enclosure/exports/MicroHuli_body_70x55x50mm.stl \
+  -o hardware/MicroHuli/enclosure/exports/MicroHuli_body_70x60x50mm_USB15.stl \
   hardware/MicroHuli/enclosure/body-cute-50mm.scad
 ```
 

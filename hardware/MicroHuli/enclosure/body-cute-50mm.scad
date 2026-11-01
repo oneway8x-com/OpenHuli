@@ -1,6 +1,6 @@
 // Corrected body: closed roof with a small sloping edge, not a raised rim.
 // Millimetres; front = -Y, rear = +Y, assembled bottom = Z=0.
-width = 55;
+width = 60;
 depth = 70;
 height = 50;
 bevel = 5;
@@ -10,7 +10,7 @@ base_wall = 1;
 base_band = 16;
 corner_radius = 4;
 usb_size = 10;
-usb_top_offset = 10;
+usb_top_offset = 15;
 oled_slot_width = 20.005;
 oled_slot_height = 3;
 oled_slot_z = 40;
@@ -32,7 +32,7 @@ module body() {
     inner_shrink = inner_top_z-inner_bevel_z;
     difference() {
         union() {
-            // Lower cavity is 53 x 68 x 16 mm after the length increase.
+            // Lower cavity is 58 x 68 x 16 mm with the widened footprint.
             translate([-width/2,-depth/2,0]) cube([width,depth,base_band+wall]);
             translate([0,0,base_band+wall])
                 linear_extrude(height=height-bevel-base_band-wall)

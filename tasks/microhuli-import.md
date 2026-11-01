@@ -82,3 +82,8 @@ Physical Nano/OLED/IR, the connected build's 485-byte runtime memory margin and 
 
 - Increase the corrected closed-roof body length from 68 to 70 mm. Width stays 55 mm, total height 50 mm, roof shoulder 5 mm. OLED and USB opening sizes/heights stay unchanged and follow the front/rear walls. Lower nominal cavity becomes 53 × 68 × 16 mm, adding 2 mm length clearance relative to the prior version; chassis retention remains unverified.
 - Regenerate a distinctly named `MicroHuli_body_70x55x50mm.stl`, update dimension notes and preview. OpenSCAD render/export, independent single-component watertight/winding/topology/dimensions/Z=0 checks and both port corner checks pass; volume is 21,100.16 mm³. Preview inspected; Markdown formatting, local links and diff checks pass. No runtime changes or physical print. Existing Draft PR #54 updated.
+
+## Body width 60 mm and USB offset 15 mm
+
+- User confirmed 60 mm refers to body width, with USB hole still 10 × 10 mm. Set outside dimensions to 60 mm wide × 70 mm long × 50 mm high. Move USB upper edge to 15 mm below the top (assembled Z=25–35 mm). Preserve OLED slot and roof shape. Lower collar cavity is now 58 × 68 × 16 mm; original chassis retention remains unverified with added clearance.
+- Export versioned `MicroHuli_body_70x60x50mm_USB15.stl`, update guide/dimension preview. OpenSCAD render/export, one-component watertight/winding/topology/dimensions/Z=0 checks and both port corner checks pass; volume 22,296.09 mm³. Final preview inspected; Markdown formatting, local links and diff checks pass. No runtime changes or physical print. Existing Draft PR #54 updated.
