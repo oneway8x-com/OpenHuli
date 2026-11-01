@@ -1,5 +1,8 @@
 # Larger MicroHuli battery cover
 
+For the separate **55 × 68 × 50 mm flat-top body** with a rear USB opening,
+see [the rectangular body alternative](body-50mm.md).
+
 A four-part replacement cover for the existing MicroHuli servo chassis. The
 owner measured the loaded four-AA holder as **60 × 50 × 16 mm**, and the Nano
 installed in the Hailege Nano I/O shield as **60 × 50 × 20 mm**. These supersede

@@ -57,3 +57,10 @@ Copy the supplied robot project into OpenHuli, rename it MicroHuli, and adapt it
 ## Remaining work / risks
 
 Physical Nano/OLED/IR, the connected build's 485-byte runtime memory margin and loaded gait require qualification; no hardware uploaded. Cloud motion is unsupported by the current protocol; ping-only liveness can become stale. Draft PR: https://github.com/oneway8x-com/OpenHuli/pull/54 (base `main`, head `codex/microhuli-import`).
+
+## Rectangular 50 mm body alternative
+
+- User requested a separate body-only design, confirmed a flat closed top, and specified 50 mm height with a rear 10 × 10 mm USB opening. Keep the original 55 × 68 mm outside footprint and open bottom; opening upper edge is 10 mm below the top, centered across the back.
+- Add `body-50mm.scad`, illustrated dimensions/print notes and a preview. Walls are 1 mm (53 × 66 mm cavity) and the closed top is 1.6 mm. Export is top-down for printing; existing larger enclosure and original cover are unchanged. No fasteners or electronics mounts are added.
+- OpenSCAD export/render pass. Independent mesh inspection passes: one connected watertight consistently wound part, 55 × 68 × 50 mm, Z=0, expected volume 17,596.80 mm³ and correct rear opening corners. Preview visually checked; Markdown formatting/local links and diff checks pass. No application behavior changes, slicing or physical print.
+- Physical chassis retention, fit and cable alignment remain unverified. This smaller alternative does not inherit the larger enclosure's validated component envelopes; plugs/wires require a layout check. Source is included in existing Draft PR #54: https://github.com/oneway8x-com/OpenHuli/pull/54.
