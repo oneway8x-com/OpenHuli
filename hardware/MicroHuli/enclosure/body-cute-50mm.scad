@@ -1,7 +1,7 @@
 // Corrected body: closed roof with a small sloping edge, not a raised rim.
 // Millimetres; front = -Y, rear = +Y, assembled bottom = Z=0.
 width = 55;
-depth = 68;
+depth = 70;
 height = 50;
 bevel = 5;
 wall = 1.6;
@@ -32,7 +32,7 @@ module body() {
     inner_shrink = inner_top_z-inner_bevel_z;
     difference() {
         union() {
-            // Keep the original nominal lower 53 x 66 x 16 mm cavity.
+            // Lower cavity is 53 x 68 x 16 mm after the length increase.
             translate([-width/2,-depth/2,0]) cube([width,depth,base_band+wall]);
             translate([0,0,base_band+wall])
                 linear_extrude(height=height-bevel-base_band-wall)

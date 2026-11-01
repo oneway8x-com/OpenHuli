@@ -1,6 +1,6 @@
 # Larger MicroHuli battery cover
 
-For the corrected **55 × 68 × 50 mm body with a closed roof and small sloped
+For the corrected **55 × 70 × 50 mm body with a closed roof and small sloped
 edge**, see [the rounded 50 mm cover](body-cute-50mm.md). It retains an
 original-style OLED cable slot and the rear USB opening. The
 [flat-top version](body-50mm.md) remains a separate alternative; the
