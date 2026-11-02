@@ -132,3 +132,37 @@ Physical Nano/OLED/IR, the connected build's 485-byte runtime memory margin and 
 - No slicing, printing or hardware qualification. Board outline, populated
   component/battery/wiring clearance, actual fasteners and printed joint strength
   still require a dry-fit.
+
+## External chassis screws and corrected orientation
+
+- User confirmed the chassis flat plate belongs on top with servo brackets down.
+  V3 previews incorrectly put the brackets inside the shell. Rigidly rotate the
+  original chassis 180 degrees about X in assembly; keep plate-on-bed orientation
+  for the printable chassis export.
+- Replace internal chassis bosses/holes with two external front/rear pairs of
+  integral tabs at Y=±41 mm, 82 mm apart. Body tabs are 4 mm thick, chassis tabs
+  5 mm, with bottom-access M3 nut pockets and top-access M3 × 12 mm screws.
+  Side ribs support the body tabs and leave the driver axis clear.
+- Shell remains 60 × 70 × 50 mm; external tabs add 13 mm at each end, giving a
+  60 × 96 × 50 mm body envelope. Keep the board mounts and 15 × 15 mm rear port.
+  Remove the v3 holes from the original chassis plate; preserve all original
+  chassis material and servo bays. Revised chassis must be reprinted.
+- Reuse branch and draft PR #55. Generate distinctly named M3 v4 artifacts to
+  avoid mixing v3 and v4. Both exported meshes pass the closed/wound/connected,
+  positive-volume, dimensions and bed checks. All 19 independent CAD checks pass,
+  including external bolt/nut/driver access, board supports, ports, lower cavity,
+  plate-up orientation and original chassis/servo-bay preservation.
+- Collision checking excludes the shared contact face by 0.001 mm for CGAL;
+  independent trimesh/manifold checking also confirms zero volumetric overlap at
+  the exact assembled position. Its mesh and clear central lower-cavity checks
+  pass. The lower-cavity CAD probe compares added material against the shell to
+  avoid counting its existing rounded corners as fastener obstructions.
+- Independent CAD renders use unique temporary files and at most four parallel
+  processes. Python compilation, changed Markdown formatting, guide links and
+  diff checks pass. All six final preview views were visually reviewed; the
+  18-file `exports/MicroHuli_M3_v4.zip` passes archive integrity checks and includes
+  the matched STL files, source, assembly guide, previews and geometry report.
+  Draft [PR #55](https://github.com/oneway8x-com/OpenHuli/pull/55) is updated to
+  describe the final external-tab design and its physical qualification limits.
+- Physical printing, joint strength, fastener fit and populated component/leg
+  clearance remain unqualified. No slicing or application/firmware changes.
