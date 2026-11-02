@@ -133,3 +133,9 @@ The original Corely AI copyright notice is preserved. Third-party dependencies r
 
 For hardware-free paced voice input, telemetry and command fault scenarios, see the
 [device simulator guide](docs/guides/DEVICE_SIMULATOR.md). Mock and paid live-provider modes are explicit.
+
+### MicroHuli robot
+
+[MicroHuli](firmware/MicroHuli/README.md) is the four-servo Arduino Nano robot
+with local USB/infrared controls, OLED eyes, printable parts and an optional
+OpenHuliSerial ping/display connection. Cloud text never triggers movement.

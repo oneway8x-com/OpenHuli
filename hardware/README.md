@@ -12,3 +12,5 @@ and useful small reference images. Generate CAD/print/PDF exports locally; avoid
 build output, private configuration and raw runtime logs. Record actual verification in task diaries.
 
 The first imported project is the [weather station](weather-station/README.md).
+
+[MicroHuli](MicroHuli/README.md) includes the enlarged four-AA robot cover and future ESP-01 bay.
