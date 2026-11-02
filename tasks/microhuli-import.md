@@ -66,7 +66,7 @@ Copy the supplied robot project into OpenHuli, rename it MicroHuli, and adapt it
 
 ## Remaining work / risks
 
-Physical Nano/OLED/IR, the connected build's 485-byte runtime memory margin and loaded gait require qualification; no hardware uploaded. Cloud motion is unsupported by the current protocol; ping-only liveness can become stale. Draft PR: https://github.com/oneway8x-com/OpenHuli/pull/54 (base `main`, head `codex/microhuli-import`).
+Physical Nano/OLED/IR, the connected build's 485-byte runtime memory margin and loaded gait require qualification; no hardware uploaded. Cloud motion is unsupported by the current protocol; ping-only liveness can become stale. Original import merged in [PR #54](https://github.com/oneway8x-com/OpenHuli/pull/54). The M3 enclosure follow-up below still needs physical printing and fit checks.
 
 ## Rectangular 50 mm body alternative
 
@@ -97,3 +97,148 @@ Physical Nano/OLED/IR, the connected build's 485-byte runtime memory margin and 
 
 - User confirmed 60 mm refers to body width, with USB hole still 10 × 10 mm. Set outside dimensions to 60 mm wide × 70 mm long × 50 mm high. Move USB upper edge to 15 mm below the top (assembled Z=25–35 mm). Preserve OLED slot and roof shape. Lower collar cavity is now 58 × 68 × 16 mm; original chassis retention remains unverified with added clearance.
 - Export versioned `MicroHuli_body_70x60x50mm_USB15.stl`, update guide/dimension preview. OpenSCAD render/export, one-component watertight/winding/topology/dimensions/Z=0 checks and both port corner checks pass; volume 22,296.09 mm³. Final preview inspected; Markdown formatting, local links and diff checks pass. No runtime changes or physical print. Existing Draft PR #54 updated.
+
+## M3 body/chassis and board mounting
+
+- Follow-up on the merged import, without a new issue. Base: current `main`;
+  branch: `codex/microhuli-m3-mounts`. Preserve the 60 × 70 × 50 mm body.
+- Owner confirmed the rear opening is 15 × 15 mm and the board has four mounting
+  holes on a 50 × 50 mm square. Retain the rear opening's upper edge 15 mm below
+  the roof. Board outline and populated component clearance are not established.
+- Add two front/rear chassis axes 58 mm apart, reinforced body nut pockets and
+  matching 3.4 mm holes in a chassis extracted from the original STL. Preserve
+  the original chassis outline and servo brackets. Use M3 × 12 mm bolts below.
+- Add four 8 mm diameter roof standoffs with through holes and flat outer head lands;
+  PCB contact at Z=40 mm. Nominal M3 × 16 mm roof bolts, washers and loose nuts
+  assume approximately 1.6 mm board thickness and require a hardware dry-fit.
+- Add a standard-library/OpenSCAD exporter and independent geometry/access
+  checks. Exported meshes and reports remain ignored; source and reference
+  previews are committed.
+- Geometry checks found 0.3514 mm³ of board washer/side-wall overlap. Add local
+  7.4 mm diameter relief below each board post, retaining 1.3 mm outer wall.
+- `python hardware/MicroHuli/enclosure/build_body.py --previews`: both meshes
+  pass closure, winding, connectivity, positive-volume, dimensions and bed checks;
+  all 17 independent mating/fastener/support/port/chassis-preservation checks pass.
+  Independent trimesh checks also pass for both exported meshes.
+- Python compilation, changed Markdown formatting and diff whitespace checks
+  pass. No application or firmware behavior changed; runtime suites are not
+  applicable. Final front/rear, inside, cutaway, assembled and exploded previews
+  visually reviewed; local guide links and the 18-file ZIP integrity check pass.
+  Matched STL files, editable source, guide, previews and report are packaged in
+  ignored `exports/MicroHuli_M3_v3.zip`.
+- Draft [PR #55](https://github.com/oneway8x-com/OpenHuli/pull/55), base `main`,
+  head `codex/microhuli-m3-mounts`, is ready for design review and physical fit
+  qualification. No issue was supplied and no issue closure is claimed.
+- No slicing, printing or hardware qualification. Board outline, populated
+  component/battery/wiring clearance, actual fasteners and printed joint strength
+  still require a dry-fit.
+
+## External chassis screws and corrected orientation
+
+- User confirmed the chassis flat plate belongs on top with servo brackets down.
+  V3 previews incorrectly put the brackets inside the shell. Rigidly rotate the
+  original chassis 180 degrees about X in assembly; keep plate-on-bed orientation
+  for the printable chassis export.
+- Replace internal chassis bosses/holes with two external front/rear pairs of
+  integral tabs at Y=±41 mm, 82 mm apart. Body tabs are 4 mm thick, chassis tabs
+  5 mm, with bottom-access M3 nut pockets and top-access M3 × 12 mm screws.
+  Side ribs support the body tabs and leave the driver axis clear.
+- Shell remains 60 × 70 × 50 mm; external tabs add 13 mm at each end, giving a
+  60 × 96 × 50 mm body envelope. Keep the board mounts and 15 × 15 mm rear port.
+  Remove the v3 holes from the original chassis plate; preserve all original
+  chassis material and servo bays. Revised chassis must be reprinted.
+- Reuse branch and draft PR #55. Generate distinctly named M3 v4 artifacts to
+  avoid mixing v3 and v4. Both exported meshes pass the closed/wound/connected,
+  positive-volume, dimensions and bed checks. All 19 independent CAD checks pass,
+  including external bolt/nut/driver access, board supports, ports, lower cavity,
+  plate-up orientation and original chassis/servo-bay preservation.
+- Collision checking excludes the shared contact face by 0.001 mm for CGAL;
+  independent trimesh/manifold checking also confirms zero volumetric overlap at
+  the exact assembled position. Its mesh and clear central lower-cavity checks
+  pass. The lower-cavity CAD probe compares added material against the shell to
+  avoid counting its existing rounded corners as fastener obstructions.
+- Independent CAD renders use unique temporary files and at most four parallel
+  processes. Python compilation, changed Markdown formatting, guide links and
+  diff checks pass. All six final preview views were visually reviewed; the
+  18-file `exports/MicroHuli_M3_v4.zip` passes archive integrity checks and includes
+  the matched STL files, source, assembly guide, previews and geometry report.
+  Draft [PR #55](https://github.com/oneway8x-com/OpenHuli/pull/55) is updated to
+  describe the final external-tab design and its physical qualification limits.
+- Physical printing, joint strength, fastener fit and populated component/leg
+  clearance remain unqualified. No slicing or application/firmware changes.
+
+## Raise board above OLED wiring
+
+- User wants the OLED wire immediately below the development board. The existing
+  cable slot spans Z=40–43 mm; raise the board contact plane from Z=40 to Z=45 mm.
+  Roof holders become 5 mm long from the outside roof top, rather than 10 mm.
+  With the assumed 1.6 mm PCB, its underside sits at Z=43.4 mm, 0.4 mm above the
+  slot. This leaves 3.4 mm between the PCB top and main roof underside.
+- Use M3 × 12 mm roof bolts with suitable nuts/washers and a dry-fit. Preserve
+  the board's 50 × 50 mm hole pattern, external chassis tabs and all ports.
+  The chassis geometry is unchanged from v4; an existing v4 print can be reused.
+- Add a PCB/slot height assertion, move independent support/access probes to the
+  new board height, and check a central printed-plastic wire passage below it.
+  Generate v5 artifacts and update draft PR #55.
+- `python hardware/MicroHuli/enclosure/build_body.py --previews` passes both mesh
+  checks and all 20 geometry/access tests. Independent trimesh/manifold checks
+  pass for both meshes, exact assembly overlap and the central lower cavity.
+  V4/v5 chassis differences have zero volume in both directions, confirming reuse.
+- Final CAD views and the PCB/wire height diagram were visually reviewed. Python
+  compilation, changed Markdown formatting, local guide links, diff checks and
+  the 19-file `exports/MicroHuli_M3_v5.zip` archive integrity check pass. Source,
+  matched STL files, guide, report and previews are included in that package.
+- PCB outline, component placement, cable/connector dimensions, solder clearance
+  and actual printed fit remain unmeasured. No slicing or firmware changes.
+
+## Side tabs and 12 mm roof holders
+
+- User requested moving the two external body/chassis fasteners to the other
+  sides; move the axes to X=±36 mm, Y=0, 72 mm apart. Tabs extend 13 mm beyond
+  each side, giving an 86 × 70 × 50 mm body envelope. Revised chassis envelope
+  is 86 × 66 × 15.996 mm. Both matched parts must be reprinted.
+- Keep the chassis plate up and brackets down. Preserve all original chassis
+  material and keep tab additions outside a 40 × 66 mm region around its measured
+  printed servo brackets. Actual servo bodies, horns and moving legs are not
+  modeled; side-tab clearance through their full travel needs qualification.
+- User then explicitly requested roof holders 12 mm below the outside top,
+  superseding the 5 mm height. Board contact is Z=38 mm; a nominal 1.6 mm PCB
+  underside is Z=36.4 mm. Nominal roof hardware becomes M3 × 18 mm with suitable
+  washers/nuts and a dry-fit. The original OLED cable slot is above this board;
+  the current slot height is retained.
+- Researched OLED mounts at the user's request. SH1106 identifies the controller,
+  not the PCB's mounting geometry. Recommend a removable slotted adapter with
+  small through bolts and nylon spacers; actual module hole size/pitch remains
+  unidentified. No fixed OLED mounting pattern has been added to the model.
+- Owner requested a dimension visualization and resolved the unit ambiguity by
+  confirming **12 mm below the roof top**. No 120 mm geometry was applied. The
+  retained OLED slot is 7–10 mm below the roof top, so its cable enters above
+  the board, 2 mm above the PCB contact plane.
+- Reuse branch and draft PR #55. The final v6 exporter passes both closed,
+  consistently wound, connected positive-volume mesh checks and all 20 CAD
+  access/clearance/preservation checks with the side tabs and 12 mm holders.
+  Independent trimesh/manifold checks confirm both meshes, exact zero assembly
+  overlap and the clear central lower cavity. All six CAD views and the corrected
+  12 mm height diagram were visually reviewed.
+- Python compilation, changed Markdown formatting, guide links, diff review and
+  the 19-file `exports/MicroHuli_M3_v6.zip` integrity check pass. The package holds
+  matched STL files, editable source, guide, diagram, previews and geometry report.
+  Update draft [PR #55](https://github.com/oneway8x-com/OpenHuli/pull/55) with this
+  final side-tab/12 mm design. No slicing, printing or firmware/application changes.
+
+## Rear opening 12 mm below roof
+
+- Owner clarified 1.2 cm: move the rear opening's upper edge from 15 mm to 12 mm
+  below the outside roof top. Preserve its 15 × 15 mm size; assembled opening is
+  now Z=23–38 mm, up 3 mm. Its upper edge aligns with the Z=38 mm PCB contact plane.
+- Keep the 12 mm board holders, OLED cable slot and left/right chassis tabs.
+  The v6 chassis geometry is unchanged and reusable. Generate v7 body/artifacts;
+  adjust the independent rear-port probe to catch a stale opening position.
+- `python hardware/MicroHuli/enclosure/build_body.py --previews` passes both mesh
+  checks and all 20 CAD checks. Independent trimesh/manifold checks confirm the
+  meshes, exact assembly clearance and matching v6/v7 chassis geometry.
+- All final CAD views were visually reviewed. Python compilation, Markdown
+  formatting, guide links, diff review and the 19-file `exports/MicroHuli_M3_v7.zip`
+  integrity check pass. Update draft [PR #55](https://github.com/oneway8x-com/OpenHuli/pull/55).
+  Physical connector alignment, printing and fit remain unverified; no slicing
+  or application/firmware changes.

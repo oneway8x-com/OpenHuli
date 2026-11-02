@@ -2,7 +2,12 @@
 
 For the corrected **60 × 70 × 50 mm body with a closed roof and small sloped
 edge**, see [the rounded 50 mm cover](body-cute-50mm.md). It retains an
-original-style OLED cable slot and the rear USB opening. The
+original-style OLED cable slot. Its M3 v7 revision has a 15 × 15 mm rear opening,
+external left/right chassis screw tabs and four roof board mounts on a 50 × 50 mm
+pattern. The 12 mm roof holders place the PCB top 2 mm below the OLED cable slot.
+The chassis plate faces up with servo brackets down. Tabs increase the
+total body width to 86 mm; the shell remains 60 mm wide. Use its matched
+body/chassis exports and assembly instructions. The
 [flat-top version](body-50mm.md) remains a separate alternative; the
 [100 mm raised-rim interpretation](body-cute-rim.md) was rejected by the owner.
 
