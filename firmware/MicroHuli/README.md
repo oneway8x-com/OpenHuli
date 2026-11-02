@@ -269,6 +269,9 @@ and speed benefit still need physical testing.
 
 ## Standalone test sketches
 
+- [Random OLED eyes test](firmware/oled_eyes_test/README.md): SH1106 128×64 at
+  0x3C, automatic random expressions/blinks, USB diagnostics, servo signals LOW.
+
 - [KY-022 infrared receiver test](firmware/ky022_test/README.md): D2 signal,
   prints ELEGOO remote button codes at 115200 baud; no servo pulses or OLED.
 - [Front-left test](firmware/front_left_test/front_left_test.ino): D3 only,

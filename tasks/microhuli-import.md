@@ -41,6 +41,16 @@ Copy the supplied robot project into OpenHuli, rename it MicroHuli, and adapt it
 - Regression demonstrated on the previous revision (fails), then all four revised shank/tool/nut paths pass. Final four-part mesh/bed/plate checks pass, as do ten component/part collision checks and the five-height original collar checks. QIDI imports four manifold objects; Python compile, Markdown/local links, archive integrity and diff checks pass. No runtime/firmware changes and no physical print test.
 - Provide a versioned `MicroHuli_cover_bolt_access_v2.zip` to prevent mixing old tub/adapter files with the revised pair. Add a top-view access diagram showing old holes under pillars and the revised 42 × 80 mm pattern. Update the exploded guide to state unresolved chassis retention explicitly.
 
+## Standalone random OLED diagnostic
+
+- User requested a test that randomly changes OLED eyes after attaching the display. Add a separate Nano sketch with five nonrepeating random expressions every 2.5 seconds, blinking/gaze and 115200-baud diagnostics.
+- Use the existing SH1106 128×64 0x3C page-buffer driver, A4/A5, and a frozen frame across pages. Probe display presence at startup. No Servo/IR/network code; D3/D5/D6/D7 are held LOW.
+- User confirmed the test hardware is Nano + OLED on USB only, with batteries and servos disconnected. The USB serial port was rediscovered; do not assume the old address still applies. Diagnostic upload replaces the robot firmware; main source remains available to restore it.
+- Host coverage added for the actual diagnostic with present/absent OLED, all five expressions, timing, bounded gaze, frame stability and LOW servo signals.
+- All seven MicroHuli host simulations pass; the root script test passes with the additional timing assertions. `pnpm typecheck`, `pnpm test` (39 Vitest files / 380 tests plus script checks), Prisma validation, architecture check and production build pass. Targeted ESLint, Markdown formatting/local links and diff checks pass.
+- Nano diagnostic cross-build passes: 14,158 bytes flash / 986 bytes static RAM. Upload with verification succeeded on isolated USB-only hardware. Serial readback reported `OLED ready` and all five expression names; actual screen appearance still requires user observation.
+- User then explicitly requested the full firmware. Compiled the main standalone Nano sketch (22,474 bytes flash / 1,299 bytes static RAM), uploaded with verification, and observed `MICROHULI_NANO ready ... idle` and its full command list. No movement commands sent. Full-firmware startup reported `OLED absent at 0x3C` despite the earlier diagnostic acknowledgment; record this as an unresolved display observation, not a passing full-display test. Main firmware is restored; the diagnostic remains a separate sketch in the repository.
+
 ## Verification
 
 - `firmware/MicroHuli/tests/run_host_tests.sh`: five simulations pass, including local controls with/without OLED, connected handshake/ping/display with/without OLED, duplicate and motion isolation, unknown I2C timeout without background retries, and corrupt EEPROM fail-closed behavior.

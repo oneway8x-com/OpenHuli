@@ -19,3 +19,8 @@ repo_dir=$(CDPATH= cd -- "$test_dir/../../.." && pwd)
 "$build_dir/connected_host_test"
 "$build_dir/connected_host_test" oled-connected
 "$build_dir/connected_host_test" oled-connected corrupt-journal
+
+"${CXX:-c++}" -std=c++11 -Wall -Wextra -Werror -I"$test_dir/stubs" \
+  "$test_dir/oled_eyes_host_test.cpp" -o "$build_dir/oled_eyes_host_test"
+"$build_dir/oled_eyes_host_test"
+"$build_dir/oled_eyes_host_test" oled-connected

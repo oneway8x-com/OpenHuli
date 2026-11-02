@@ -11,5 +11,5 @@ test("MicroHuli local controls and OpenHuliSerial integration", () => {
       timeout: 60000,
     },
   );
-  assert.equal(output.match(/PASS/g)?.length, 5);
+  assert.equal(output.match(/PASS/g)?.length, 7);
 });
