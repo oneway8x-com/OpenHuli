@@ -79,46 +79,49 @@ def check_assembly(openscad):
         intersection("assembled body/chassis clearance (0.001 mm face tolerance)",
                      "body();", "translate([0,0,-0.001]) chassis();")
         # Independently specified axes catch misplaced holes and obstructions.
-        for y in (-41, 41):
-            intersection(f"chassis bolt {y}: shank/nut/tool access",
+        for x in (-36, 36):
+            intersection(f"chassis bolt {x}: shank/nut/tool access",
                          "union() { body(); chassis(); }", f'''union() {{
-                translate([0,{y},-6]) cylinder(d=3.2,h=11);
-                translate([0,{y},-20]) cylinder(d=5.5/cos(30),h=17.5,$fn=6);
-                translate([0,{y},4.1]) cylinder(d=8,h=30);
+                translate([{x},0,-6]) cylinder(d=3.2,h=11);
+                translate([{x},0,-20]) cylinder(d=5.5/cos(30),h=17.5,$fn=6);
+                translate([{x},0,4.1]) cylinder(d=8,h=30);
             }}''')
-            intersection(f"external tab support at bolt {y}", "body();", f'''difference() {{
-                translate([0,{y},0.1]) cylinder(d=10,h=0.4);
-                translate([0,{y},0]) cylinder(d=4,h=1);
+            intersection(f"external tab support at bolt {x}", "body();", f'''difference() {{
+                translate([{x},0,0.1]) cylinder(d=10,h=0.4);
+                translate([{x},0,0]) cylinder(d=4,h=1);
             }}''', 26.3, 26.4)
         for x in (-25, 25):
             for y in (-25, 25):
                 intersection(f"board bolt {x},{y}: shank/head/nut access", "body();", f'''union() {{
-                    translate([{x},{y},44.9]) cylinder(d=3.2,h=7);
+                    translate([{x},{y},37.9]) cylinder(d=3.2,h=14);
                     translate([{x},{y},50.01]) cylinder(d=7,h=15);
-                    translate([{x},{y},40]) cylinder(d=7,h=3.3);
+                    translate([{x},{y},33]) cylinder(d=7,h=3.3);
                 }}''')
                 # Support exists at the PCB contact plane, not just at the roof.
                 intersection(f"board support {x},{y}", "body();", f'''difference() {{
-                    translate([{x},{y},45.1]) cylinder(d=7,h=0.4);
-                    translate([{x},{y},45]) cylinder(d=4,h=1);
+                    translate([{x},{y},38.1]) cylinder(d=7,h=0.4);
+                    translate([{x},{y},38]) cylinder(d=4,h=1);
                 }}''', 10.3, 10.4)
         intersection("rear 15 x 15 opening", "body();",
                      "translate([-7.49,33,20.01]) cube([14.98,3,14.98]);")
         intersection("front OLED slot", "body();",
                      "translate([-9.99,-36,40.01]) cube([19.98,3,2.98]);")
-        intersection("OLED wire passage below raised board", "body();",
+        intersection("existing OLED cable passage above lowered board", "body();",
                      "translate([-4,-36,41]) cube([8,36,1.5]);")
         # Compare added material against the shell so its rounded corners are
         # not incorrectly classified as internal fastener obstructions.
         intersection("lower body cavity clear of chassis mounts", "difference() { body(); shell(); }",
-                     "translate([-29,-33.99,0.01]) cube([58,67.98,19.9]);")
+                     "translate([-28.99,-33.99,0.01]) cube([57.98,67.98,19.9]);")
         intersection("chassis entirely below the plate plane", "chassis();",
                      "translate([-50,-50,0.01]) cube([100,100,30]);")
         intersection("no original chassis cuts", "rotate([180,0,0]) original_chassis();",
                      "difference() { cube([120,120,120],center=true); chassis(); }")
-        intersection("no added material in servo bays", '''difference() {
+        # Original brackets occupy approximately X=-17.5..17.7, Y=-32..32.
+        # Keep additions outside a larger bracket region; real moving legs are
+        # not modeled by this check and still need physical qualification.
+        intersection("no added material around original servo brackets", '''difference() {
             chassis(); rotate([180,0,0]) original_chassis();
-        }''', "translate([-27,-30.9,-20]) cube([54,61.8,19.9]);")
+        }''', "translate([-20,-33,-20]) cube([40,66,19.9]);")
         # Isolate the independent CAD renders and allow at most four processes
         # at once to keep verification time and memory use bounded.
         with ThreadPoolExecutor(max_workers=4) as pool:
@@ -140,16 +143,16 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     reports = {}
     for name in ("body", "chassis"):
-        path = output / f"MicroHuli_{name}_M3_v5.stl"
+        path = output / f"MicroHuli_{name}_M3_v6.stl"
         render(openscad, SOURCE, path, "--export-format", "binstl", "-D", f'part="{name}"')
         reports[name] = mesh(path)[2]
-        expected = [60, 96, 50] if name == "body" else [53, 96, 15.996]
+        expected = [86, 70, 50] if name == "body" else [86, 66, 15.996]
         if any(not math.isclose(a, b, abs_tol=0.01)
                for a, b in zip(reports[name]["size_mm"], expected)):
             raise ValueError(f"Unexpected {name} dimensions: {reports[name]}")
         print(f"PASS {name}: {reports[name]}")
     checks = check_assembly(openscad)
-    (output / "body_M3_v5_report.json").write_text(json.dumps({
+    (output / "body_M3_v6_report.json").write_text(json.dumps({
         "parts": reports, "checks": checks,
         "qualification": "CAD geometry only; no slicing or physical qualification",
     }, indent=2) + "\n", encoding="utf-8")
@@ -160,7 +163,7 @@ def main():
             ("exploded", "120,-170,125,0,0,35"),
             ("body", "110,160,-100,0,0,25"),
         ):
-            render(openscad, SOURCE, output / f"body_M3_v5_{name}.png",
+            render(openscad, SOURCE, output / f"body_M3_v6_{name}.png",
                    "--render", "--imgsize=1200,1000", "--colorscheme=Tomorrow",
                    f"--camera={camera}", "--viewall", "--autocenter", "--projection=o",
                    "-D", f'part="{name}"', "-D", "print_orientation=false")

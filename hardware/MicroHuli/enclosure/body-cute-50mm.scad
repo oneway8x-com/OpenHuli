@@ -17,24 +17,24 @@ oled_slot_height = 3;
 oled_slot_z = 40;
 print_orientation = true;
 m3_clearance = 3.4;
-chassis_hole_y = 41; // External front/rear axes, 82 mm apart.
+chassis_hole_x = 36; // External left/right axes, 72 mm apart.
 tab_d = 14;
 body_tab_t = 4;
 chassis_tab_t = 5;
 chassis_nut_roof = -2.4;
 nut_af = 5.8; // Clearance pocket for an ordinary 5.5 mm AF M3 hex nut.
 board_pitch = [50, 50]; // Owner-confirmed four-hole square, centre to centre.
-board_mount_z = 45; // Five mm below outer roof; PCB top contacts the post ends.
-board_pcb_t = 1.6; // Assumed PCB thickness for the OLED wire-height check.
+board_drop_from_roof = 12; // Measured from the outside roof top.
+board_mount_z = height-board_drop_from_roof; // PCB top contacts the post ends.
 board_post_d = 8;
 $fn = 64;
 
 assert(board_pitch[0]/2+board_post_d/2 <= width/2);
 assert(board_pitch[1]/2+board_post_d/2 <= depth/2);
-assert(chassis_hole_y-tab_d/2 >= depth/2-base_wall);
+assert(chassis_hole_x-tab_d/2 >= width/2-base_wall);
 assert(chassis_tab_t+chassis_nut_roof >= 2.5);
-assert(board_mount_z-board_pcb_t > oled_slot_z+oled_slot_height,
-       "PCB underside must be above the OLED cable slot");
+assert(board_mount_z > 0 && board_mount_z < height-top_thickness,
+       "PCB contact plane must be below the roof and above the body rim");
 
 module rounded_rectangle(w,d,r) {
     offset(r=r) square([w-2*r,d-2*r],center=true);
@@ -81,23 +81,23 @@ module board_axes() {
 }
 
 module chassis_axes() {
-    for(side=[-1,1]) translate([0,side*chassis_hole_y,0]) children();
+    for(side=[-1,1]) translate([side*chassis_hole_x,0,0]) children();
 }
 
-module tab_plate(anchor_y,z,h) {
+module tab_plate(anchor_x,z,h) {
     hull() {
-        translate([-tab_d/2,anchor_y,z]) cube([tab_d,1,h]);
-        translate([0,chassis_hole_y,z]) cylinder(d=tab_d,h=h);
+        translate([anchor_x,-tab_d/2,z]) cube([1,tab_d,h]);
+        translate([chassis_hole_x,0,z]) cylinder(d=tab_d,h=h);
     }
 }
 
 module body_tabs() {
-    for(side=[-1,1]) scale([1,side,1]) {
-        tab_plate(depth/2-base_wall,0,body_tab_t);
+    for(side=[-1,1]) scale([side,1,1]) {
+        tab_plate(width/2-base_wall,0,body_tab_t);
         // External side ribs support roof-down printing and leave the tool axis clear.
-        for(x=[-7,5]) hull() {
-            translate([x,depth/2-base_wall,body_tab_t-1]) cube([2,14,1]);
-            translate([x,depth/2-base_wall,17]) cube([2,1,0.1]);
+        for(y=[-7,5]) hull() {
+            translate([width/2-base_wall,y,body_tab_t-1]) cube([14,2,1]);
+            translate([width/2-base_wall,y,17]) cube([1,2,0.1]);
         }
     }
 }
@@ -138,8 +138,8 @@ module chassis() {
         union() {
             // Rigidly turn the original part over: plate up, servo brackets down.
             rotate([180,0,0]) original_chassis();
-            for(side=[-1,1]) scale([1,side,1])
-                tab_plate(31,-chassis_tab_t,chassis_tab_t);
+            for(side=[-1,1]) scale([side,1,1])
+                tab_plate(24.5,-chassis_tab_t,chassis_tab_t);
         }
         chassis_axes() {
             translate([0,0,-chassis_tab_t-1]) cylinder(d=m3_clearance,h=chassis_tab_t+2);

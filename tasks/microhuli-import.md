@@ -190,3 +190,38 @@ Physical Nano/OLED/IR, the connected build's 485-byte runtime memory margin and 
   matched STL files, guide, report and previews are included in that package.
 - PCB outline, component placement, cable/connector dimensions, solder clearance
   and actual printed fit remain unmeasured. No slicing or firmware changes.
+
+## Side tabs and 12 mm roof holders
+
+- User requested moving the two external body/chassis fasteners to the other
+  sides; move the axes to X=±36 mm, Y=0, 72 mm apart. Tabs extend 13 mm beyond
+  each side, giving an 86 × 70 × 50 mm body envelope. Revised chassis envelope
+  is 86 × 66 × 15.996 mm. Both matched parts must be reprinted.
+- Keep the chassis plate up and brackets down. Preserve all original chassis
+  material and keep tab additions outside a 40 × 66 mm region around its measured
+  printed servo brackets. Actual servo bodies, horns and moving legs are not
+  modeled; side-tab clearance through their full travel needs qualification.
+- User then explicitly requested roof holders 12 mm below the outside top,
+  superseding the 5 mm height. Board contact is Z=38 mm; a nominal 1.6 mm PCB
+  underside is Z=36.4 mm. Nominal roof hardware becomes M3 × 18 mm with suitable
+  washers/nuts and a dry-fit. The original OLED cable slot is above this board;
+  the current slot height is retained.
+- Researched OLED mounts at the user's request. SH1106 identifies the controller,
+  not the PCB's mounting geometry. Recommend a removable slotted adapter with
+  small through bolts and nylon spacers; actual module hole size/pitch remains
+  unidentified. No fixed OLED mounting pattern has been added to the model.
+- Owner requested a dimension visualization and resolved the unit ambiguity by
+  confirming **12 mm below the roof top**. No 120 mm geometry was applied. The
+  retained OLED slot is 7–10 mm below the roof top, so its cable enters above
+  the board, 2 mm above the PCB contact plane.
+- Reuse branch and draft PR #55. The final v6 exporter passes both closed,
+  consistently wound, connected positive-volume mesh checks and all 20 CAD
+  access/clearance/preservation checks with the side tabs and 12 mm holders.
+  Independent trimesh/manifold checks confirm both meshes, exact zero assembly
+  overlap and the clear central lower cavity. All six CAD views and the corrected
+  12 mm height diagram were visually reviewed.
+- Python compilation, changed Markdown formatting, guide links, diff review and
+  the 19-file `exports/MicroHuli_M3_v6.zip` integrity check pass. The package holds
+  matched STL files, editable source, guide, diagram, previews and geometry report.
+  Update draft [PR #55](https://github.com/oneway8x-com/OpenHuli/pull/55) with this
+  final side-tab/12 mm design. No slicing, printing or firmware/application changes.
