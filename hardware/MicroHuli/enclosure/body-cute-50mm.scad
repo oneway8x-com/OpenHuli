@@ -24,7 +24,8 @@ chassis_tab_t = 5;
 chassis_nut_roof = -2.4;
 nut_af = 5.8; // Clearance pocket for an ordinary 5.5 mm AF M3 hex nut.
 board_pitch = [50, 50]; // Owner-confirmed four-hole square, centre to centre.
-board_mount_z = 40; // PCB top contacts the four standoff ends.
+board_mount_z = 45; // Five mm below outer roof; PCB top contacts the post ends.
+board_pcb_t = 1.6; // Assumed PCB thickness for the OLED wire-height check.
 board_post_d = 8;
 $fn = 64;
 
@@ -32,6 +33,8 @@ assert(board_pitch[0]/2+board_post_d/2 <= width/2);
 assert(board_pitch[1]/2+board_post_d/2 <= depth/2);
 assert(chassis_hole_y-tab_d/2 >= depth/2-base_wall);
 assert(chassis_tab_t+chassis_nut_roof >= 2.5);
+assert(board_mount_z-board_pcb_t > oled_slot_z+oled_slot_height,
+       "PCB underside must be above the OLED cable slot");
 
 module rounded_rectangle(w,d,r) {
     offset(r=r) square([w-2*r,d-2*r],center=true);

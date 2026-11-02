@@ -166,3 +166,27 @@ Physical Nano/OLED/IR, the connected build's 485-byte runtime memory margin and 
   describe the final external-tab design and its physical qualification limits.
 - Physical printing, joint strength, fastener fit and populated component/leg
   clearance remain unqualified. No slicing or application/firmware changes.
+
+## Raise board above OLED wiring
+
+- User wants the OLED wire immediately below the development board. The existing
+  cable slot spans Z=40–43 mm; raise the board contact plane from Z=40 to Z=45 mm.
+  Roof holders become 5 mm long from the outside roof top, rather than 10 mm.
+  With the assumed 1.6 mm PCB, its underside sits at Z=43.4 mm, 0.4 mm above the
+  slot. This leaves 3.4 mm between the PCB top and main roof underside.
+- Use M3 × 12 mm roof bolts with suitable nuts/washers and a dry-fit. Preserve
+  the board's 50 × 50 mm hole pattern, external chassis tabs and all ports.
+  The chassis geometry is unchanged from v4; an existing v4 print can be reused.
+- Add a PCB/slot height assertion, move independent support/access probes to the
+  new board height, and check a central printed-plastic wire passage below it.
+  Generate v5 artifacts and update draft PR #55.
+- `python hardware/MicroHuli/enclosure/build_body.py --previews` passes both mesh
+  checks and all 20 geometry/access tests. Independent trimesh/manifold checks
+  pass for both meshes, exact assembly overlap and the central lower cavity.
+  V4/v5 chassis differences have zero volume in both directions, confirming reuse.
+- Final CAD views and the PCB/wire height diagram were visually reviewed. Python
+  compilation, changed Markdown formatting, local guide links, diff checks and
+  the 19-file `exports/MicroHuli_M3_v5.zip` archive integrity check pass. Source,
+  matched STL files, guide, report and previews are included in that package.
+- PCB outline, component placement, cable/connector dimensions, solder clearance
+  and actual printed fit remain unmeasured. No slicing or firmware changes.

@@ -93,19 +93,21 @@ def check_assembly(openscad):
         for x in (-25, 25):
             for y in (-25, 25):
                 intersection(f"board bolt {x},{y}: shank/head/nut access", "body();", f'''union() {{
-                    translate([{x},{y},39.9]) cylinder(d=3.2,h=12);
+                    translate([{x},{y},44.9]) cylinder(d=3.2,h=7);
                     translate([{x},{y},50.01]) cylinder(d=7,h=15);
-                    translate([{x},{y},35]) cylinder(d=7,h=3.3);
+                    translate([{x},{y},40]) cylinder(d=7,h=3.3);
                 }}''')
                 # Support exists at the PCB contact plane, not just at the roof.
                 intersection(f"board support {x},{y}", "body();", f'''difference() {{
-                    translate([{x},{y},40.1]) cylinder(d=7,h=0.4);
-                    translate([{x},{y},40]) cylinder(d=4,h=1);
+                    translate([{x},{y},45.1]) cylinder(d=7,h=0.4);
+                    translate([{x},{y},45]) cylinder(d=4,h=1);
                 }}''', 10.3, 10.4)
         intersection("rear 15 x 15 opening", "body();",
                      "translate([-7.49,33,20.01]) cube([14.98,3,14.98]);")
         intersection("front OLED slot", "body();",
                      "translate([-9.99,-36,40.01]) cube([19.98,3,2.98]);")
+        intersection("OLED wire passage below raised board", "body();",
+                     "translate([-4,-36,41]) cube([8,36,1.5]);")
         # Compare added material against the shell so its rounded corners are
         # not incorrectly classified as internal fastener obstructions.
         intersection("lower body cavity clear of chassis mounts", "difference() { body(); shell(); }",
@@ -138,7 +140,7 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     reports = {}
     for name in ("body", "chassis"):
-        path = output / f"MicroHuli_{name}_M3_v4.stl"
+        path = output / f"MicroHuli_{name}_M3_v5.stl"
         render(openscad, SOURCE, path, "--export-format", "binstl", "-D", f'part="{name}"')
         reports[name] = mesh(path)[2]
         expected = [60, 96, 50] if name == "body" else [53, 96, 15.996]
@@ -147,7 +149,7 @@ def main():
             raise ValueError(f"Unexpected {name} dimensions: {reports[name]}")
         print(f"PASS {name}: {reports[name]}")
     checks = check_assembly(openscad)
-    (output / "body_M3_v4_report.json").write_text(json.dumps({
+    (output / "body_M3_v5_report.json").write_text(json.dumps({
         "parts": reports, "checks": checks,
         "qualification": "CAD geometry only; no slicing or physical qualification",
     }, indent=2) + "\n", encoding="utf-8")
@@ -158,7 +160,7 @@ def main():
             ("exploded", "120,-170,125,0,0,35"),
             ("body", "110,160,-100,0,0,25"),
         ):
-            render(openscad, SOURCE, output / f"body_M3_v4_{name}.png",
+            render(openscad, SOURCE, output / f"body_M3_v5_{name}.png",
                    "--render", "--imgsize=1200,1000", "--colorscheme=Tomorrow",
                    f"--camera={camera}", "--viewall", "--autocenter", "--projection=o",
                    "-D", f'part="{name}"', "-D", "print_orientation=false")

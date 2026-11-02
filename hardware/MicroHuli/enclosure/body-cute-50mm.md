@@ -4,10 +4,10 @@ This is the corrected body requested after the raised-rim interpretation was
 rejected. The main shell is **60 × 70 × 50 mm**, including the roof.
 It has a **closed top**, a small **5 mm sloped shoulder** like the original
 cover, softly rounded upper plan corners, and an open bottom for the chassis.
-The current **M3 v4** revision puts both chassis fasteners on external front/rear
+The current **M3 v5** revision puts both chassis fasteners on external front/rear
 tabs. The chassis is assembled with its **flat plate on top and servo brackets
 pointing down**, leaving the body cavity free for components. Four roof standoffs
-hold the development board.
+hold the development board just above the OLED cable slot.
 
 ![Front and rear of the corrected body](body-cute-50mm.png)
 
@@ -28,9 +28,14 @@ hold the development board.
   The original chassis plate and servo brackets have no holes or cuts added.
 - Four board screws: **50 × 50 mm centre-to-centre**, at X=±25, Y=±25 mm.
   Standoffs are 8 mm diameter with 3.4 mm through holes. Their PCB contact plane
-  is Z=40 mm, 8.4 mm below the main roof underside. Flat screw-head lands extend
-  through the sloped roof shoulder; screw heads sit outside the roof. Local
+  is Z=45 mm, 5 mm below the outer roof top and 3.4 mm below the main roof
+  underside. Flat screw-head lands extend through the sloped roof shoulder;
+  screw heads sit outside the roof. Local
   relief below the posts clears 7 mm washers/nuts and retains 1.3 mm outer wall.
+  With the assumed **1.6 mm PCB**, its underside is **Z=43.4 mm**, 0.4 mm above
+  the OLED slot's upper edge. Wires entering at Z=40–43 mm pass below the PCB.
+  The populated component outline and actual connector bend radius still need
+  checking; this height does not establish a clear route around components.
 - The external tabs extend **13 mm beyond each end** of the shell. Body plastic
   envelope is **60 × 96 × 50 mm**, revised chassis is **53 × 96 × 15.996 mm**.
   In assembly, the chassis extends below the body, giving about **66 mm total
@@ -40,8 +45,9 @@ hold the development board.
 
 ## M3 assembly
 
-Use the **M3 v4 body and chassis together**. V3 used internal mounting lugs and
-the wrong assembled chassis orientation; do not mix those exports with v4.
+Use the **M3 v5 body** with the v5 or v4 external-tab chassis. The chassis geometry
+is unchanged from v4, so an already printed v4 chassis can be reused. V3 parts
+have different internal mounts and are incompatible.
 Exported STL files are oriented for printing, not assembled positioning.
 
 1. With power disconnected, turn the printed chassis over so the flat plate is
@@ -50,10 +56,10 @@ Exported STL files are oriented for printing, not assembled positioning.
 2. Put **two ordinary M3 hex nuts** into the underside pockets of the external
    chassis tabs. All chassis fastener hardware is accessible outside the shell;
    printed nut retention is not assumed.
-3. Mount the development board under the roof using **four M3 × 16 mm bolts,
+3. Mount the development board under the roof using **four M3 × 12 mm bolts,
    four M3 nuts and suitable M3 washers**. Bolts enter from outside the roof,
    pass through the standoffs and board, and receive nuts below the PCB. The
-   PCB top meets Z=40 mm; orient populated components toward the open bottom
+   PCB top meets Z=45 mm; orient populated components toward the open bottom
    where possible. Use insulating washers and verify clearance from copper,
    solder and components. The length assumes approximately 1.6 mm PCB thickness;
    dry-fit the hardware and check protruding ends before tightening.
@@ -65,12 +71,14 @@ Exported STL files are oriented for printing, not assembled positioning.
 5. Check USB access through the enlarged rear opening, wire routing, battery
    clearance and leg travel before powering the robot.
 
-**Reprint the revised chassis:** its integral external tabs are required. Drilling
-the old chassis does not add these tabs. The current design adds material only
-at the front/rear tabs, leaving the original servo bays clear in CAD. Physical
+**Use a chassis with the integral external tabs:** v4 and v5 are identical.
+The original chassis and v3 do not have these tabs. The current design adds
+material only at the front/rear tabs, leaving the original servo bays clear in CAD. Physical
 servo, leg and ground clearance still need checking.
 
 ![M3 body and chassis, cut away to show the mounts](body-m3-cutaway.png)
+
+![Roof holder height and OLED wire position](board-cable-height.png)
 
 ## Export and print
 
@@ -82,10 +90,10 @@ python hardware/MicroHuli/enclosure/build_body.py --previews
 
 Outputs in `exports/`:
 
-- `MicroHuli_body_M3_v4.stl`: body, roof on the bed.
-- `MicroHuli_chassis_M3_v4.stl`: chassis with matching external tabs, flat plate
+- `MicroHuli_body_M3_v5.stl`: body, roof on the bed.
+- `MicroHuli_chassis_M3_v5.stl`: chassis with matching external tabs, flat plate
   on the bed and servo brackets upward. Flip it over for assembly.
-- `body_M3_v4_report.json`: mesh, dimensions, mating clearance, port and fastener
+- `body_M3_v5_report.json`: mesh, dimensions, mating clearance, port and fastener
   access checks. Generated previews include assembled, cutaway and exploded views.
 
 The body export puts the closed central roof on the bed and the open bottom upward.
