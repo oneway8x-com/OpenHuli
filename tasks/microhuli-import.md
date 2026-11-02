@@ -125,7 +125,10 @@ Physical Nano/OLED/IR, the connected build's 485-byte runtime memory margin and 
   applicable. Final front/rear, inside, cutaway, assembled and exploded previews
   visually reviewed; local guide links and the 18-file ZIP integrity check pass.
   Matched STL files, editable source, guide, previews and report are packaged in
-  ignored `exports/MicroHuli_M3_v3.zip`. PR handoff pending.
+  ignored `exports/MicroHuli_M3_v3.zip`.
+- Draft [PR #55](https://github.com/oneway8x-com/OpenHuli/pull/55), base `main`,
+  head `codex/microhuli-m3-mounts`, is ready for design review and physical fit
+  qualification. No issue was supplied and no issue closure is claimed.
 - No slicing, printing or hardware qualification. Board outline, populated
   component/battery/wiring clearance, actual fasteners and printed joint strength
   still require a dry-fit.
