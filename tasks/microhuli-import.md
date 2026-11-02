@@ -225,3 +225,20 @@ Physical Nano/OLED/IR, the connected build's 485-byte runtime memory margin and 
   matched STL files, editable source, guide, diagram, previews and geometry report.
   Update draft [PR #55](https://github.com/oneway8x-com/OpenHuli/pull/55) with this
   final side-tab/12 mm design. No slicing, printing or firmware/application changes.
+
+## Rear opening 12 mm below roof
+
+- Owner clarified 1.2 cm: move the rear opening's upper edge from 15 mm to 12 mm
+  below the outside roof top. Preserve its 15 × 15 mm size; assembled opening is
+  now Z=23–38 mm, up 3 mm. Its upper edge aligns with the Z=38 mm PCB contact plane.
+- Keep the 12 mm board holders, OLED cable slot and left/right chassis tabs.
+  The v6 chassis geometry is unchanged and reusable. Generate v7 body/artifacts;
+  adjust the independent rear-port probe to catch a stale opening position.
+- `python hardware/MicroHuli/enclosure/build_body.py --previews` passes both mesh
+  checks and all 20 CAD checks. Independent trimesh/manifold checks confirm the
+  meshes, exact assembly clearance and matching v6/v7 chassis geometry.
+- All final CAD views were visually reviewed. Python compilation, Markdown
+  formatting, guide links, diff review and the 19-file `exports/MicroHuli_M3_v7.zip`
+  integrity check pass. Update draft [PR #55](https://github.com/oneway8x-com/OpenHuli/pull/55).
+  Physical connector alignment, printing and fit remain unverified; no slicing
+  or application/firmware changes.

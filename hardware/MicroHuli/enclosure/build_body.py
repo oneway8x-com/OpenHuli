@@ -103,7 +103,7 @@ def check_assembly(openscad):
                     translate([{x},{y},38]) cylinder(d=4,h=1);
                 }}''', 10.3, 10.4)
         intersection("rear 15 x 15 opening", "body();",
-                     "translate([-7.49,33,20.01]) cube([14.98,3,14.98]);")
+                     "translate([-7.49,33,23.01]) cube([14.98,3,14.98]);")
         intersection("front OLED slot", "body();",
                      "translate([-9.99,-36,40.01]) cube([19.98,3,2.98]);")
         intersection("existing OLED cable passage above lowered board", "body();",
@@ -143,7 +143,7 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     reports = {}
     for name in ("body", "chassis"):
-        path = output / f"MicroHuli_{name}_M3_v6.stl"
+        path = output / f"MicroHuli_{name}_M3_v7.stl"
         render(openscad, SOURCE, path, "--export-format", "binstl", "-D", f'part="{name}"')
         reports[name] = mesh(path)[2]
         expected = [86, 70, 50] if name == "body" else [86, 66, 15.996]
@@ -152,7 +152,7 @@ def main():
             raise ValueError(f"Unexpected {name} dimensions: {reports[name]}")
         print(f"PASS {name}: {reports[name]}")
     checks = check_assembly(openscad)
-    (output / "body_M3_v6_report.json").write_text(json.dumps({
+    (output / "body_M3_v7_report.json").write_text(json.dumps({
         "parts": reports, "checks": checks,
         "qualification": "CAD geometry only; no slicing or physical qualification",
     }, indent=2) + "\n", encoding="utf-8")
@@ -163,7 +163,7 @@ def main():
             ("exploded", "120,-170,125,0,0,35"),
             ("body", "110,160,-100,0,0,25"),
         ):
-            render(openscad, SOURCE, output / f"body_M3_v6_{name}.png",
+            render(openscad, SOURCE, output / f"body_M3_v7_{name}.png",
                    "--render", "--imgsize=1200,1000", "--colorscheme=Tomorrow",
                    f"--camera={camera}", "--viewall", "--autocenter", "--projection=o",
                    "-D", f'part="{name}"', "-D", "print_orientation=false")

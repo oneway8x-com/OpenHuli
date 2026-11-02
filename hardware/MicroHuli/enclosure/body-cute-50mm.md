@@ -4,7 +4,7 @@ This is the corrected body requested after the raised-rim interpretation was
 rejected. The main shell is **60 × 70 × 50 mm**, including the roof.
 It has a **closed top**, a small **5 mm sloped shoulder** like the original
 cover, softly rounded upper plan corners, and an open bottom for the chassis.
-The current **M3 v6** revision puts both chassis fasteners on external left/right
+The current **M3 v7** revision puts both chassis fasteners on external left/right
 tabs. The chassis is assembled with its **flat plate on top and servo brackets
 pointing down**, leaving the body cavity free for components. Four roof standoffs
 hold the development board 12 mm below the outside roof top.
@@ -15,8 +15,8 @@ hold the development board 12 mm below the outside roof top.
   the original robot, the OLED board mounts outside the body. The cable slot
   is retained; the old sloping recess and a verified OLED fastening method are
   not reproduced.
-- Rear USB opening: **15 × 15 mm**, centered, 20–35 mm above the bottom. Its
-  upper edge is **15 mm below the top**. Check actual connector alignment.
+- Rear USB opening: **15 × 15 mm**, centered, 23–38 mm above the bottom. Its
+  upper edge is **12 mm below the top**. Check actual connector alignment.
 - Upper walls and flat roof: **1.6 mm**. Lower collar: 1 mm walls with a nominal
   **58 × 68 mm cavity for the first 16 mm**, without internal chassis mounting lugs.
   A short transition joins the square collar to rounded upper corners. The cavity
@@ -46,8 +46,9 @@ hold the development board 12 mm below the outside roof top.
 
 ## M3 assembly
 
-Use the **matched M3 v6 body and chassis**. Both parts have new left/right tabs;
-v4/v5 front/rear-tab chassis parts cannot be reused with this body.
+Use the **M3 v7 body** with a v7 or v6 left/right-tab chassis. The chassis
+geometry is unchanged from v6, so its print can be reused. V4/v5 front/rear-tab
+chassis parts cannot be reused with this body.
 Exported STL files are oriented for printing, not assembled positioning.
 
 1. With power disconnected, turn the printed chassis over so the flat plate is
@@ -71,7 +72,7 @@ Exported STL files are oriented for printing, not assembled positioning.
 5. Check USB access through the enlarged rear opening, wire routing, battery
    clearance and leg travel before powering the robot.
 
-**Reprint both matched v6 parts** to move the attachment to the left/right sides.
+**Use a v6 or v7 left/right-tab chassis**; only the body changes in v7.
 The original servo brackets are preserved. Added tab material stays outside a
 40 × 66 mm region around those brackets in CAD. The real servos, horns and
 moving legs are not modeled: side-tab clearance through their full travel still
@@ -113,10 +114,10 @@ python hardware/MicroHuli/enclosure/build_body.py --previews
 
 Outputs in `exports/`:
 
-- `MicroHuli_body_M3_v6.stl`: body, roof on the bed.
-- `MicroHuli_chassis_M3_v6.stl`: chassis with matching external tabs, flat plate
+- `MicroHuli_body_M3_v7.stl`: body, roof on the bed.
+- `MicroHuli_chassis_M3_v7.stl`: chassis with matching external tabs, flat plate
   on the bed and servo brackets upward. Flip it over for assembly.
-- `body_M3_v6_report.json`: mesh, dimensions, mating clearance, port and fastener
+- `body_M3_v7_report.json`: mesh, dimensions, mating clearance, port and fastener
   access checks. Generated previews include assembled, cutaway and exploded views.
 
 The body export puts the closed central roof on the bed and the open bottom upward.
