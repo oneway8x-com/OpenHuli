@@ -70,3 +70,17 @@ Draft PR: https://github.com/oneway8x-com/OpenHuli/pull/56 (base `main`, head
 - Update the same draft PR #56. Physical stability and loaded step distance
   remain unverified; no hardware was moved or firmware uploaded during this
   follow-up.
+
+## Requested firmware upload — 2026-11-03
+
+- Owner explicitly requested uploading the latest firmware. Built the standalone
+  Nano sketch from `58ce416` and uploaded with Arduino CLI readback verification
+  to the connected Nano; upload and verification succeeded.
+- Reran all seven host tests successfully before upload. Build uses 22,526 bytes
+  flash and 1,299 bytes static RAM.
+- At 115200 baud, observed `MICROHULI_NANO ready` with idle status, a successful
+  `HELP` response, and `STOPPED; servo pulses off` after `STOP`. Closed the serial
+  monitor so the port is available to the owner.
+- No walking, pose or isolated-servo test was triggered. Loaded balance,
+  direction and clearance remain physical checks. The previous source remains
+  available in Git for rebuilding if a firmware rollback is needed.
