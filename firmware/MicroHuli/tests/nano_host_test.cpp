@@ -230,15 +230,62 @@ int main(int argc, char **) {
     assert(servos[i].writes == writeCounts[i]);
   }
 
-  // Backward reverses the phase order, rather than repeating a shifted WALK.
-  send("WALK\n");
-  tick(GAIT_ENTRY_MS + GAIT_CYCLE_MS / 4);
-  const float forwardRear = targetPos[2];
-  send("BACK\n");
-  tick(GAIT_ENTRY_MS + GAIT_CYCLE_MS / 4);
-  assert(forwardRear < 110 && targetPos[2] > 150);
-  send("!");
-  assertOff();
+  // Owner observed the former positive-phase WALK moving backward. Every USB
+  // alias and corresponding IR key must use the corrected phase sequence.
+  auto checkDirection = [&](bool forward) {
+    tick(GAIT_ENTRY_MS + GAIT_CYCLE_MS / 4);
+    assert(forward ? targetPos[2] > 150 : targetPos[2] < 100);
+    assert(forward ? targetPos[3] > 80 : targetPos[3] < 30);
+    tick(GAIT_CYCLE_MS / 2);
+    assert(forward ? targetPos[2] < 100 : targetPos[2] > 150);
+    assert(forward ? targetPos[3] < 30 : targetPos[3] > 80);
+    send("!");
+    assertOff();
+  };
+  for (const char *command : {"WALK\n", "FORWARD\n", "F\n"}) {
+    send(command);
+    checkDirection(true);
+  }
+  for (const char *command : {"BACK\n", "B\n"}) {
+    send(command);
+    checkDirection(false);
+  }
+  for (uint8_t key : {0x18, 0x43, 0x5E, 0x44}) {
+    remote(key);
+    checkDirection(key == 0x18 || key == 0x43);
+  }
+
+  // Both directions complete a larger, unclipped 70-degree swing in at most
+  // 1.1 seconds. The actual simulated outputs track it within a 4-degree tick.
+  assert(GAIT_CYCLE_MS > 0 && GAIT_CYCLE_MS <= 1100);
+  for (const char *command : {"WALK\n", "BACK\n"}) {
+    send(command);
+    tick(GAIT_ENTRY_MS + 2 * GAIT_CYCLE_MS);
+    float low[LEG_COUNT], high[LEG_COUNT], previous[LEG_COUNT];
+    float largestStep = 0;
+    for (uint8_t i = 0; i < LEG_COUNT; ++i) {
+      low[i] = high[i] = currentPos[i];
+      previous[i] = currentPos[i];
+    }
+    for (unsigned long ms = 0; ms < GAIT_CYCLE_MS; ++ms) {
+      tick(1);
+      for (uint8_t i = 0; i < LEG_COUNT; ++i) {
+        low[i] = std::fmin(low[i], currentPos[i]);
+        high[i] = std::fmax(high[i], currentPos[i]);
+        const float step = std::fabs(currentPos[i] - previous[i]);
+        assert(step <= 4.001f);
+        largestStep = std::fmax(largestStep, step);
+        previous[i] = currentPos[i];
+        assert(servos[i].output >= 20 && servos[i].output <= 160);
+      }
+    }
+    for (uint8_t i = 0; i < LEG_COUNT; ++i) {
+      assert(high[i] - low[i] > 69 && high[i] - low[i] <= 70.001f);
+    }
+    assert(largestStep > 3);
+    send("STOP\n");
+    assertOff();
+  }
 
   // An overlong command is discarded; CRLF and lowercase commands still work.
   send("F" + std::string(40, 'x') + "\n");
