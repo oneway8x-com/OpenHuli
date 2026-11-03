@@ -176,8 +176,8 @@ standard profile and need checking against the actual handset. Use the
 [receiver-only sketch](firmware/ky022_test/README.md) to read differing codes.
 
 IR support adds no receive timer and uses IRremote's small NEC decoder via D2.
-Set `MICROHULI_IR=0` to build without this receiver/library. The local-control Nano build uses **22,474 bytes flash and 1,299 bytes static RAM**.
-The connected build uses **25,306 bytes flash and 1,563 bytes static RAM**, leaving
+Set `MICROHULI_IR=0` to build without this receiver/library. The local-control Nano build uses **22,526 bytes flash and 1,299 bytes static RAM**.
+The connected build uses **25,384 bytes flash and 1,563 bytes static RAM**, leaving
 **485 bytes** for stack and other runtime use. The compiler flags low remaining
 memory; physical stack margin and stability under simultaneous IR/display/motion
 load remain unverified.
@@ -224,17 +224,36 @@ At the top of the sketch:
 
 - `SERVO_PINS`: `{3, 5, 6, 7}`, in FL / FR / BL / BR order.
 - `SERVO_DIRECTIONS`: `{1, 1, -1, -1}`. Rear output directions were reversed after
-  the owner reported opposite front/rear rotation. Physical walking direction
-  still needs confirmation.
+  the owner reported opposite front/rear rotation. WALK/FORWARD/F now use the
+  formerly backward phase sequence, and BACK/B the formerly forward sequence,
+  after the owner observed reversed travel. USB and IR share this correction;
+  physical direction with the revised build still needs confirmation.
 - `SERVO_TRIM`: neutral adjustment for each joint, initially all zero.
 - `SERVO_MIN` / `SERVO_MAX`: normal motion target bounds, initially 20°–160°.
 - Servo pulse range: **1000–2000 microseconds**, matching the Nano test sketches.
-- `WALK_OFFSETS`, `WALK_PHASES`, `AMPLITUDE`, `GAIT_CYCLE_MS`: gait tuning.
+- `GAIT_CYCLE_MS`: **1100 ms**, reduced from 1260 ms for a faster gait cadence.
+- `AMPLITUDE`: **35 degrees** (70-degree swing), increased from 30 degrees.
+- `WALK_OFFSETS`: `{-10, 10, 35, -35}`; the rear centers were moved inward by
+  5 degrees so straight walking fits the existing output bounds without clipping.
+- `WALK_PHASES`: relative leg timing. Forward walking now reverses phase
+  progression; backward uses positive progression. Turning/spin phase directions
+  are unchanged.
+- `GAIT_SERVO_STEP`: **4 degrees per 20 ms tick** for walking, turning and spins.
+  Poses, isolated tests and tricks retain `SERVO_STEP` at **3 degrees per tick**.
+- Turns use 0.4 times the swing on the inside and the normal swing on the
+  outside. Spins use the normal swing with opposite signs on each side. The
+  former 1.2 multiplier exceeded rear travel and the movement budget, clipping
+  and delaying part of each step.
+
+After uploading, start with `F` for two forward cycles, then `B` for two backward
+cycles. Confirm physical direction and leg clearance before continuous `WALK`.
+Use `STOP` or `!` to interrupt. The faster cadence and larger commanded swing
+do not establish actual ground speed or step distance under load.
 
 These software bounds are starting values, not measured mechanical clearance.
-Check leg clearance before expanding movement. BACK reverses phase progression;
-LEFT/RIGHT use the physical left/right leg pairs. Turning and trick poses have
-not been validated on the assembled robot.
+Check leg clearance before expanding movement. LEFT/RIGHT use the physical
+left/right leg pairs. Turning and trick poses have not been validated on the
+assembled robot.
 
 At the owner's request, `DOWN` and `REST` use the creator's full-range logical
 targets `{180, 0, 180, 0}` and bypass the normal 20°–160° target limits. With
@@ -243,6 +262,55 @@ this build's rear reversal and zero trims, the physical output commands are
 pulse range remains **1000–2000 microseconds**; the original ESP32 sketch used
 its servo library's defaults, so matching command angles does not establish
 matching physical leg angles. These endpoints have not been physically checked.
+
+## Mounting and stability checks
+
+Outside-facing legs and different front/rear mounting do not, by themselves,
+identify servo direction signs or horn neutral positions. Check each leg before
+changing those settings. The owner reports that the current isolated checks are
+correct; retain the existing rear inversion pending more specific measurements.
+
+With zero trims, steady WALK/BACK uses these **commanded output angles**, not
+measured joint angles or foot positions:
+
+| Leg         | Pin | Output range | Isolated check | Repeated output sequence |
+| ----------- | --- | ------------ | -------------- | ------------------------ |
+| Front-left  | D3  | 45–115       | `TESTFL`       | 90 → 85 → 95 → 90        |
+| Front-right | D5  | 65–135       | `TESTFR`       | 90 → 85 → 95 → 90        |
+| Back-left   | D6  | 20–90        | `TESTBL`       | 90 → 95 → 85 → 90        |
+| Back-right  | D7  | 90–160       | `TESTBR`       | 90 → 95 → 85 → 90        |
+
+1. Support the body with the feet off the floor and use the separate servo
+   supply described above. Run each isolated check separately and wait for its
+   completion (about 15 seconds). Only the selected servo receives pulses.
+2. Verify the named leg moves. Record whether its first small sweep after
+   centering moves the foot toward the head, tail or sideways. Check horn
+   alignment and whether the centered legs give a level stance. Changing a
+   direction sign also affects poses; recheck those while supporting the body.
+3. On a flat floor, use `F` and `B` before continuous walking. Compare short
+   runs with one tuning change at a time; record travel, slipping, body rocking
+   and resets. Check secure, low, centered battery placement, loose horns,
+   joint play, foot grip and power. `STOP`/`!` disables holding torque.
+
+Host tests check every leg through WALK, BACK, LEFT, RIGHT, SL and SR. Steady
+targets fit the configured bounds and each simulated servo reaches its next
+target at every 20 ms update. These tests omit ground contact, torque, backlash,
+supply sag and body balance. Arduino's
+[Servo API](https://github.com/arduino-libraries/Servo/blob/master/docs/api.md#read)
+also reports the last command, not physical position feedback.
+
+[Iida and Pfeifer (2006)](https://people.csail.mit.edu/iida/papers/RASIidaPfeifer2006.pdf)
+found that phase, frequency, mass and ground friction affect a four-servo robot's
+stability. Its compliant legs differ from MicroHuli's rigid legs, so its tuned
+values cannot be copied directly. [Xu, Zi and Ding (2019), section 2.2](https://link.springer.com/article/10.1186/s10033-019-0321-2)
+describe creeping gait with at least three supporting legs. MicroHuli's one
+driven joint per leg and lack of contact feedback mean four different phases
+alone cannot establish that support pattern.
+
+If the checked assembly rocks or slips, compare a smaller swing and a longer
+cycle before increasing speed again. This is a tuning experiment, not a verified
+stable profile. Mounting measurements and loaded contact observations are needed
+before selecting new offsets or a different gait sequence.
 
 ## Larger battery cover
 
@@ -289,7 +357,8 @@ firmware. The STL and pictures are unchanged by the Nano port.
 From this folder, run `./tests/run_host_tests.sh` with a C++11 compiler. This exercises the actual
 sketch against simulated Serial, time, servo and display interfaces, with the
 OLED both present and absent. Checks cover idle startup, bounded steps, STOP
-without a position jump, backward phase order, input overflow, interruptible
+without a position jump, corrected USB/IR forward/backward phase order, faster
+unclipped 70-degree straight gait swings, input overflow, interruptible
 tricks, individual-servo isolation, and rear inversion. They do not verify electrical power, physical motion
 or OLED appearance.
 

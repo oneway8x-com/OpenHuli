@@ -56,13 +56,15 @@ constexpr int8_t SERVO_DIRECTIONS[LEG_COUNT] = {1, 1, -1, -1};
 constexpr int8_t SERVO_TRIM[LEG_COUNT] = {0, 0, 0, 0};
 constexpr uint8_t SERVO_MIN[LEG_COUNT] = {20, 20, 20, 20};
 constexpr uint8_t SERVO_MAX[LEG_COUNT] = {160, 160, 160, 160};
-constexpr float WALK_OFFSETS[LEG_COUNT] = {-10, 10, 40, -40};
+// Rear centers leave room for the full 35-degree swing within 20/160 bounds.
+constexpr float WALK_OFFSETS[LEG_COUNT] = {-10, 10, 35, -35};
 constexpr float WALK_PHASES[LEG_COUNT] = {0, 0, PI / 2, PI / 2};
-constexpr unsigned long GAIT_CYCLE_MS = 1260;
+constexpr unsigned long GAIT_CYCLE_MS = 1100;
 constexpr unsigned long GAIT_ENTRY_MS = 700;
 constexpr unsigned long SERVO_TICK_MS = 20;
 constexpr float SERVO_STEP = 3;
-constexpr float AMPLITUDE = 30;
+constexpr float GAIT_SERVO_STEP = 4;
+constexpr float AMPLITUDE = 35;
 
 enum Motion { IDLE, POSE, WALK_FORWARD, WALK_BACKWARD, TURN_LEFT, TURN_RIGHT,
               SPIN_LEFT, SPIN_RIGHT, PUSHUPS, SWING, GALLOP, SERVO_TEST };
@@ -179,10 +181,12 @@ void beginAction(Motion action, unsigned long limit = 0) {
 
 float gaitScale(uint8_t leg) {
   const bool left = (leg % 2) == 0;
-  if (motion == TURN_LEFT) return left ? 0.4f : 1.2f;
-  if (motion == TURN_RIGHT) return left ? 1.2f : 0.4f;
-  if (motion == SPIN_LEFT) return left ? 1.2f : -1.2f;
-  if (motion == SPIN_RIGHT) return left ? -1.2f : 1.2f;
+  // Slow the inside legs to turn; keep every full swing within both the
+  // configured output bounds and the per-tick movement budget.
+  if (motion == TURN_LEFT) return left ? 0.4f : 1;
+  if (motion == TURN_RIGHT) return left ? 1 : 0.4f;
+  if (motion == SPIN_LEFT) return left ? 1 : -1;
+  if (motion == SPIN_RIGHT) return left ? -1 : 1;
   return 1;
 }
 
@@ -259,9 +263,10 @@ void updateAction(unsigned long now) {
       robotLog.println(F("STEP complete; returning to center"));
       return;
     }
-    // Reverse time progression for BACK, rather than shifting every leg by PI.
+    // Owner's assembled robot moved backward with positive-phase WALK.
+    // Reverse forward time progression; retain existing turning/spin phases.
     float phase = TWO_PI * static_cast<float>(walkingTime % GAIT_CYCLE_MS) / GAIT_CYCLE_MS;
-    if (motion == WALK_BACKWARD) phase = -phase;
+    if (motion == WALK_FORWARD) phase = -phase;
     for (uint8_t i = 0; i < LEG_COUNT; ++i) {
       const float angle = 90 + WALK_OFFSETS[i] +
                           gaitScale(i) * AMPLITUDE * cos(phase + WALK_PHASES[i]);
@@ -314,10 +319,11 @@ void updateServos(unsigned long now) {
   if (!attached || now - lastServoTick < SERVO_TICK_MS) return;
   lastServoTick = now;
   bool reached = true;
+  const float step = isGait(motion) ? GAIT_SERVO_STEP : SERVO_STEP;
   for (uint8_t i = 0; i < LEG_COUNT; ++i) {
     if (!servos[i].attached()) continue;
     const float remaining = targetPos[i] - currentPos[i];
-    currentPos[i] += constrain(remaining, -SERVO_STEP, SERVO_STEP);
+    currentPos[i] += constrain(remaining, -step, step);
     // Targets enforce their own bounds; allow a gradual return from DOWN's
     // full-range endpoints instead of snapping back to the normal 20/160 limits.
     servos[i].write(static_cast<int>(physicalAngle(i, currentPos[i], true) + 0.5f));
