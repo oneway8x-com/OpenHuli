@@ -37,3 +37,6 @@ verified `main` at `ba5b621`.
 
 Physical direction, loaded speed, clearance and power stability need testing
 on the assembled robot. No firmware upload is part of this change.
+
+Draft PR: https://github.com/oneway8x-com/OpenHuli/pull/56 (base `main`, head
+`codex/microhuli-gait`).
