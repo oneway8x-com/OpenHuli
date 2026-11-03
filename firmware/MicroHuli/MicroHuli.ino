@@ -181,10 +181,12 @@ void beginAction(Motion action, unsigned long limit = 0) {
 
 float gaitScale(uint8_t leg) {
   const bool left = (leg % 2) == 0;
-  if (motion == TURN_LEFT) return left ? 0.4f : 1.2f;
-  if (motion == TURN_RIGHT) return left ? 1.2f : 0.4f;
-  if (motion == SPIN_LEFT) return left ? 1.2f : -1.2f;
-  if (motion == SPIN_RIGHT) return left ? -1.2f : 1.2f;
+  // Slow the inside legs to turn; keep every full swing within both the
+  // configured output bounds and the per-tick movement budget.
+  if (motion == TURN_LEFT) return left ? 0.4f : 1;
+  if (motion == TURN_RIGHT) return left ? 1 : 0.4f;
+  if (motion == SPIN_LEFT) return left ? 1 : -1;
+  if (motion == SPIN_RIGHT) return left ? -1 : 1;
   return 1;
 }
 

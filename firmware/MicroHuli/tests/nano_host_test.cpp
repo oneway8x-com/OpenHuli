@@ -287,6 +287,41 @@ int main(int argc, char **) {
     assertOff();
   }
 
+  // Turning/spinning must preserve smooth, symmetric swings too. Increasing
+  // an outer leg beyond the straight-walk swing clips the rear targets and
+  // makes the 4-degree limiter distort timing relative to the other legs.
+  const char *gaits[] = {"WALK\n", "BACK\n", "LEFT\n", "RIGHT\n", "SL\n", "SR\n"};
+  const float expectedSwings[][LEG_COUNT] = {
+    {70, 70, 70, 70}, {70, 70, 70, 70}, {28, 70, 28, 70},
+    {70, 28, 70, 28}, {70, 70, 70, 70}, {70, 70, 70, 70}
+  };
+  for (uint8_t gait = 0; gait < 6; ++gait) {
+    send(gaits[gait]);
+    tick(GAIT_ENTRY_MS + 3 * GAIT_CYCLE_MS);
+    float low[LEG_COUNT] = {180, 180, 180, 180};
+    float high[LEG_COUNT] = {0, 0, 0, 0};
+    for (unsigned long ms = 0; ms < GAIT_CYCLE_MS; ++ms) {
+      const unsigned long writes = servos[0].writes;
+      tick(1);
+      for (uint8_t i = 0; i < LEG_COUNT; ++i) {
+        const float output = physicalAngle(i, targetPos[i]);
+        low[i] = std::fmin(low[i], output);
+        high[i] = std::fmax(high[i], output);
+        assert(output >= 20 && output <= 160);
+        // At every actual update, each simulated leg can reach its target.
+        if (servos[0].writes != writes)
+          assert(std::fabs(targetPos[i] - currentPos[i]) < 0.01f);
+      }
+    }
+    const float centers[] = {80, 100, 55, 125};
+    for (uint8_t i = 0; i < LEG_COUNT; ++i) {
+      assert(std::fabs(high[i] - low[i] - expectedSwings[gait][i]) < 0.1f);
+      assert(std::fabs((high[i] + low[i]) / 2 - centers[i]) < 0.1f);
+    }
+    send("STOP\n");
+    assertOff();
+  }
+
   // An overlong command is discarded; CRLF and lowercase commands still work.
   send("F" + std::string(40, 'x') + "\n");
   assertOff();

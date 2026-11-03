@@ -40,3 +40,33 @@ on the assembled robot. No firmware upload is part of this change.
 
 Draft PR: https://github.com/oneway8x-com/OpenHuli/pull/56 (base `main`, head
 `codex/microhuli-gait`).
+
+## All-servo stability follow-up
+
+- Owner reports different rear/front mounting and confirms the existing isolated
+  leg checks are correct. Preserve direction signs; no measured mounting angles,
+  foot trajectories or contact timings were supplied.
+- Audited all four outputs in all six steady gait modes using the actual sketch
+  with simulated time and servos. Straight WALK/BACK fits the output bounds.
+  The 1.2 multiplier for turns/spins requests 42-degree amplitude; the rear legs
+  clip for 205 of 1100 ms, and the 4-degree limiter leaves about 5.4 degrees of
+  error even at output updates (up to about 9.2 degrees between updates).
+- Limit full turn/spin swings to the normal 35-degree amplitude. Keep the
+  0.4 inside-turn multiplier. Output bounds, pose limits, direction signs and
+  straight-walk settings remain as previously implemented.
+- A new all-mode regression fails before the fix at an output-update tracking
+  assertion; after the fix all seven host runs pass. The independent simulation
+  audit reports zero clipped samples in all modes, and no target lag at output
+  updates. Maximum 20 ms changes stay below 4 degrees.
+- Added per-leg command ranges, isolated check sequences and mounting/tuning
+  guidance. Research uses Iida/Pfeifer's four-servo experiments, Xu et al.'s gait
+  analysis and Arduino's Servo API; none proves this assembly is stable. Updated
+  the passive-shoe guide's stale firmware timing reference.
+- Standalone and connected Nano builds pass: respectively 22,526/25,384 bytes
+  flash and unchanged 1,299/1,563 bytes static RAM. The connected build retains
+  the existing low-memory warning. Changed Markdown formatting/local links and
+  diff checks pass; complete follow-up diff self-reviewed. Application code is
+  unchanged, so application/database/browser suites were not run.
+- Update the same draft PR #56. Physical stability and loaded step distance
+  remain unverified; no hardware was moved or firmware uploaded during this
+  follow-up.

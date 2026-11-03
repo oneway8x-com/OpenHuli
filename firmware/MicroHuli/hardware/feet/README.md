@@ -67,8 +67,10 @@ and three with all four shoes, and compare travel times and visible slipping.
 A wider sole can also increase return-stroke drag; a speed gain is not assumed.
 After establishing the mechanical effect, gait frequency can be tuned separately.
 
-The current firmware uses a 1.26 s gait period and a 3-command-degree/20 ms slew
-limit. These files do not change that firmware.
+The current [Nano firmware](../../README.md#servo-configuration) uses a 1.10 s
+gait period, 35-command-degree amplitude and a 4-command-degree/20 ms gait slew
+limit. These shoe files do not change those settings. Compare traction with the
+same firmware before changing timing or amplitude.
 
 ## Export and geometry checks
 
