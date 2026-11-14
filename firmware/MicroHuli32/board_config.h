@@ -1,8 +1,9 @@
 #pragma once
 
 // ESP32-C3 SuperMini: GPIO numbers, not Arduino Nano D-pin numbers.
-// Keep GPIO2/8/9 (boot straps), 18/19 (USB) and 20/21 (UART) free.
-#define MICROHULI32_FL_PIN 3
+// GPIO2 is used for FL by request; check reset behavior with the servo connected.
+// Keep GPIO8/9 (boot straps), 18/19 (USB) and 20/21 (UART) free.
+#define MICROHULI32_FL_PIN 2
 #define MICROHULI32_FR_PIN 4
 #define MICROHULI32_BL_PIN 5
 #define MICROHULI32_BR_PIN 6

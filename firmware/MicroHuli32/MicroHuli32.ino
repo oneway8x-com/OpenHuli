@@ -514,7 +514,7 @@ void setup() {
     oled.begin();
   } else robotLog.println(F("OLED absent at 0x3C; continuing without display"));
 #endif
-  robotLog.println(F("MICROHULI32 ready; ESP32-C3; FL3 FR4 BL5 BR6; rear reversed; idle"));
+  robotLog.println(F("MICROHULI32 ready; ESP32-C3; FL2 FR4 BL5 BR6; rear reversed; idle"));
   printHelp();
 }
 

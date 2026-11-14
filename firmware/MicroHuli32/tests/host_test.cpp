@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
   assert(Serial.output.find("MICROHULI32 ready") != std::string::npos);
   assert(Wire.sda == 0 && Wire.scl == 1 && Wire.timeoutMs == 3);
   assert(IR_RECEIVE_PIN == 10);
-  const int expectedPins[] = {3, 4, 5, 6};
+  const int expectedPins[] = {2, 4, 5, 6};
   for (uint8_t i = 0; i < LEG_COUNT; ++i) {
     assert(servos[i].pin == expectedPins[i]);
     assert(servos[i].frequency == 50);

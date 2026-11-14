@@ -25,7 +25,7 @@ viewpoint, looking forward. The mapping is defined in [board_config.h](board_con
 
 | Connection               | Old Nano pin          | SuperMini GPIO / connection                                |
 | ------------------------ | --------------------- | ---------------------------------------------------------- |
-| Front-left servo signal  | D3                    | **GPIO3**                                                  |
+| Front-left servo signal  | D3                    | **GPIO2**                                                  |
 | Front-right servo signal | D5                    | **GPIO4**                                                  |
 | Back-left servo signal   | D6                    | **GPIO5**                                                  |
 | Back-right servo signal  | D7                    | **GPIO6**                                                  |
@@ -39,9 +39,11 @@ viewpoint, looking forward. The mapping is defined in [board_config.h](board_con
 | Servo red wires          | External servo supply | Suitable regulated **5 V servo supply**                    |
 | Servo brown/black wires  | Common GND            | Servo supply negative and **board GND**                    |
 
-GPIO2, GPIO8 and GPIO9 are boot-strapping pins; GPIO18/19 are reserved here
-for native USB and GPIO20/21 for UART. Infrared LED feedback is disabled so the
-decoder does not drive the SuperMini's onboard LED on a boot-strapping pin.
+GPIO2, GPIO8 and GPIO9 are boot-strapping pins. GPIO2 is used for the front-left
+servo at the owner's request; check reset behavior with the servo connected.
+GPIO8/9 remain unused, GPIO18/19 are reserved for native USB and GPIO20/21 for
+UART. Infrared LED feedback is disabled so the decoder does not drive the
+SuperMini's onboard LED on a boot-strapping pin.
 See [Espressif's C3 hardware guidelines](https://docs.espressif.com/projects/esp-hardware-design-guidelines/en/latest/esp32c3/schematic-checklist.html).
 
 **ESP32-C3 GPIO is 3.3 V logic.** Do not carry over the Nano's 5 V signal wiring.
@@ -113,7 +115,7 @@ pio run --project-dir firmware/MicroHuli32 --environment supermini_minimal
 4. Open `MicroHuli32.ino` from this folder, keeping `board_config.h` beside it.
    Select the USB port and upload with external/servo power disconnected.
 5. Open Serial Monitor at **115200 baud**, with **Newline** ending. Expect
-   `MICROHULI32 ready; ESP32-C3; FL3 FR4 BL5 BR6; rear reversed; idle`.
+   `MICROHULI32 ready; ESP32-C3; FL2 FR4 BL5 BR6; rear reversed; idle`.
 
 If the USB connection repeatedly disappears or uploading cannot start: hold
 **BOOT**, tap **RESET**, then release **BOOT**. Alternatively hold **BOOT** while

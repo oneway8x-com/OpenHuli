@@ -14,8 +14,9 @@ board in place of the classic Arduino Nano. No issue supplied.
   sketch's network services or copy the AVR-only EEPROM serial connection.
 - Owner supplied the DUBEUYEW SuperMini/expansion listing and its prohibition
   on simultaneous USB and external power. Document separate power modes.
-- Use ESP32Servo at 50 Hz / 14-bit resolution and explicit C3 I2C pins. Keep
-  boot, USB and UART pins free; disable infrared LED feedback so it cannot drive
+- Use ESP32Servo at 50 Hz / 14-bit resolution and explicit C3 I2C pins. The
+  original mapping kept boot, USB and UART pins free; see the GPIO2 follow-up.
+  Disable infrared LED feedback so it cannot drive
   the onboard boot LED. Bound USB transmit waits to 1 ms for local operation.
 - Pin the existing Arduino-ESP32 2.0.17 toolchain. Use the official Arduino
   library archive URLs because PlatformIO's U8g2 registry lacks version 2.36.19.
@@ -81,3 +82,21 @@ Draft PR: https://github.com/oneway8x-com/OpenHuli/pull/57 (base `main`, head
 - Restored the normal MicroHuli32 build with flash hash verification, confirmed
   STOP and released the serial port. Diagnostic sources and the old-flash backup
   remain private and ignored; production firmware source was not changed.
+
+## Front-left GPIO2 follow-up — 2026-11-14
+
+- Owner requested moving the front-left servo signal from GPIO3 to GPIO2.
+  Update the shared pin configuration, startup banner, wiring table and existing
+  hardware-mapping regression. Other peripheral pins remain unchanged.
+- GPIO2 is a strapping pin; retain detached startup and document checking reset
+  behavior with the connected servo. Firmware cannot physically move the wire.
+- The updated mapping regression fails against the old GPIO3 configuration at
+  the actual attached-servo pin assertion, before changing the firmware.
+- Both Nano/C3 host test groups and both C3 PlatformIO environments pass after
+  the pin change. Architecture, changed Markdown formatting, local README links
+  and complete diff whitespace checks pass. Self-reviewed the scoped diff.
+- Uploaded the revised standalone firmware with flash hash verification. The
+  board booted and acknowledged STOP and HELP; the serial port was released.
+  No movement command was sent before the owner moves the signal wire to GPIO2.
+- Physical movement and reset behavior with the servo connected to GPIO2 still
+  need checking. The earlier GPIO3 pad measurements do not qualify GPIO2.
