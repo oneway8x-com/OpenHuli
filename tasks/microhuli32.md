@@ -44,3 +44,6 @@ board in place of the classic Arduino Nano. No issue supplied.
 
 Expansion-board power routing, actual PWM, infrared reception and loaded gait
 need physical qualification. No upload requested.
+
+Draft PR: https://github.com/oneway8x-com/OpenHuli/pull/57 (base `main`, head
+`codex/microhuli32`).
