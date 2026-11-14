@@ -38,12 +38,27 @@ board in place of the classic Arduino Nano. No issue supplied.
   checkout has no completed dependency installation.
 - Self-reviewed the complete diff and compared the port against the original
   Nano sketch. Application, database and browser suites were not run for this
-  firmware-only change. No hardware was flashed or moved.
+  firmware-only change. Initial software validation did not flash hardware;
+  see the requested hardware-test follow-up below.
 
 ## Remaining work / risks
 
 Expansion-board power routing, actual PWM, infrared reception and loaded gait
-need physical qualification. No upload requested.
+need physical qualification.
 
 Draft PR: https://github.com/oneway8x-com/OpenHuli/pull/57 (base `main`, head
 `codex/microhuli32`).
+
+## Front-left hardware test — 2026-11-14
+
+- Owner requested testing the front-left servo and confirmed USB-only power
+  with external power disconnected, following the expansion-board instruction.
+- The attached C3 was running a Wi-Fi access-point test. Saved its complete
+  4 MB flash in a private, ignored local backup before replacing the firmware.
+- Rebuilt MicroHuli32 from `ec61fa8` and uploaded successfully with flash hash
+  verification. The standalone USB command handler acknowledged STOP and HELP.
+- Sent `TESTFL` once. The board reported `SERVO TEST start; GPIO3`, followed by
+  `SERVO TEST complete; centered; pulses off`. This command requests eight
+  90/85/95/90-degree cycles on the front-left output only.
+- Sent a final STOP, received `STOPPED; servo pulses off`, and closed the port.
+  Firmware execution is verified; physical movement remains unconfirmed.
