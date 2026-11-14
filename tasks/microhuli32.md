@@ -61,4 +61,23 @@ Draft PR: https://github.com/oneway8x-com/OpenHuli/pull/57 (base `main`, head
   `SERVO TEST complete; centered; pulses off`. This command requests eight
   90/85/95/90-degree cycles on the front-left output only.
 - Sent a final STOP, received `STOPPED; servo pulses off`, and closed the port.
-  Firmware execution is verified; physical movement remains unconfirmed.
+  Firmware execution is verified, but the owner subsequently reported no
+  physical movement. The hardware test has not passed.
+- Owner confirms signal on pin 3 and red on the expansion header's V rail.
+  The supplied product image identifies VCC1/VCC2 separately from the blue 5V
+  power block. Recommended the blue 5V output for the isolated USB-only test;
+  actual supply voltage and ground continuity remain unmeasured.
+- The first retest connection failed its STOP preflight, so it sent no movement
+  command. After reconnecting and confirming STOP separately, `TESTFL` started
+  and completed on GPIO3; owner again reported no movement. Final STOP succeeded.
+- Built and temporarily uploaded a private diagnostic copy of the same sketch
+  to sample GPIO3's input buffer without changing its PWM output routing.
+  The first sample reported zero frequency/duty during startup; all 18 later
+  samples reported 50 Hz, high times 1470–1525 microseconds, and combined
+  high/low times 19998–19999 microseconds. The diagnostic completed and stopped.
+- These measurements establish pulses at the chip pad, not signal delivery
+  through the connector, voltage amplitude, motor supply or ground continuity.
+  No firmware fault was established; physical movement still has not passed.
+- Restored the normal MicroHuli32 build with flash hash verification, confirmed
+  STOP and released the serial port. Diagnostic sources and the old-flash backup
+  remain private and ignored; production firmware source was not changed.
