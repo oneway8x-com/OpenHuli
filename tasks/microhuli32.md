@@ -98,5 +98,9 @@ Draft PR: https://github.com/oneway8x-com/OpenHuli/pull/57 (base `main`, head
 - Uploaded the revised standalone firmware with flash hash verification. The
   board booted and acknowledged STOP and HELP; the serial port was released.
   No movement command was sent before the owner moves the signal wire to GPIO2.
-- Physical movement and reset behavior with the servo connected to GPIO2 still
-  need checking. The earlier GPIO3 pad measurements do not qualify GPIO2.
+- On the owner's subsequent request, sent `TESTFL` once. The board acknowledged
+  `SERVO TEST start; GPIO2` and automatic completion; final STOP was acknowledged
+  and the serial port released. The owner reported no physical movement.
+- The GPIO2 change has not resolved the observed failure. Servo supply voltage,
+  ground/connector continuity and a known-working replacement servo remain
+  unchecked. The earlier GPIO3 pad measurements do not qualify GPIO2's waveform.
