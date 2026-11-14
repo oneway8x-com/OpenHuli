@@ -8,6 +8,7 @@ struct U8G2_SH1106_128X64_NONAME_1_HW_I2C {
   unsigned long pages = 0;
   uint8_t page = 0;
   U8G2_SH1106_128X64_NONAME_1_HW_I2C(uint8_t, uint8_t) {}
+  U8G2_SH1106_128X64_NONAME_1_HW_I2C(uint8_t, uint8_t, uint8_t, uint8_t) {}
   void setI2CAddress(uint8_t address) { assert(address == 0x78); }
   void setBusClock(unsigned long) {}
   void begin() {}

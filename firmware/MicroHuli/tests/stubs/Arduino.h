@@ -24,7 +24,9 @@ struct TestSerial : Stream {
   std::string input;
   std::string output;
   unsigned long baud = 0;
+  uint32_t txTimeoutMs = 0;
   void begin(unsigned long value) { baud = value; }
+  void setTxTimeoutMs(uint32_t value) { txTimeoutMs = value; }
   size_t write(const uint8_t* bytes, size_t count) {
     output.append(reinterpret_cast<const char*>(bytes), count);
     return count;

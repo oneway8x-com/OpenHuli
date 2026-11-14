@@ -7,7 +7,10 @@
 unsigned long testTime = 0;
 TestSerial Serial;
 TestWire Wire;
-#include "../MicroHuli.ino"
+#ifndef MICROHULI_TEST_SKETCH
+#define MICROHULI_TEST_SKETCH "../MicroHuli.ino"
+#endif
+#include MICROHULI_TEST_SKETCH
 
 void tick(unsigned long duration) {
   while (duration--) { ++testTime; loop(); }
@@ -367,4 +370,5 @@ int main(int argc, char **) {
   assert(Wire.connected ? oled.pages > 0 : oled.pages == 0);
   std::cout << "PASS: full IR command map, single-press continuous gait/STOP/filtering, isolated servo tests, idle boot, bounded gait, STOP, reverse phase, parser, tricks, rear inversion; OLED "
             << (Wire.connected ? "present" : "absent") << '\n';
+  return 0;
 }
