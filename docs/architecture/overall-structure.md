@@ -27,3 +27,5 @@ and [the MVP specification](../mvp-spec.md) for current versus intended runtime 
 including its standalone diagnostics and printable hardware sources. Its optional
 OpenHuliSerial connection uses the existing gateway and ping/display contracts;
 robot motion stays local to USB console or infrared control.
+[MicroHuli32](../../firmware/MicroHuli32/README.md) is the standalone ESP32-C3
+SuperMini port with the same local controls; it has no server connection.

@@ -139,3 +139,7 @@ For hardware-free paced voice input, telemetry and command fault scenarios, see 
 [MicroHuli](firmware/MicroHuli/README.md) is the four-servo Arduino Nano robot
 with local USB/infrared controls, OLED eyes, printable parts and an optional
 OpenHuliSerial ping/display connection. Cloud text never triggers movement.
+
+[MicroHuli32](firmware/MicroHuli32/README.md) ports the local robot controls to
+an ESP32-C3 SuperMini and GPIO expansion board, with C3 wiring, native USB,
+infrared controls and separate USB/external-power instructions.
